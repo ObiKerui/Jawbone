@@ -1,0 +1,64 @@
+$height : 40px;
+$spacing : 10px;
+$placeholder-colour : #AAA;
+$select-colour : #2875C7;
+$font-size : 14px;
+$border-colour : black;
+
+.obi-default-dropdown-box {
+	font-size: large;
+	padding: 4px;
+}
+
+.obi-dropdown-container {
+	position: relative;
+
+	.obi-dropdown-display {
+		cursor : pointer;
+		border : solid 1px #ddd;
+		box-sizing : border-box;
+	}
+
+	.obi-dropdown-list {
+		
+		position: absolute;
+		top: 100%;
+		left: 0%;
+		transform:scale(1, 0);
+		transition:transform ease 250ms;
+		z-index: 1000;
+		background-color: rgb(51, 51, 51);
+
+		ul {
+			list-style: none;
+			padding-left: 0px;
+
+			li {
+				color: white;
+				display: block;
+				width:100%;
+				padding: 0 $spacing;
+				box-sizing: border-box;
+				border:solid 1px $border-colour; 
+				border-top:none;
+				cursor: pointer;
+				white-space: nowrap;
+
+				&:hover {
+					background: rgb(84, 84, 84);
+				}
+					
+				&.selected {
+					background: $select-colour;
+					color:white;
+				}					
+			}
+		}
+	}
+}
+
+.obi-show {
+	.obi-dropdown-list {
+		transform:scale(1, 1);
+	}
+}	

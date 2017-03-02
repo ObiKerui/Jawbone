@@ -1,0 +1,29 @@
+{
+  "name": "mean-template",
+  "version": "0.0.0",
+  "main": [
+    "./dist/styles/*.css",
+    "./dist/scripts/*.js"
+  ],
+  "dependencies": {
+    "angular-animate": "~1.4.2",
+    "angular-sanitize": "~1.4.2",
+    "angular-messages": "~1.4.2",
+    "bootstrap-sass": "~3.3.5",
+    "jquery": "~2.1.4",
+    "angular": "~1.4.2",
+    "angular-ui-router": "~0.2.15",
+    "angular-bootstrap": "~2.5.0",
+    "angular-google-chart": "~0.1.0",
+    "velocity": "~1.4.2",
+    "animate.css": "~3.5.2"
+  },
+  "devDependencies": {
+    "angular-mocks": "~1.4.2"
+  },
+  "overrides": {},
+  "resolutions": {
+    "jquery": "~2.1.4",
+    "angular": "~1.4.2"
+  }
+}

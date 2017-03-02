@@ -1,0 +1,29 @@
+<div class="list-view-box">
+	<div class="heading">
+		{{ctrl.lo.listobj.heading}}
+	</div>
+	<div class="filter-container" ng-show='ctrl.hasFilter'>
+		<input type="text" class="form-control" placeholder="search for..." ng-model='searchtext'></input>
+	</div>
+	<p></p>
+	<header-bar tpl='ctrl.lo.listobj.headerbar'></header-bar>
+	<div id="listviewerbox" class="list-viewer-elements" mouse-wheel-up='ctrl.didMouseWheelUp()' mouse-wheel-down='ctrl.didMouseWheelDown()'>
+		<ul>
+			<li ng-repeat="elem in ctrl.lo.listobj.elements track by $index">
+				<lvelem
+					tpl='ctrl.lo.listobj.template'
+					obj='elem'
+					i='{{$index}}'>
+				</lvelem>
+			</li>
+		</ul>	
+	</div>
+	<div class="scroll-control" ng-show='ctrl.hasScrollers'>
+		<span class="btn btn-default scroll-button" ng-click='ctrl.back()' ng-disabled='ctrl.atStart()'>
+			<span class="glyphicon glyphicon-chevron-up"></span> 
+		</span>
+		<span class="btn btn-default scroll-button" ng-click='ctrl.forward()' ng-disabled='ctrl.atEnd()'>
+			<span class="glyphicon glyphicon-chevron-down"></span> 
+		</span>
+	</div>
+</div>

@@ -1,0 +1,13 @@
+<div class="obi-dropdown-container" ng-class="{ 'obi-show': ctrl.visible }" obi-click-elsewhere='ctrl.onDeselect()'>
+	<div class="obi-dropdown-display" ng-click="ctrl.show();" ng-class="{ 'clicked': ctrl.visible }">
+		<span ng-include='ctrl.ddobj.templateUrl'></span>
+	</div>
+	<div class="obi-dropdown-list">
+		<ul>
+			<li ng-repeat="$item in ctrl.ddobj.filters track by $index" ng-click='ctrl.setSelected($index)'>
+				<h5 ng-if="ctrl.ddobj.selectedFilterIdx === $index">{{$item}} <small><span class="glyphicon glyphicon-ok"></span></small></h5>
+				<h5 ng-if="ctrl.ddobj.selectedFilterIdx !== $index">{{$item}} &nbsp;</h5>
+			</li>			
+		</ul>
+	</div>
+</div>

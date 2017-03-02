@@ -1,0 +1,71 @@
+.profile-side-bar {
+	float: left;
+
+	ul {
+		padding-left: 0px;
+		padding-top: 4px;
+		list-style: none;
+		li {
+			background: rgba(221, 221, 221, 0.5);
+			width: 212px;
+			border: 1px solid #ddd;
+			overflow: hidden;
+			padding: 4px;
+
+			a {
+				color: #777;
+				font-size: 14px;
+				text-decoration: none;
+			}
+			:hover {
+				color: rgb(51, 51, 51);
+			}
+
+			span {				
+				float: left;
+				padding-left: 10px;
+				padding-right: 10px;				
+			}
+		}
+	}
+}
+
+.profile-main-panel {
+	margin-left: 250px;
+}
+
+.appear {
+	/* start 'enter' transition */
+    &.ng-enter {
+        transition: 1.0s;
+        opacity: 0;
+    }
+ 
+    /* end 'enter' transition */
+    &.ng-enter-active {
+        opacity: 1;
+    }	
+}
+
+// .slide-eff.ng-enter {
+// 	animation: fadeIn 1s;
+// }
+
+.slide-eff.ng-enter-active {
+
+-webkit-animation: fadeInRight 0.5s;
+animation: fadeInRight 0.5s;
+
+} 
+
+// .slide-eff {
+
+// 	/* start 'enter' transition */
+//     &.ng-enter {
+
+// 	}    		
+
+// 	&.ng-enter-active {
+//     	animation: slideInRight 0.5s;		
+// 	}
+// }

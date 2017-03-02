@@ -1,0 +1,30 @@
+.trends-element-style {
+	border-radius: 3px;
+	background-color: rgb(221, 221, 221);        
+	background-color: rgba(221, 221, 221, 0.3);
+	border: 1px solid #ddd;        
+	padding: 5px;
+	margin: 5px;	
+	overflow: hidden;
+	min-width: 500px;
+
+	span {
+		float: left;
+		min-width: 90px;
+	}
+}
+
+.active {
+	background-color: white;
+}
+
+.trends-header-bar {
+	padding-left: 1em;
+	overflow: hidden;
+	border-top: 1px solid #ddd;	
+
+	span {
+		float: left;
+		min-width: 90px;
+	}
+}
