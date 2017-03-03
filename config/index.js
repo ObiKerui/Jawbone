@@ -15,3 +15,5 @@ switch (env) {
     console.error("Unrecognized NODE_ENV: " + process.env.NODE_ENV);
     process.exit(1);
 }
+
+module.exports.ids = require('./auth').ids;

@@ -3,10 +3,14 @@
   "version": "0.0.0",
   "dependencies": {
     "async": "^2.1.4",
-    "bcryptjs": "^2.3.0",    
+    "bcrypt-nodejs": "latest",
+    "bcryptjs": "^2.3.0",
+    "connect-flash": "~0.1.1",
+    "cookie-parser": "^1.4.3",
     "ejs": "^2.3.1",
     "express": "^4.14.0",
     "express-http-proxy": "^0.10.1",
+    "express-session": "~1.0.0",
     "fs": "0.0.2",
     "http-proxy": "^1.15.2",
     "http-proxy-middleware": "~0.9.0",
@@ -15,6 +19,7 @@
     "mongoose": "^4.6.4",
     "morgan": "^1.7.0",
     "passport": "^0.2.1",
+    "passport-local": "^1.0.0",
     "passport-oauth": "^1.0.0"
   },
   "scripts": {

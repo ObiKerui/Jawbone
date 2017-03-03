@@ -11,8 +11,10 @@
         <ul class="nav navbar-nav">
             <li><a href="/">Home</a></li>
             <li><a href="/about">About</a></li>
-            <li><a href="/logout">Logout</a></li>
-            <li><a href="/disconnect">Disconnect</a></li>
+            <% if (locals.user) { %>
+                <li><a href="/logout">Logout (<%= user.email %>)</a></li>
+            <% } %>
+
         </ul>
       
     </div>

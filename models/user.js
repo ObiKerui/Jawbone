@@ -7,6 +7,7 @@ var Schema = db.Schema;
 */
 var user = new Schema({
 	jawboneId: { type: String, required: false, unique: true },
+  email: { type: String, required: false, unique: false },
 	password: { type: String, required: false, select: false },
   socialMediaUser : { type: String, required: false },  
 	roles: [{ type: String, required: true }],
@@ -73,17 +74,19 @@ var User = db.model('User', user);
 var create = function(prof, data, cb) {
 
   var newProf = { img: prof.img, first: prof.first, last: prof.last, weight: prof.weight, height: prof.height, gender: prof.gender };
-  var neObj = new User({jawboneId : prof.xid, profile : newProf, jbdata : data});
+  var neObj = new User({jawboneId : prof.xid, email: prof.email, password: prof.password, profile : newProf, jbdata : data});
 
-  //console.log('create a new user: ' + JSON.stringify(neObj));
-
-  neObj.save(function (err, result) {
-    if (err) {
-      cb(err);
-    } else {
-      cb(null, result);
-    }
+  bcrypt.hash(neObj.password, 10, function(err, hash) {
+    neObj.password = hash;
+    neObj.save(function (err, result) {
+      if (err) {
+        cb(err);
+      } else {
+          cb(null, result);
+      }
+    });
   });
+  //console.log('create a new user: ' + JSON.stringify(neObj));
 };
 
 /**
@@ -99,6 +102,20 @@ var get = function(xid, cb) {
       //console.log('send result from get function: ' + result);
       return cb(null, result);
     });
+};
+
+/**
+* get a specified user by their email
+*/
+var getByEmail = function(email, cb) {
+  var q = User.findOne({email: email}).select('+password').lean();
+  q.exec(function(err, result) {
+    if(err) {
+      return cb(err);
+    }
+    console.log('return user: ' + JSON.stringify(result));
+    return cb(null, result);
+  });
 };
 
 /**
@@ -166,11 +183,22 @@ var remove = function(id, user, cb) {
     });
 };
 
+var hashPassword = function(password, cb) {
+  return bcrypt.hashSync(password, bcrypt.genSaltSync(10));
+};
+
+var comparePassword = function(user, password) {
+  return bcrypt.compareSync(password, user.password);
+};
+
 module.exports.User = User;
 module.exports.create = create;
 //module.exports.createSMUser = createSMUser;
 module.exports.get = get;
+module.exports.getByEmail = getByEmail;
 module.exports.all = all;
 module.exports.remove = remove;
 module.exports.update = update;
+module.exports.hashPassword = hashPassword;
+module.exports.comparePassword = comparePassword;
 
