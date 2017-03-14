@@ -18,19 +18,21 @@
 
   }
 
-  function buildListViewer($q, $log, obj, trendsdata, TrendObj) {
+  function buildListViewer($q, $log, obj, trendsdata, TrendObj, batchRetriever) {
     //$log.info('trends data: ' + JSON.stringify(trendsdata));
     obj.listobj = {};
     obj.listobj.template = 'app/trends/_trends-element-tpl.html';
     obj.listobj.headerbar = 'app/trends/_trends-header.html';
     obj.listobj.heading = 'Trends';
 
+    obj.listobj.getElementsObj = batchRetriever;
+    
     obj.listobj.getElements = function() {
       var deferred = $q.defer();
       deferred.resolve(trendsdata.data || []);
       return deferred.promise;
       //return (trendsdata.data || []);
-    }
+    };
 
     obj.listobj.makeElement = function(objElement) {
       return new TrendObj(objElement)
@@ -38,12 +40,19 @@
 
   }
 
-  function TrendsComponentBuilderFtn($q, $log, TrendObj) {
-    var TrendsComponentBuilder = function(trendsdata) {
+  function TrendsComponentBuilderFtn($q, $log, TrendObj, JawboneService) {
+    var TrendsComponentBuilder = function(user) {
       var obj = this;
 
-      buildCallbacks($log, obj, trendsdata);
-      buildListViewer($q, $log, obj, trendsdata, TrendObj);
+      obj.profile = JawboneService.extractData('profile', user);
+      obj.name = obj.profile.first + ' ' + obj.profile.last;
+      obj.trends = JawboneService.extractData('trends', user);
+      obj.earliest = obj.trends.earliest || new Date();
+      obj.elems = obj.trends.data || [];
+      var bobj = JawboneService.makeBatch('trends');
+
+      buildCallbacks($log, obj, obj.elems);
+      buildListViewer($q, $log, obj, obj.elems, TrendObj, bobj);
 
     };
     return TrendsComponentBuilder;

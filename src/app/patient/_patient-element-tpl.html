@@ -1,0 +1,13 @@
+<div class="user-list-element" ng-class="{'active' : ctrl.obj.element.selected }">
+	<img ng-src='assets/users.png' height='100px' width='100px'></img>
+	<div class="user-details">
+		<div class="name">
+			{{ctrl.obj.element.first}} {{ctrl.obj.element.last}}
+		</div>
+		<div class="features">
+			<p>Weight: {{ctrl.obj.element.weight | number: 2}}</p>
+			<p>Gender: {{ctrl.obj.element.gender}}</p>
+			<p>Height: {{ctrl.obj.element.height}}</p>
+		</div> 
+	</div>
+</div>

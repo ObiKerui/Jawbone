@@ -111,12 +111,16 @@
 				return result.data;
 			})
 	  		.catch(function(errResponse) {
-	  			$log.info('error getting user: ' + errResponse);
+	  			$log.info('error getting user: ' + JSON.stringify(errResponse));
 	  		});
 	  	}
 
-	  	function makeBatch() {
-	  		return new BatchObj('/users');
+	  	function makeBatch(endpoint, id) {
+	  		var userid = id || 'me';
+	  		endpoint = '/' + endpoint + '/' + userid; 
+	  		$log.info('endpoint: ' + endpoint);
+
+	  		return new BatchObj(endpoint);
 	  	}
 
 	  	/*
@@ -152,6 +156,10 @@
 	  		else if(dataname === 'sleeps') {
 	  			return extractSleeps(data);
 	  		}
+	  		else if(dataname === 'groups') {
+	  			return extractGroups(data);
+	  		}
+	  		$log.info('jawbone service: call to extract unknown data: ' + dataname);
 	  		return {};
 	  	}
 
@@ -171,6 +179,11 @@
 	  		var activities = jbdata.activities || {};
 	  		var sleepspart = activities[2] || [];
 	  		return sleepspart.items;
+	  	}
+
+	  	function extractGroups(data) {
+	  		$log.info('groups from user: ' + JSON.stringify(data));
+	  		return data.groups;
 	  	}
 	}
 })();

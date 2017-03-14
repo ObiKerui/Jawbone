@@ -1,0 +1,18 @@
+<div ng-if='ctrl.obj.mode === "view"'>
+
+	<listviewer
+		obj='ctrl.obj.patientViewer'>
+	</listviewer>
+
+</div>
+
+<div ng-if='ctrl.obj.mode === "edit"'>
+
+	<div class="btn btn-primary" ng-click='ctrl.obj.mode = "view"'>exit</div>
+	<chart obj='ctrl.obj.sleepsChart'></chart>
+
+	<listviewer
+		obj='ctrl.obj.sleepsViewer'>
+	</listviewer>
+
+</div>

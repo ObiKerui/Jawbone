@@ -1,10 +1,19 @@
 var userCtrl = require('../controllers/users');
+var groupCtrl = require('../controllers/jbGroups');
+var JBDataCtrl = require('../controllers/jbData');
 var jbbuilder = require('../passport/jawboneProfile');
 
 module.exports = function(app, passport) {
 	
 	app.get('/users', userCtrl.getAll);
 	app.get('/users/:id', userCtrl.getOne);
+
+	app.get('/groups', groupCtrl.getAll);
+	app.get('/groups/:id', groupCtrl.getOne);
+
+	app.get('/sleeps/me', isLoggedIn, JBDataCtrl.getSleeps);
+	app.get('/trends', isLoggedIn, JBDataCtrl.getTrends);
+	app.get('/patients', isLoggedIn, JBDataCtrl.getPatients);
 
 	app.get('/login/jawbone', 
 	  passport.authorize('jawbone', {
@@ -24,11 +33,19 @@ module.exports = function(app, passport) {
 		res.render('pages/superuser', { user: req.user });
 	});
 
+	// app.get('/sleepdata',
+	//   passport.authorize('jawbone', {
+	//     failureRedirect: '/'
+	//   }), function(req, res) {
+	//     res.render('pages/userdata', { data: req.account });
+	//   }
+	// );
+
 	app.get('/sleepdata',
-	  passport.authorize('jawbone', {
+	  passport.authenticate('jawbone', {
 	    failureRedirect: '/'
 	  }), function(req, res) {
-	    res.render('pages/userdata', { data: req.account });
+	    res.render('pages/userdata', { data: req.user });
 	  }
 	);
 
@@ -69,8 +86,11 @@ module.exports = function(app, passport) {
 
 	    // if user is authenticated in the session, carry on 
 	    if (req.isAuthenticated()) {
-	    	console.log('user is authenticated');
+	    	//console.log('user is authenticated');
+	    	//console.log('user is ' + JSON.stringify(req.user));
 	        return next();
+	    } else {
+	    	//console.log('no user? ' + JSON.stringify(req.user));
 	    }
 
 	    // if they aren't redirect them to the home page

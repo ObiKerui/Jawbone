@@ -1,0 +1,23 @@
+<div class="profile-side-bar">
+	<user
+		obj='profile.userprofile'>
+	</user>
+
+<!-- 	<goals
+		obj='profile.goalsObj'>
+	</goals>
+ -->
+	<ul>
+		<li><a ui-sref='profile.groups'><span class="glyphicon glyphicon-bed"></span> Groups</a></li>
+		<li><a ui-sref='profile.patients'><span class="glyphicon glyphicon-user"></span> Patients</a></li>
+	  	<li><a ui-sref='profile.moves'><span class="glyphicon glyphicon-transfer"></span> Moves</a></li>
+	  	<li><a ui-sref='profile.trends'><span class="glyphicon glyphicon-stats"></span> Trends</a></li>
+	</ul>
+
+	<listviewer
+		obj='profile.recentUsers'>
+	</listviewer>
+
+</div>
+
+<div class="profile-main-panel slide-eff" ui-view></div>

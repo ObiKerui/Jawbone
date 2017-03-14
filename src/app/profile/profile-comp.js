@@ -25,7 +25,17 @@
     return ProfileComponentBuilder;
   }
 
-  function ProfileObjFtn($log, SleepsComponentBuilder, TrendsComponentBuilder, TrendsChartBuilderObj, SleepsChartBuilderObj, UserComp, RecentUsersObj) {
+  function ProfileObjFtn(
+    $log, 
+    SleepsComponentBuilder, 
+    TrendsComponentBuilder, 
+    TrendsChartBuilderObj, 
+    SleepsChartBuilderObj, 
+    GroupsComponentBuilder, 
+    PatientsComponentBuilder, 
+    UserComp, 
+    RecentUsersObj) {
+    
     var ProfileObj = function(jbUser, getUsers) {
       //$log.info('profile object jawbone user: ' + JSON.stringify(jbUser));
       //$log.info('users: ' + JSON.stringify(users));
@@ -33,12 +43,14 @@
 
       obj.user = jbUser || {};   
       obj.jbdata = obj.user.jbdata;   
-      obj.sleeps =  new SleepsComponentBuilder(obj.jbdata.activities[2].items);
+      obj.sleeps =  new SleepsComponentBuilder(obj.user);
       obj.sleepschart = new SleepsChartBuilderObj(obj.user);
-      obj.trends = new TrendsComponentBuilder(obj.jbdata.profile[3]);
+      obj.trends = new TrendsComponentBuilder(obj.user);
       obj.trendschart = new TrendsChartBuilderObj(obj.user);
       obj.userprofile = new UserComp(jbUser, getUsers);
       obj.recentUsers = new RecentUsersObj(jbUser, getUsers);
+      obj.groups = new GroupsComponentBuilder(jbUser);
+      obj.patients = new PatientsComponentBuilder(jbUser);
     };
     return ProfileObj;
   }

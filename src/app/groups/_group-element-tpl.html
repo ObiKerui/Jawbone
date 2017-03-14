@@ -1,0 +1,20 @@
+<!-- <div class="trends-element-style" ng-class="{'active' : ctrl.obj.element.selected }">
+
+	<span>{{ctrl.obj.element.name}}</span>
+	<span>{{ctrl.obj.element.description}}</span>
+	<span>{{ctrl.obj.element.size}}</span>
+
+</div>
+ -->
+<div class="user-list-element" ng-class="{'active' : ctrl.obj.element.selected }">
+	<img ng-src='assets/group.png' height='100px' width='100px'></img>
+	<div class="user-details">
+		<div class="name">
+			{{ctrl.obj.element.name}}
+		</div>
+		<div class="features">
+			<p>{{ctrl.obj.element.description}}</p>
+			<p>{{ctrl.obj.element.size}} members</p>
+		</div> 
+	</div>
+</div>

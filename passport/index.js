@@ -6,11 +6,13 @@ var passportJawbone = require('./jawbone');
 
 // set up the user model
 passport.serializeUser(function(user, done) {
-	done(null, user.email);
+	console.log('serialise the user');
+	done(null, user._id);
 });
 
-passport.deserializeUser(function(email, done) {
-	User.getByEmail(email, function (err, user) {
+passport.deserializeUser(function(id, done) {
+	console.log('deserialise the user');
+	User.get(id, function (err, user) {
 	  done(err, user);
 	});
 });

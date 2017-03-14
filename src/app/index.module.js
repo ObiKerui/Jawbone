@@ -1,6 +1,7 @@
 (function() {
   'use strict';
 
+  angular.module('jbtemplates', [])
   angular.module('config', [])
   angular.module('constants', [])
   angular.module('mainRoute', [
@@ -8,7 +9,6 @@
   ])
   angular.module('run', [])
   angular.module('jawboneApp', [
-    'PreloadedData',
   	'config',
   	'constants',
   	'mainRoute',
@@ -16,7 +16,21 @@
     'ngAnimate',
   	'ngSanitize',
     'ui.bootstrap',
-    'googlechart'
+    'ui.router',
+    'googlechart',
+    'jbtemplates'
+  ])
+  angular.module('jawboneUApp', [
+    'jawboneApp',
+    'PreloadedData'
+  ])
+  angular.module('jawboneSUApp', [
+    'jawboneApp',
+    'PreloadedData'
   ]);
+
+  // angular.module('jawboneSUApp', [
+    
+  // ]);
 
 })();

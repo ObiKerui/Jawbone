@@ -39,7 +39,7 @@ function buildPartials() {
 
   // template cache parameters
   var cacheParams = {
-    module: conf.projectDetails.name,
+    module: conf.projectDetails.templates,
     root: 'app'
   };
 

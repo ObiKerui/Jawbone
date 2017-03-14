@@ -4,7 +4,6 @@
   angular
     .module('jawboneApp')
     .factory('SleepsComponentBuilder', SleepsComponentBuilderFtn)
-    //.factory('SleepsObj', SleepsObjFtn)
     .factory('SleepObj', SleepObjFtn);
 
   function buildCallbacks($log, obj, sleepsdata) {
@@ -19,13 +18,14 @@
 
   }
 
-  function buildListViewer($q, $log, obj, sleepsdata, SleepObj) {
+  function buildListViewer($q, $log, obj, sleepsdata, SleepObj, batchRetriever) {
     $log.info('sleeps data: ' + JSON.stringify(sleepsdata));
     obj.listobj = {};
     obj.listobj.template = 'app/sleeps/_sleeps-element-tpl.html';
     obj.listobj.headerbar = 'app/sleeps/_sleeps-header-tpl.html';
     obj.listobj.heading = 'Sleeps';
 
+    obj.listobj.getElementsObj = batchRetriever;
     obj.listobj.getElements = function() {
       var deferred = $q.defer();
       deferred.resolve(sleepsdata || []);
@@ -38,44 +38,21 @@
 
   }
 
-  function SleepsComponentBuilderFtn($q, $log, SleepObj) {
-    var SleepsComponentBuilder = function(sleepsdata) {
+  function SleepsComponentBuilderFtn($q, $log, SleepObj, JawboneService) {
+    var SleepsComponentBuilder = function(user) {
       var obj = this;
 
-      buildCallbacks($log, obj, sleepsdata);
-      buildListViewer($q, $log, obj, sleepsdata, SleepObj);
+      obj.profile = JawboneService.extractData('profile', user);
+      obj.name = obj.profile.first + ' ' + obj.profile.last;
+      obj.elems = JawboneService.extractData('sleeps', user);
+      var bobj = JawboneService.makeBatch('sleeps');
+
+      buildCallbacks($log, obj, obj.elems);
+      buildListViewer($q, $log, obj, obj.elems, SleepObj, bobj);
 
     };
     return SleepsComponentBuilder;
   }
-
-  // function SleepsObjFtn($log, SleepObj) {
-  //   var SleepsObj = function(data) {
-  //     var o = this;
-  //     o.data = data || {};
-      
-  //     //$log.info('sleeps data: ' + JSON.stringify(o.data));
-      
-  //     o.elems = o.data.items || [];
-  //     o.template = 'app/sleeps/_sleeps-element-tpl.html',
-  //     o.heading = 'Sleeps',
-  //     o.headerbar = 'app/sleeps/_sleeps-header-tpl.html'
-  //     //o.image = 'https://jawbone.com' + o.elems[0].snapshot_image;
-
-  //     this.getElements = function() {
-  //       //$log.info('return elems: ' + JSON.stringify(o.elems));
-  //       return o.elems;
-  //     }
-
-  //     this.makeElement = function(elemData) {
-  //       return new SleepObj(elemData)
-  //     };
-      
-  //     // this.sleepgraph = 'https://jawbone.com/nudge/api/v.1.1/sleeps/' + this.elements[0].xid + '/image';
-  //     // $log.info('sleep graph: ' + this.sleepgraph);
-  //   };
-  //   return SleepsObj;
-  // }
 
   function convertToMinutes(str, $log) {
     str = str.toString();

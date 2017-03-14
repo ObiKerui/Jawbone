@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" ng-app="jawboneApp">
+<html lang="en" ng-app="jawboneSUApp">
 <head>
     <% include ../partials/head %>
 </head>
@@ -11,13 +11,20 @@
 
   <main>
 
-    <p>super user app</p>
+<!--     <p>super user app</p>
     <p><%- JSON.stringify(user) %></p>
     <p><%= user.email %></p>
-    
-<!--     <div ui-view></div> -->
+ -->    
+    <div ui-view></div>
 
   </main>
+
+  <script type="text/javascript" src="scripts/vendor.js"></script>
+  <script>
+     angular.module('PreloadedData', [])
+       .constant('JawboneData', <%- JSON.stringify(user) %>);
+  </script>
+  <script type="text/javascript" src="scripts/jawbone-app.js"></script>
 
   <footer>
     <% include ../partials/footer %>

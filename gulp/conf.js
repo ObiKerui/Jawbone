@@ -10,6 +10,7 @@ var gutil = require('gulp-util');
 
 exports.projectDetails = {
   name: 'jawboneApp',
+  templates : 'jbtemplates',
   jsFile: 'jawbone-app.js',
   scssFile: 'jawbone-app.scss'
 };

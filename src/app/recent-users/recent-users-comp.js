@@ -67,11 +67,12 @@
       obj.listobj.template = obj.listobj.template || 'app/user/_user-element-tpl.html';
       obj.listobj.chunksize = obj.listobj.chunksize || 1;
 
-      obj.listobj.getElements = function() {
-        var deferred = $q.defer();
-        deferred.resolve(obj.recentUsers);
-        return deferred.promise;
-      };
+      obj.listobj.getElementsObj = JawboneService.makeBatch('recentUsers');
+      // obj.listobj.getElements = function() {
+      //   var deferred = $q.defer();
+      //   deferred.resolve(obj.recentUsers);
+      //   return deferred.promise;
+      // };
 
       obj.listobj.makeElement = function(value) {
         //$log.info('user to-a make : ' + JSON.stringify(value));

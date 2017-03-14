@@ -11,6 +11,7 @@ var user = new Schema({
 	password: { type: String, required: false, select: false },
   socialMediaUser : { type: String, required: false },  
 	roles: [{ type: String, required: true }],
+  groups: [{ type: Schema.Types.ObjectId, ref: 'JbGroup' }], 
 	jbdata: { type: Object, required: false },
 	profile: {
 		img: { data: Buffer, contentType: String, required: false },
@@ -33,8 +34,7 @@ var user = new Schema({
 user.pre('remove', function(next) {
   // 'this' is the client being removed. Provide callbacks here if you want
   // to be notified of the calls' result.
-  // Event.remove({_owner: this._id}).exec();
-  // Group.remove({_owner: this._id}).exec();
+  Group.remove({_owner: this._id}).exec();
   next();
 });
 
@@ -92,17 +92,28 @@ var create = function(prof, data, cb) {
 /**
 * get a specified user
 */
-var get = function(xid, cb) {
+var get = function(id, cb) {
 
-    var q = User.findOne({jawboneId : xid}).lean();
+    var q = User.findOne({_id : id}).lean();
     q.exec(function(err, result) {
       if(err) {
+        console.log('err is  : ' + err);
         return cb(err);
       }
       //console.log('send result from get function: ' + result);
       return cb(null, result);
     });
 };
+
+var getByJawboneId = function(jbId, cb) {
+  var q = User.findOne({jawboneId : jbId}).lean();
+  q.exec(function(err, result) {
+    if(err) {
+      return cb(err);
+    }
+    return cb(null, result);
+  });
+}
 
 /**
 * get a specified user by their email
@@ -191,14 +202,98 @@ var comparePassword = function(user, password) {
   return bcrypt.compareSync(password, user.password);
 };
 
+var addGroup = function(user, group, cb) {
+  user.groups.push(group);
+  User.update(
+    { _id: user._id },
+    {$set:{groups: user.groups}}
+  )
+  .exec(function(err, savedUser) {
+    if(err) {
+      return cb(err);
+    }
+    return cb();
+  });  
+};
+
+function extractSleeps(params, user) {
+  var jbdata = user.jbdata || {};
+  var activities = jbdata.activities || {};
+  var sleepspart = activities[2] || [];
+
+  return {
+      total: sleepspart.items.length,
+      max: params.max,
+      offset: params.offset,
+      sortBy: params.sortBy,
+      data: sleepspart.items
+    }
+}
+
+function extractTrends(params, user) {
+  var jbdata = user.jbdata || {};
+  var prof = jbdata.profile || {};      
+  var trends = prof[3] || {};
+
+  return {
+      total: trends.length,
+      max: params.max,
+      offset: params.offset,
+      sortBy: params.sortBy,
+      data: sleepspart.items
+    }
+}
+
+var JBData = {
+
+  sleeps : function(user, params, cb) {
+
+    if(params.user) {
+      get(params.user, function(err, user) {
+        if(err) {
+          return cb(err);
+        } 
+        cb(null, extractSleeps(params, user));
+      });
+    } else {
+      cb(null, extractSleeps(params, user));
+    }
+  },
+
+  trends : function(user, params, cb) {
+    if(params.user) {
+      get(params.user, function(err, user) {
+        if(err) {
+          return cb(err);
+        } 
+        cb(null, extractTrends(params, user));
+      });
+    } else {
+      cb(null, extractTrends(params, user));
+    }
+  },
+
+  patients : function(group, params, cb) {
+    cb(null, {
+      total: group.members.length,
+      max: params.max,
+      offset: params.offset,
+      sortBy: params.sortBy,
+      data: group.members
+    });    
+  }
+};
+
 module.exports.User = User;
 module.exports.create = create;
+module.exports.JBData = JBData;
 //module.exports.createSMUser = createSMUser;
 module.exports.get = get;
+module.exports.getByJawboneId = getByJawboneId;
 module.exports.getByEmail = getByEmail;
 module.exports.all = all;
 module.exports.remove = remove;
 module.exports.update = update;
 module.exports.hashPassword = hashPassword;
 module.exports.comparePassword = comparePassword;
-
+module.exports.addGroup = addGroup;

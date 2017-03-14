@@ -39,7 +39,7 @@ var storeUpData = function(data, callback) {
   var prof = data.profile[0];
   //console.log('profile: ' + JSON.stringify(prof));
   
-  user.get(prof.xid, function(getErr, userResult) {
+  user.getByJawboneId(prof.xid, function(getErr, userResult) {
     if(getErr) {
       console.log('error getting user: ' + JSON.stringify(getErr));
       return callback(getErr, null);
