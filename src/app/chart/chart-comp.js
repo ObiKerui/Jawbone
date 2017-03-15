@@ -9,20 +9,21 @@
     .directive('chart', chartFtn);
 
   function ChartManagerFtn($log, ModalService, UserSelectorObj, ChartObj, JawboneService) {
-    var ChartManager = function(chartdata, getUsers) {
+    var ChartManager = function(chartdata) {
       var obj = this;
       obj.chart = new ChartObj(chartdata);
-      obj.getUsers = getUsers || function() {
-        return JawboneService.getUsers();
-      };
 
       obj.clickFtn = chartdata.clickFtn || function() {        
         // create modal
-        ModalService.onClick(new UserSelectorObj(obj.getUsers, function(userChoice) {
-          JawboneService.getUser(userChoice.jawboneId)
+        ModalService.onClick(new UserSelectorObj(function(userChoice) {
+          JawboneService.getUser(userChoice.data._id)
           .then(function(response) {
-            obj.chart.addCompareData(chartdata.extractFromUser(response));
-            JawboneService.setUser(userChoice);
+            return chartdata.extractFromUser(response)
+          })
+          .then(function(data) {
+            //$log.info('got data: ' + JSON.stringify(data));
+            obj.chart.addCompareData(data.data);
+            JawboneService.setUser(userChoice);            
           });
         }))
         .then(function(result) {
@@ -64,10 +65,9 @@
         return 0;
       };
 
-      // get the elements
-      data.getElements()
+      data.getElementsObj.get()
       .then(function(result) {
-        processElements(result);
+        processElements(result.data);
       });
 
       function convertToArr(graphData, yValueField) {
@@ -96,14 +96,15 @@
 
       function processElements(elems) {
 
+        //$log.info('elements: ' + JSON.stringify(elems));
+
         obj.elements = [];
         angular.forEach(elems, function(value) {
           this.push(data.makeElement(value));
         }, obj.elements);
 
-        //var startDate = new Date(2017, 1, 10);
         var startDate = new Date(2016, 11, 1);
-        var endDate = new Date(2017, 2, 10);
+        var endDate = new Date(2017, 2, 20);
 
         // preapare plot data
         obj.graphData = PlotGenerator.preparePlot(startDate, endDate, obj.elements, ['craig']);  
@@ -122,16 +123,17 @@
       };
 
       obj.addCompareData = function(dataToAdd) {
-        data.getElements(dataToAdd)
-        .then(function(response) {
+        //$log.info('add this compare data: ' + JSON.stringify(dataToAdd));
+        //data.getElements(dataToAdd)
+        //.then(function(response) {
           //$log.info('add compare data: ' + JSON.stringify(dataToAdd));
           var result = [];
-          angular.forEach(response, function(val) {
+          angular.forEach(dataToAdd, function(val) {
             this.push(data.makeElement(val));
           }, result);      
           obj.graphData = PlotGenerator.appendPlot(obj.graphData, result, ['name']);   
           obj.selectPlot(0, obj.graphData); 
-        });        
+        //});        
       };
 
     };

@@ -11,16 +11,17 @@
       var o = this;      
       o.profile = JawboneService.extractData('profile', user);
       o.name = o.profile.first + ' ' + o.profile.last;
-      o.elems = JawboneService.extractData('sleeps', user);
-      o.elements = [];
+      //o.elems = JawboneService.extractData('sleeps', user);
+      //o.elements = [];
 
       // get the elements to construct the chart
-      o.getElements = function(data) {      
-        //$log.info('sleeps chart builder call to get elements: ' + JSON.stringify(o.elems));  
-        var deferred = $q.defer();
-        deferred.resolve(data || o.elems);
-        return deferred.promise;
-      };
+      o.getElementsObj = JawboneService.makeBatch('sleeps');
+      // o.getElements = function(data) {      
+      //   //$log.info('sleeps chart builder call to get elements: ' + JSON.stringify(o.elems));  
+      //   var deferred = $q.defer();
+      //   deferred.resolve(data || o.elems);
+      //   return deferred.promise;
+      // };
 
       // make an element
       o.makeElement = function(rawElem) {
@@ -45,13 +46,22 @@
       }
 
       o.extractFromUser = function(user) {
-        // fake some data for now
-        var fakedata = o.elems.slice();
-        angular.forEach(fakedata, function(val) {
-          val.title = randomrange(50, 100);
-        }, fakedata);
 
-        return fakedata;
+        // get the sleeps for this user
+        var batch = JawboneService.makeBatch('sleeps', user._id);
+        return batch.get()
+        .then(function(response) {
+          $log.info('return the sleeps response: ' + JSON.stringify(response));
+          return response;
+        });
+
+        // fake some data for now
+        // var fakedata = o.elems.slice();
+        // angular.forEach(fakedata, function(val) {
+        //   val.title = randomrange(50, 100);
+        // }, fakedata);
+
+        // return fakedata;
         //return JawboneService.extractData('trends', user);
       };
 

@@ -69,6 +69,9 @@ var users = {
 
 	getOne: function(req, res) {
 	    var id = req.params.id;
+
+	    console.log('user ctrl get one: id: ' + id);
+
 	    User.get(id, function(err, result) {
 	      if(err) {
 	        return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});        

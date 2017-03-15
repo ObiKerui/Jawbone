@@ -6,12 +6,12 @@ var passportJawbone = require('./jawbone');
 
 // set up the user model
 passport.serializeUser(function(user, done) {
-	console.log('serialise the user');
+	//console.log('serialise the user');
 	done(null, user._id);
 });
 
 passport.deserializeUser(function(id, done) {
-	console.log('deserialise the user');
+	//console.log('deserialise the user');
 	User.get(id, function (err, user) {
 	  done(err, user);
 	});

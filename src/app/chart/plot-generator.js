@@ -108,12 +108,15 @@
                 this.push(PlotGenerator.createEmpty(value));
             }, arr); 
 
+            $log.info('dae arr: ' + JSON.stringify(dateArr));
+
             // populate for every data entry within the date range
             angular.forEach(data, function(value) {            
                 //find the index into the date array to add this 'value'
                 idx = findIndexOf(dateArr, function(elem) {
                     var jsdate = JawboneChartUtils.jawboneToJSDate(value.date);
-                    //$log.info('date is ' + elem.toDateString() + ' jsdate: ' + jsdate.toDateString());
+                    // $log.info('elem: ' + elem);
+                    // $log.info('date is ' + elem.toDateString() + ' jsdate: ' + jsdate.toDateString());
                     return (elem.toDateString() === jsdate.toDateString());  
                 }, idx);     
 

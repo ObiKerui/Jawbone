@@ -5,15 +5,15 @@ var jbbuilder = require('../passport/jawboneProfile');
 
 module.exports = function(app, passport) {
 	
-	app.get('/users', userCtrl.getAll);
-	app.get('/users/:id', userCtrl.getOne);
-
-	app.get('/groups', groupCtrl.getAll);
-	app.get('/groups/:id', groupCtrl.getOne);
-
+	app.get('/users/me', isLoggedIn, userCtrl.getAll);
+	app.get('/users/:id', isLoggedIn, userCtrl.getOne);
+	app.get('/groups/me', isLoggedIn, groupCtrl.getAll);
+	app.get('/groups/:id', isLoggedIn, groupCtrl.getOne);
 	app.get('/sleeps/me', isLoggedIn, JBDataCtrl.getSleeps);
-	app.get('/trends', isLoggedIn, JBDataCtrl.getTrends);
-	app.get('/patients', isLoggedIn, JBDataCtrl.getPatients);
+	app.get('/sleeps/:id', isLoggedIn, JBDataCtrl.getSleeps);
+	app.get('/trends/me', isLoggedIn, JBDataCtrl.getTrends);
+	app.get('/trends/:id', isLoggedIn, JBDataCtrl.getTrends);
+	app.get('/patients/me', isLoggedIn, JBDataCtrl.getPatients);
 
 	app.get('/login/jawbone', 
 	  passport.authorize('jawbone', {
@@ -33,14 +33,6 @@ module.exports = function(app, passport) {
 		res.render('pages/superuser', { user: req.user });
 	});
 
-	// app.get('/sleepdata',
-	//   passport.authorize('jawbone', {
-	//     failureRedirect: '/'
-	//   }), function(req, res) {
-	//     res.render('pages/userdata', { data: req.account });
-	//   }
-	// );
-
 	app.get('/sleepdata',
 	  passport.authenticate('jawbone', {
 	    failureRedirect: '/'
@@ -48,14 +40,6 @@ module.exports = function(app, passport) {
 	    res.render('pages/userdata', { data: req.user });
 	  }
 	);
-
-	// app.get('/disconnect', 
-	//   passport.authorize('jawbone', {
-	//     failureRedirect: '/'
-	//   }), function(req, res) {
-	//     res.render('pages/about');
-	//   }
-	// );
 
 	app.get('/logout', function(req, res) {
 	  req.logout();

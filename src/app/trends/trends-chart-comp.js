@@ -11,17 +11,18 @@
       var o = this;      
       o.profile = JawboneService.extractData('profile', user);
       o.name = o.profile.first + ' ' + o.profile.last;
-      o.trends = JawboneService.extractData('trends', user);
-      o.earliest = o.trends.earliest || new Date();
-      o.elems = o.trends.data || [];
-      o.elements = [];
+      //o.trends = JawboneService.extractData('trends', user);
+      //o.earliest = o.trends.earliest || new Date();
+      //o.elems = o.trends.data || [];
+      //o.elements = [];
 
       // get the elements to construct the chart
-      o.getElements = function(data) {        
-        var deferred = $q.defer();
-        deferred.resolve(data || o.elems);
-        return deferred.promise;
-      };
+      o.getElementsObj = JawboneService.makeBatch('trends');
+      // o.getElements = function(data) {        
+      //   var deferred = $q.defer();
+      //   deferred.resolve(data || o.elems);
+      //   return deferred.promise;
+      // };
 
       // make an element
       o.makeElement = function(rawElem) {
@@ -46,14 +47,24 @@
       }
 
       o.extractFromUser = function(user) {
+        
+        var batch = JawboneService.makeBatch('trends', user._id);
+        return batch.get()
+        .then(function(response) {
+          $log.info('return the trends response: ' + JSON.stringify(response));
+          return response;
+        });
+
         // fake some data for now
-        var fakedata = o.elems.slice();
 
-        angular.forEach(fakedata, function(val) {
-          val[1].weight = randomrange(50, 100);
-        }, fakedata);
 
-        return fakedata;
+        // var fakedata = o.elems.slice();
+
+        // angular.forEach(fakedata, function(val) {
+        //   val[1].weight = randomrange(50, 100);
+        // }, fakedata);
+
+        // return fakedata;
         //return JawboneService.extractData('trends', user);
       };
 

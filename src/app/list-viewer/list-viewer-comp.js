@@ -46,12 +46,6 @@
 
       // get an object to retrieve batches now
       o.getElementsObj = o.listobj.getElementsObj || {};
-      $log.info('dee list obj: ' + JSON.stringify(o.listobj));
-      $log.info('get elem obj hereris: ' + JSON.stringify(o.getElementsObj));
-
-      //var elems = o.getElements();
-
-      //$log.info('the list heading is : ' + o.heading);
 
       o.makeElement = o.listobj.makeElement || function(value) {
         $log.info('supply a make element function');
@@ -112,8 +106,8 @@
       function populate(list, batchObj) {
         // o.getElements()
 
-        $log.info('list comprises: ' + JSON.stringify(list));
-        $log.info('call batch obj get: ' + JSON.stringify(batchObj));
+        //$log.info('list comprises: ' + JSON.stringify(list));
+        //$log.info('call batch obj get: ' + JSON.stringify(batchObj));
         batchObj.get()
         .then(function(batch) {
           angular.forEach(batch.data, function(value) { 
@@ -137,7 +131,7 @@
         populate(o.elements, o.getElementsObj);
       };
 
-      $log.info('calling populate on creation...');
+      //$log.info('calling populate on creation...');
       populate(o.elements, o.getElementsObj);
 
       //$log.info('got elems: ' + JSON.stringify(o.elems));

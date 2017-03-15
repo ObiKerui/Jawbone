@@ -30,7 +30,7 @@
 
     obj.patientViewer.onSelect = function(ss) {
       $log.info('on select event fired for patients element: ' + JSON.stringify(ss));
-      var bsleeps = JawboneService.makeBatch('sleeps');
+      var bsleeps = JawboneService.makeBatch('sleeps', ss.data.user._id);
       buildPatientSleeps($log, obj.sleepsViewer, SleepObj, bsleeps);
       buildPatientGraph($log, obj, user, SleepsChartBuilderObj);
       obj.mode = 'edit';

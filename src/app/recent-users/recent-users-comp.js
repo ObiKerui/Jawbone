@@ -5,48 +5,6 @@
     .module('jawboneApp')
     .factory('RecentUsersObj', RecentUsersObjFtn);
 
-  // function buildCallbacks($log, obj) {
-
-  //   obj.onSelect = function(sel) {
-  //   };
-
-  //   obj.onConfirm = function() {
-  //     $log.info('recent confirm it');
-  //   };
-
-  // }
-
-  // function buildListViewer($q, $log, UserObj) {
-  //   //$log.info('recent users data: ' + JSON.stringify(sleepsdata));
-  //   obj.listobj = {};
-  //   //obj.listobj.template = 'app/sleeps/_sleeps-element-tpl.html';
-  //   //obj.listobj.headerbar = 'app/sleeps/_sleeps-header-tpl.html';
-  //   obj.listobj.heading = 'Recent Users';
-
-  //   obj.listobj.getElements = function() {
-  //     var deferred = $q.defer();
-  //     deferred.resolve(sleepsdata || []);
-  //     return deferred.promise;
-  //   }
-
-  //   obj.listobj.makeElement = function(objElement) {
-  //     return new SleepObj(objElement)
-  //   };    
-
-  // }
-
-  // function SleepsComponentBuilderFtn($q, $log, UserObj) {
-  //   var RecentUsersBuilder = function() {
-  //     var obj = this;
-
-  //     buildCallbacks($log, obj);
-  //     buildListViewer($q, $log, UserObj);
-
-  //   };
-  //   return RecentUsersBuilder;
-  // }
-
-
   function RecentUsersObjFtn($q, $log, JawboneService, UserObj) {
     var RecentUsersObj = function(jbdata, getUsers) {
 
@@ -55,9 +13,9 @@
       obj.recentUsers = [];
 
       function newUser(newUser) {
-        $log.info('recent-user obj new user selected: ' + JSON.stringify(newUser.data));
+        //$log.info('recent-user obj new user selected: ' + JSON.stringify(newUser.data));
         obj.recentUsers.push(newUser.data);
-        obj.listobj.onPopulate();
+        //obj.listobj.onPopulate(); // why is this not working atm?
       }
 
       JawboneService.setUserCallback(newUser);

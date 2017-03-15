@@ -24,42 +24,44 @@
     };
   }
 
-  function buildListViewer($log, obj, getUsers, UserObj) {
+  function buildListViewer($log, obj, UserObj, batchRetriever) {
     //$log.info('profile data: ' + JSON.stringify());
     obj.listobj = {};
     obj.listobj.template = 'app/user/_user-element-tpl.html';
     obj.listobj.heading = 'Users';
+    obj.listobj.getElementsObj = batchRetriever;
 
-    obj.listobj.getElements = function() {
-      return getUsers().then(function(result) {
-        $log.info('return dat result: ' + JSON.stringify(result));
-        return result;
-      }, function(err) {
-        return [];
-      });
-    }
+    // obj.listobj.getElements = function() {
+    //   return getUsers().then(function(result) {
+    //     $log.info('return dat result: ' + JSON.stringify(result));
+    //     return result;
+    //   }, function(err) {
+    //     return [];
+    //   });
+    // }
 
     obj.listobj.makeElement = function(objElement) {
       return new UserObj(objElement)
     };    
   }
 
-  function UsersComponentBuilderFtn($log, UserObj) {
-    var UsersComponentBuilder = function(getUsers, callbacks) {
+  function UsersComponentBuilderFtn($log, UserObj, JawboneService) {
+    var UsersComponentBuilder = function(callbacks) {
 
       //$log.info('incoming data: ' + JSON.stringify(usersdata));
       var obj = this;
+      var bobj = JawboneService.makeBatch('users');
 
       // build the callbacks
       buildCallbacks($log, obj, callbacks);
-      buildListViewer($log, obj, getUsers, UserObj);
+      buildListViewer($log, obj, UserObj, bobj);
 
     };
     return UsersComponentBuilder;
   }
 
   function UserSelectorObjFtn($log, UsersComponentBuilder) {
-    var UserSelectorObj = function(getUsers, onConfirm) {
+    var UserSelectorObj = function(onConfirm) {
       var obj = this;
       obj.tpl = 'app/user/_user-select-modal-tpl.html';
       obj.selection = null;
@@ -80,13 +82,13 @@
         onConfirm : obj.onConfirm
       };
 
-      obj.userlist = new UsersComponentBuilder(getUsers, obj.callbacks);
+      obj.userlist = new UsersComponentBuilder(obj.callbacks);
     };
     return UserSelectorObj;
   }
 
   function UserCompFtn($log, UserObj, ModalService, UserSelectorObj, JawboneService) {
-    var UserComp = function(userdata, getUsers) {
+    var UserComp = function(userdata) {
 
       //$log.info('data to user control: ' + JSON.stringify(userdata.profile));
 
@@ -96,7 +98,8 @@
       
       obj.clickFtn = userdata.clickFtn || function() {        
         // create modal
-        ModalService.onClick(new UserSelectorObj(getUsers, function(obj) {
+        ModalService.onClick(new UserSelectorObj(function(obj) {
+          $log.info('this called to confirm selection: ' + JSON.stringify(obj));
           JawboneService.setUser(obj);
         }))
         .then(function(result) {

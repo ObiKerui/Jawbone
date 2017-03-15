@@ -15,7 +15,7 @@
     function init() {
       JawboneService.getMainUser()
       .then(function(mainUserSumm) {
-        return JawboneService.getUser(mainUserSumm.jawboneId);
+        return JawboneService.getUser(mainUserSumm._id);
       })
       .then(function(mainUserFull) {
         return ProfileComponentBuilder.build(mainUserFull, JawboneService.getUsers);

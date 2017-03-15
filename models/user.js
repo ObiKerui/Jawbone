@@ -240,7 +240,7 @@ function extractTrends(params, user) {
       max: params.max,
       offset: params.offset,
       sortBy: params.sortBy,
-      data: sleepspart.items
+      data: trends.data
     }
 }
 

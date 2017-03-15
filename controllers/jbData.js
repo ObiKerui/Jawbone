@@ -14,6 +14,7 @@ var JBData = {
 	      	sortBy : req.query.sortBy
 	    };
 
+	    console.log('id : ' + req.params.id);
 	    // console.log('sleeps max : ' + params.max + ' offset: ' + params.offset + ' sortBy: ' + params.sortBy);
 
 	    JBDataModel.sleeps(req.user, params, function(err, sleeps) {

@@ -60,42 +60,44 @@
     };
   }
 
-  function buildListViewer($log, obj, getUsers, UserObj) {
+  function buildListViewer($log, obj, UserObj, batchRetriever) {
     //$log.info('profile data: ' + JSON.stringify());
     obj.listobj = {};
     obj.listobj.template = 'app/user/_user-element-tpl.html';
     obj.listobj.heading = 'Users';
+    obj.listobj.getElementsObj = batchRetriever;
 
-    obj.listobj.getElements = function() {
-      return getUsers().then(function(result) {
-        $log.info('return dat result: ' + JSON.stringify(result));
-        return result;
-      }, function(err) {
-        return [];
-      });
-    }
+    // obj.listobj.getElements = function() {
+    //   return getUsers().then(function(result) {
+    //     $log.info('return dat result: ' + JSON.stringify(result));
+    //     return result;
+    //   }, function(err) {
+    //     return [];
+    //   });
+    // }
 
     obj.listobj.makeElement = function(objElement) {
       return new UserObj(objElement)
     };    
   }
 
-  function UsersComponentBuilderFtn($log, UserObj) {
-    var UsersComponentBuilder = function(getUsers, callbacks) {
+  function UsersComponentBuilderFtn($log, UserObj, JawboneService) {
+    var UsersComponentBuilder = function(callbacks) {
 
       //$log.info('incoming data: ' + JSON.stringify(usersdata));
       var obj = this;
+      var bobj = JawboneService.makeBatch('users');
 
       // build the callbacks
       buildCallbacks($log, obj, callbacks);
-      buildListViewer($log, obj, getUsers, UserObj);
+      buildListViewer($log, obj, UserObj, bobj);
 
     };
     return UsersComponentBuilder;
   }
 
   function UserSelectorObjFtn($log, UsersComponentBuilder) {
-    var UserSelectorObj = function(getUsers, onConfirm) {
+    var UserSelectorObj = function(onConfirm) {
       var obj = this;
       obj.tpl = 'app/user/_user-select-modal-tpl.html';
       obj.selection = null;
@@ -116,13 +118,13 @@
         onConfirm : obj.onConfirm
       };
 
-      obj.userlist = new UsersComponentBuilder(getUsers, obj.callbacks);
+      obj.userlist = new UsersComponentBuilder(obj.callbacks);
     };
     return UserSelectorObj;
   }
 
   function UserCompFtn($log, UserObj, ModalService, UserSelectorObj, JawboneService) {
-    var UserComp = function(userdata, getUsers) {
+    var UserComp = function(userdata) {
 
       //$log.info('data to user control: ' + JSON.stringify(userdata.profile));
 
@@ -132,7 +134,8 @@
       
       obj.clickFtn = userdata.clickFtn || function() {        
         // create modal
-        ModalService.onClick(new UserSelectorObj(getUsers, function(obj) {
+        ModalService.onClick(new UserSelectorObj(function(obj) {
+          $log.info('this called to confirm selection: ' + JSON.stringify(obj));
           JawboneService.setUser(obj);
         }))
         .then(function(result) {
@@ -300,17 +303,18 @@
       var o = this;      
       o.profile = JawboneService.extractData('profile', user);
       o.name = o.profile.first + ' ' + o.profile.last;
-      o.trends = JawboneService.extractData('trends', user);
-      o.earliest = o.trends.earliest || new Date();
-      o.elems = o.trends.data || [];
-      o.elements = [];
+      //o.trends = JawboneService.extractData('trends', user);
+      //o.earliest = o.trends.earliest || new Date();
+      //o.elems = o.trends.data || [];
+      //o.elements = [];
 
       // get the elements to construct the chart
-      o.getElements = function(data) {        
-        var deferred = $q.defer();
-        deferred.resolve(data || o.elems);
-        return deferred.promise;
-      };
+      o.getElementsObj = JawboneService.makeBatch('trends');
+      // o.getElements = function(data) {        
+      //   var deferred = $q.defer();
+      //   deferred.resolve(data || o.elems);
+      //   return deferred.promise;
+      // };
 
       // make an element
       o.makeElement = function(rawElem) {
@@ -335,14 +339,24 @@
       }
 
       o.extractFromUser = function(user) {
+        
+        var batch = JawboneService.makeBatch('trends', user._id);
+        return batch.get()
+        .then(function(response) {
+          $log.info('return the trends response: ' + JSON.stringify(response));
+          return response;
+        });
+
         // fake some data for now
-        var fakedata = o.elems.slice();
 
-        angular.forEach(fakedata, function(val) {
-          val[1].weight = randomrange(50, 100);
-        }, fakedata);
 
-        return fakedata;
+        // var fakedata = o.elems.slice();
+
+        // angular.forEach(fakedata, function(val) {
+        //   val[1].weight = randomrange(50, 100);
+        // }, fakedata);
+
+        // return fakedata;
         //return JawboneService.extractData('trends', user);
       };
 
@@ -373,7 +387,7 @@
     function init() {
       JawboneService.getMainUser()
       .then(function(mainUserSumm) {
-        return JawboneService.getUser(mainUserSumm.jawboneId);
+        return JawboneService.getUser(mainUserSumm._id);
       })
       .then(function(mainUserFull) {
         return ProfileComponentBuilder.build(mainUserFull, JawboneService.getUsers);
@@ -680,16 +694,17 @@
       var o = this;      
       o.profile = JawboneService.extractData('profile', user);
       o.name = o.profile.first + ' ' + o.profile.last;
-      o.elems = JawboneService.extractData('sleeps', user);
-      o.elements = [];
+      //o.elems = JawboneService.extractData('sleeps', user);
+      //o.elements = [];
 
       // get the elements to construct the chart
-      o.getElements = function(data) {      
-        //$log.info('sleeps chart builder call to get elements: ' + JSON.stringify(o.elems));  
-        var deferred = $q.defer();
-        deferred.resolve(data || o.elems);
-        return deferred.promise;
-      };
+      o.getElementsObj = JawboneService.makeBatch('sleeps');
+      // o.getElements = function(data) {      
+      //   //$log.info('sleeps chart builder call to get elements: ' + JSON.stringify(o.elems));  
+      //   var deferred = $q.defer();
+      //   deferred.resolve(data || o.elems);
+      //   return deferred.promise;
+      // };
 
       // make an element
       o.makeElement = function(rawElem) {
@@ -714,13 +729,22 @@
       }
 
       o.extractFromUser = function(user) {
-        // fake some data for now
-        var fakedata = o.elems.slice();
-        angular.forEach(fakedata, function(val) {
-          val.title = randomrange(50, 100);
-        }, fakedata);
 
-        return fakedata;
+        // get the sleeps for this user
+        var batch = JawboneService.makeBatch('sleeps', user._id);
+        return batch.get()
+        .then(function(response) {
+          $log.info('return the sleeps response: ' + JSON.stringify(response));
+          return response;
+        });
+
+        // fake some data for now
+        // var fakedata = o.elems.slice();
+        // angular.forEach(fakedata, function(val) {
+        //   val.title = randomrange(50, 100);
+        // }, fakedata);
+
+        // return fakedata;
         //return JawboneService.extractData('trends', user);
       };
 
@@ -787,48 +811,6 @@
     .module('jawboneApp')
     .factory('RecentUsersObj', RecentUsersObjFtn);
 
-  // function buildCallbacks($log, obj) {
-
-  //   obj.onSelect = function(sel) {
-  //   };
-
-  //   obj.onConfirm = function() {
-  //     $log.info('recent confirm it');
-  //   };
-
-  // }
-
-  // function buildListViewer($q, $log, UserObj) {
-  //   //$log.info('recent users data: ' + JSON.stringify(sleepsdata));
-  //   obj.listobj = {};
-  //   //obj.listobj.template = 'app/sleeps/_sleeps-element-tpl.html';
-  //   //obj.listobj.headerbar = 'app/sleeps/_sleeps-header-tpl.html';
-  //   obj.listobj.heading = 'Recent Users';
-
-  //   obj.listobj.getElements = function() {
-  //     var deferred = $q.defer();
-  //     deferred.resolve(sleepsdata || []);
-  //     return deferred.promise;
-  //   }
-
-  //   obj.listobj.makeElement = function(objElement) {
-  //     return new SleepObj(objElement)
-  //   };    
-
-  // }
-
-  // function SleepsComponentBuilderFtn($q, $log, UserObj) {
-  //   var RecentUsersBuilder = function() {
-  //     var obj = this;
-
-  //     buildCallbacks($log, obj);
-  //     buildListViewer($q, $log, UserObj);
-
-  //   };
-  //   return RecentUsersBuilder;
-  // }
-
-
   function RecentUsersObjFtn($q, $log, JawboneService, UserObj) {
     var RecentUsersObj = function(jbdata, getUsers) {
 
@@ -837,9 +819,9 @@
       obj.recentUsers = [];
 
       function newUser(newUser) {
-        $log.info('recent-user obj new user selected: ' + JSON.stringify(newUser.data));
+        //$log.info('recent-user obj new user selected: ' + JSON.stringify(newUser.data));
         obj.recentUsers.push(newUser.data);
-        obj.listobj.onPopulate();
+        //obj.listobj.onPopulate(); // why is this not working atm?
       }
 
       JawboneService.setUserCallback(newUser);
@@ -1104,7 +1086,7 @@
 
     obj.patientViewer.onSelect = function(ss) {
       $log.info('on select event fired for patients element: ' + JSON.stringify(ss));
-      var bsleeps = JawboneService.makeBatch('sleeps');
+      var bsleeps = JawboneService.makeBatch('sleeps', ss.data.user._id);
       buildPatientSleeps($log, obj.sleepsViewer, SleepObj, bsleeps);
       buildPatientGraph($log, obj, user, SleepsChartBuilderObj);
       obj.mode = 'edit';
@@ -1592,12 +1574,6 @@
 
       // get an object to retrieve batches now
       o.getElementsObj = o.listobj.getElementsObj || {};
-      $log.info('dee list obj: ' + JSON.stringify(o.listobj));
-      $log.info('get elem obj hereris: ' + JSON.stringify(o.getElementsObj));
-
-      //var elems = o.getElements();
-
-      //$log.info('the list heading is : ' + o.heading);
 
       o.makeElement = o.listobj.makeElement || function(value) {
         $log.info('supply a make element function');
@@ -1658,8 +1634,8 @@
       function populate(list, batchObj) {
         // o.getElements()
 
-        $log.info('list comprises: ' + JSON.stringify(list));
-        $log.info('call batch obj get: ' + JSON.stringify(batchObj));
+        //$log.info('list comprises: ' + JSON.stringify(list));
+        //$log.info('call batch obj get: ' + JSON.stringify(batchObj));
         batchObj.get()
         .then(function(batch) {
           angular.forEach(batch.data, function(value) { 
@@ -1683,7 +1659,7 @@
         populate(o.elements, o.getElementsObj);
       };
 
-      $log.info('calling populate on creation...');
+      //$log.info('calling populate on creation...');
       populate(o.elements, o.getElementsObj);
 
       //$log.info('got elems: ' + JSON.stringify(o.elems));
@@ -2593,12 +2569,15 @@
                 this.push(PlotGenerator.createEmpty(value));
             }, arr); 
 
+            $log.info('dae arr: ' + JSON.stringify(dateArr));
+
             // populate for every data entry within the date range
             angular.forEach(data, function(value) {            
                 //find the index into the date array to add this 'value'
                 idx = findIndexOf(dateArr, function(elem) {
                     var jsdate = JawboneChartUtils.jawboneToJSDate(value.date);
-                    //$log.info('date is ' + elem.toDateString() + ' jsdate: ' + jsdate.toDateString());
+                    // $log.info('elem: ' + elem);
+                    // $log.info('date is ' + elem.toDateString() + ' jsdate: ' + jsdate.toDateString());
                     return (elem.toDateString() === jsdate.toDateString());  
                 }, idx);     
 
@@ -2644,20 +2623,21 @@
     .directive('chart', chartFtn);
 
   function ChartManagerFtn($log, ModalService, UserSelectorObj, ChartObj, JawboneService) {
-    var ChartManager = function(chartdata, getUsers) {
+    var ChartManager = function(chartdata) {
       var obj = this;
       obj.chart = new ChartObj(chartdata);
-      obj.getUsers = getUsers || function() {
-        return JawboneService.getUsers();
-      };
 
       obj.clickFtn = chartdata.clickFtn || function() {        
         // create modal
-        ModalService.onClick(new UserSelectorObj(obj.getUsers, function(userChoice) {
-          JawboneService.getUser(userChoice.jawboneId)
+        ModalService.onClick(new UserSelectorObj(function(userChoice) {
+          JawboneService.getUser(userChoice.data._id)
           .then(function(response) {
-            obj.chart.addCompareData(chartdata.extractFromUser(response));
-            JawboneService.setUser(userChoice);
+            return chartdata.extractFromUser(response)
+          })
+          .then(function(data) {
+            //$log.info('got data: ' + JSON.stringify(data));
+            obj.chart.addCompareData(data.data);
+            JawboneService.setUser(userChoice);            
           });
         }))
         .then(function(result) {
@@ -2699,10 +2679,9 @@
         return 0;
       };
 
-      // get the elements
-      data.getElements()
+      data.getElementsObj.get()
       .then(function(result) {
-        processElements(result);
+        processElements(result.data);
       });
 
       function convertToArr(graphData, yValueField) {
@@ -2731,14 +2710,15 @@
 
       function processElements(elems) {
 
+        //$log.info('elements: ' + JSON.stringify(elems));
+
         obj.elements = [];
         angular.forEach(elems, function(value) {
           this.push(data.makeElement(value));
         }, obj.elements);
 
-        //var startDate = new Date(2017, 1, 10);
         var startDate = new Date(2016, 11, 1);
-        var endDate = new Date(2017, 2, 10);
+        var endDate = new Date(2017, 2, 20);
 
         // preapare plot data
         obj.graphData = PlotGenerator.preparePlot(startDate, endDate, obj.elements, ['craig']);  
@@ -2757,16 +2737,17 @@
       };
 
       obj.addCompareData = function(dataToAdd) {
-        data.getElements(dataToAdd)
-        .then(function(response) {
+        //$log.info('add this compare data: ' + JSON.stringify(dataToAdd));
+        //data.getElements(dataToAdd)
+        //.then(function(response) {
           //$log.info('add compare data: ' + JSON.stringify(dataToAdd));
           var result = [];
-          angular.forEach(response, function(val) {
+          angular.forEach(dataToAdd, function(val) {
             this.push(data.makeElement(val));
           }, result);      
           obj.graphData = PlotGenerator.appendPlot(obj.graphData, result, ['name']);   
           obj.selectPlot(0, obj.graphData); 
-        });        
+        //});        
       };
 
     };
@@ -2827,7 +2808,7 @@ $templateCache.put("app/patient/_patient-mgr-tpl.html","<div ng-if=\'ctrl.obj.mo
 $templateCache.put("app/profile/_sleeps-element-tpl.html","<div class=\"trends-element-style\">date : {{ctrl.obj.date | jbDate}} title : {{ctrl.obj.title}} sounds : {{ctrl.obj.sounds}} awakenings : {{ctrl.obj.awakenings}} light : {{ctrl.obj.light}}</div>");
 $templateCache.put("app/profile/friends.html","friends");
 $templateCache.put("app/profile/moves.html","");
-$templateCache.put("app/profile/profile-main.html","<div class=\"profile-side-bar\"><user obj=\"profile.userprofile\"></user><ul><li><a ui-sref=\"profile.sleeps\"><span class=\"glyphicon glyphicon-bed\"></span> Sleeps</a></li><li><a ui-sref=\"profile.friends\"><span class=\"glyphicon glyphicon-user\"></span> Friends</a></li><li><a ui-sref=\"profile.moves\"><span class=\"glyphicon glyphicon-transfer\"></span> Moves</a></li><li><a ui-sref=\"profile.trends\"><span class=\"glyphicon glyphicon-stats\"></span> Trends</a></li></ul><listviewer obj=\"profile.recentUsers\"></listviewer></div><div class=\"profile-main-panel slide-eff\" ui-view=\"\"></div>");
+$templateCache.put("app/profile/profile-main.html","<div class=\"profile-side-bar\"><user obj=\"profile.userprofile\"></user><ul><li><a ui-sref=\"profile.sleeps\"><span class=\"glyphicon glyphicon-bed\"></span> Sleeps</a></li><li><a ui-sref=\"profile.friends\"><span class=\"glyphicon glyphicon-user\"></span> Friends</a></li><li><a ui-sref=\"profile.moves\"><span class=\"glyphicon glyphicon-transfer\"></span> Moves</a></li><li><a ui-sref=\"profile.trends\"><span class=\"glyphicon glyphicon-stats\"></span> Trends</a></li></ul></div><div class=\"profile-main-panel slide-eff\" ui-view=\"\"></div>");
 $templateCache.put("app/profile/sleeps.html","<chart obj=\"profile.sleepschart\"></chart><listviewer obj=\"profile.sleeps\"></listviewer>");
 $templateCache.put("app/profile/trends.html","<chart obj=\"profile.trendschart\"></chart><listviewer obj=\"profile.trends\"></listviewer>");
 $templateCache.put("app/profile/user.html","");
