@@ -16,4 +16,4 @@ switch (env) {
     process.exit(1);
 }
 
-module.exports.ids = require('./auth').ids;
+//module.exports.ids = require('./auth').ids;

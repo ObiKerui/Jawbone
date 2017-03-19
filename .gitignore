@@ -52,6 +52,7 @@ bower_components/
 .idea/
 .tmp/
 dist/
+ssl/
 
 # server certificates
 cert.pem

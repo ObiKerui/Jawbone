@@ -15,8 +15,8 @@ var cookieParser = require('cookie-parser');
 var flash = require('connect-flash');
 
 var sslOptions = {
-  key: fs.readFileSync('./server.key'),
-  cert: fs.readFileSync('./server.crt')
+  key: fs.readFileSync('./ssl/server.key'),
+  cert: fs.readFileSync('./ssl/server.crt')
 };
 
 app.use(logger('dev'));
