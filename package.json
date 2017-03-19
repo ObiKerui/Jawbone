@@ -75,7 +75,7 @@
     "wrench": "~1.5.8"
   },
   "engines": {
-    "node": ">=0.10.0",
+    "node": "6.x",
     "npm": "3.3.12"
   },
   "description": "web browser client application",

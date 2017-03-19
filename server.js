@@ -14,11 +14,6 @@ var session = require('express-session');
 var cookieParser = require('cookie-parser');
 var flash = require('connect-flash');
 
-var sslOptions = {
-  key: fs.readFileSync('./ssl/server.key'),
-  cert: fs.readFileSync('./ssl/server.crt')
-};
-
 app.use(logger('dev'));
 
 var proxy = proxyMiddleware('/api', {
@@ -74,7 +69,31 @@ require('./routes')(app, passport);
 // initialise the database
 require('./init_db');
 
-var secureServer = https.createServer(sslOptions, app).listen(config.PORT, function() {
-  console.log('Up server listening on port: ' + config.PORT);
-  console.log('environment: ' + app.get('env'));
-});
+function createSecureServer(app) {
+  var sslOptions = {
+    key: fs.readFileSync('./ssl/server.key'),
+    cert: fs.readFileSync('./ssl/server.crt')
+  };
+
+  return https.createServer(sslOptions, app).listen(config.PORT, function() {
+    console.log('Up server listening on port: ' + config.PORT);
+    console.log('environment: ' + app.get('env'));
+  });  
+}
+
+function createServer(app) {
+  return app.listen(config.PORT, function() {
+   console.log('Express server listening on port ' + config.PORT);
+   console.log('environment: ' + app.get('env'));
+  });  
+}
+
+var env = process.env.NODE_ENV;
+env = env.trim();
+
+// on local machine development environment we create a secure server
+if(env === 'development') {
+  createSecureServer(app);
+} else { // on heroku should be secure anyway
+  createServer(app);
+}
