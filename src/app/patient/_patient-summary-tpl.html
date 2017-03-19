@@ -1,0 +1,18 @@
+<div class="patient-header">
+	<div class="patient-info">
+		<img ng-src="{{ctrl.pso.user.profile.image | defaultPatient }}" height='100px' width='100px'></img>
+		<div class="user-details">
+			<div class="name">
+				{{ctrl.pso.user.profile.first}} {{ctrl.pso.user.profile.last}}
+			</div>
+			<div class="features">
+				<p>Weight: {{ctrl.pso.user.profile.weight | number: 2}}</p>
+				<p>Gender: {{ctrl.pso.user.profile.gender}}</p>
+				<p>Height: {{ctrl.pso.user.profile.height}}</p>
+			</div> 
+		</div>
+	</div>
+	<hr/>
+	<div style="clear: both;"></div>
+	<div ng-include='ctrl.pso.actionBar'></div>
+</div>

@@ -25,7 +25,7 @@
         // vm.sleepschart = profile.sleepschart;
         // vm.trends = profile.trends;
         // vm.trendschart = profile.trendschart;
-        // vm.userprofile = profile.userprofile;
+        vm.userprofile = profile.userprofile;
         // vm.recentUsers = profile.recentUsers;
         vm.groups = profile.groups;
         vm.patients = profile.patients;

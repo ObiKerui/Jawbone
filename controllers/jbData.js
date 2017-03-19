@@ -1,5 +1,6 @@
 var JBDataModel = require('../models/user').JBData;
 var Groups = require('../models/jbGroup');
+var ErrorHandler = require('./error-handler');
 
 // var ErrorHandler = require('./error-handler');
 
@@ -14,7 +15,7 @@ var JBData = {
 	      	sortBy : req.query.sortBy
 	    };
 
-	    console.log('id : ' + req.params.id);
+	    console.log('request for sleeps id : ' + req.params.id);
 	    // console.log('sleeps max : ' + params.max + ' offset: ' + params.offset + ' sortBy: ' + params.sortBy);
 
 	    JBDataModel.sleeps(req.user, params, function(err, sleeps) {
@@ -60,6 +61,7 @@ var JBData = {
 	    var id = req.user.groups[0] || null;
     	Groups.get(id, function(err, group) {
 	    	if(err) {
+	    		console.log('error getting group: ' + err);
 	        	return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});
 	    	}
 

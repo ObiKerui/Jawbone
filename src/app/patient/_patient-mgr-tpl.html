@@ -1,4 +1,4 @@
-<div ng-if='ctrl.obj.mode === "view"'>
+ <div class="patient-area" ng-if='ctrl.obj.mode === "view"'>
 
 	<listviewer
 		obj='ctrl.obj.patientViewer'>
@@ -6,9 +6,22 @@
 
 </div>
 
-<div ng-if='ctrl.obj.mode === "edit"'>
+<div class="patient-area" ng-if='ctrl.obj.mode === "edit"'>
 
-	<div class="btn btn-primary" ng-click='ctrl.obj.mode = "view"'>exit</div>
+<!-- 	<div class="patient-header">
+		<div ng-include="'app/user/_user-element-tpl.html'"></div>
+		<hr/>
+		<div style="clear: both;"></div>
+		<div class="btn btn-default" ng-click='ctrl.obj.mode = "view"' style="float : left;">back to patients view</div>
+		<div class="btn btn-default" style="float: right;">download to csv file</div>
+		<div style="clear: both;"></div>
+	</div>
+ -->
+
+ 	<patient-summary
+ 		obj='ctrl.obj.patientSummary'>
+ 	</patient-summary>
+ 	
 	<chart obj='ctrl.obj.sleepsChart'></chart>
 
 	<listviewer

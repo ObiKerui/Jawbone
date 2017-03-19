@@ -126,7 +126,7 @@
   function UserCompFtn($log, UserObj, ModalService, UserSelectorObj, JawboneService) {
     var UserComp = function(userdata) {
 
-      //$log.info('data to user control: ' + JSON.stringify(userdata.profile));
+      $log.info('data to user control: ' + JSON.stringify(userdata));
 
       var obj = this;
       obj.profiledata = userdata || {};
@@ -150,9 +150,9 @@
     return UserComp;
   }
 
-  function UserObjFtn($log) {
+  function UserObjFtn($log, JawboneService) {
     var UserObj = function(objElement) {
-      //$log.info('obj supplied to UserObj: ' + JSON.stringify(objElement));
+      $log.info('obj supplied to UserObj: ' + JSON.stringify(objElement));
       //$log.info('profile userobject user: ' + JSON.stringify(objElement.profile));
       var o = this;
       o.data = objElement || {};
@@ -163,6 +163,7 @@
       o.weight = o.obj.weight || 'blank weight';
       o.gender = o.obj.gender || 'no gender';
       o.height = o.obj.height || 'no height';
+      o.image = JawboneService.extractData('userImage', objElement);
 
       o.selected = false;
 
@@ -316,6 +317,18 @@
       //   return deferred.promise;
       // };
 
+      o.makePlotParams = function(profile) {
+        profile = profile || o.profile;
+        return {
+          range : [new Date(2016, 11, 1), new Date(2017, 2, 20)],
+          plotName : profile.first          
+        }
+      };
+
+      o.preprocessElements = function(arr) {
+        return arr;
+      };
+
       // make an element
       o.makeElement = function(rawElem) {
         return new TrendObj(rawElem);
@@ -397,7 +410,7 @@
         // vm.sleepschart = profile.sleepschart;
         // vm.trends = profile.trends;
         // vm.trendschart = profile.trendschart;
-        // vm.userprofile = profile.userprofile;
+        vm.userprofile = profile.userprofile;
         // vm.recentUsers = profile.recentUsers;
         vm.groups = profile.groups;
         vm.patients = profile.patients;
@@ -434,93 +447,6 @@
     $log.info('profile controller a ran');
   }	
 })();
-// (function() {
-//   'use strict';
-
-//   angular
-//     .module('jawboneApp')
-//     .factory('PatientsComponentBuilder', PatientsComponentBuilderFtn)
-//     .factory('PatientObj', PatientObjFtn);
-
-//   function buildCallbacks($log, obj, groupsdata) {
-
-//     obj.onSelect = function(ss) {
-//       $log.info('on select event fired for patients element: ' + JSON.stringify(ss));
-//     };
-
-//     obj.onConfirm = function() {
-//     };
-//   }
-
-//   function buildListViewer($q, $log, obj, data, PatientObj, batchRetriever) {
-//     obj.listobj = {};
-//     obj.listobj.template = 'app/patient/_patient-element-tpl.html';
-//     obj.listobj.heading = 'Patients';
-
-//     obj.listobj.getElementsObj = batchRetriever;
-//     obj.listobj.getElements = function() {
-//       var deferred = $q.defer();
-//       deferred.resolve(data || []);
-//       return deferred.promise;
-//     }
-
-//     obj.listobj.makeElement = function(objElement) {
-//       return new PatientObj(objElement)
-//     };    
-
-//   }
-
-//   function PatientsComponentBuilderFtn($q, $log, PatientObj, JawboneService) {
-//     var PatientsComponentBuilder = function(user) {
-//       var obj = this;
-
-//       obj.profile = JawboneService.extractData('profile', user);
-//       obj.name = obj.profile.first + ' ' + obj.profile.last;
-//       obj.patients = JawboneService.extractData('patients', user);
-//       obj.elems = obj.patients || [];
-
-//       var bobj = JawboneService.makeBatch('patients');
-//       $log.info('bobj: ' + JSON.stringify(bobj));
-
-//       buildCallbacks($log, obj, obj.elems);
-//       buildListViewer($q, $log, obj, obj.elems, PatientObj, bobj);
-
-//       $log.info('patient comp builder ran: ' );
-
-//     };
-//     return PatientsComponentBuilder;
-//   }
-
-//   function PatientObjFtn($log) {
-//     var PatientObj = function(objElement) {
-
-//       $log.info('obj element: ' + JSON.stringify(objElement));
-
-//       var o = this;
-//       o.data = objElement || {};
-//       o.jawboneId = objElement.jawboneId || 'blank';
-//       o.obj = objElement.user.profile || {};
-//       o.first = o.obj.first || 'blank';
-//       o.last = o.obj.last || 'blank';
-//       o.weight = o.obj.weight || 'blank weight';
-//       o.gender = o.obj.gender || 'no gender';
-//       o.height = o.obj.height || 'no height';
-//       o.joinDate = objElement.joinDate || null;
-
-//       o.selected = false;
-
-//       o.activated = function() {
-//         o.selected = true;
-//       };
-
-//       o.deactivated = function() {
-//         o.selected = false;
-//       }
-//     };
-//     return PatientObj;
-//   }
-
-// })();
 (function() {
   'use strict';
 
@@ -640,10 +566,13 @@
 
   function convertToMinutes(str, $log) {
     str = str.toString();
+
     var arr = str.match(/\d+/g);
-    if(arr.length === 2) {
+    if(arr.length === 2) { // hours and minutes
       return (parseInt(arr[0]) * 60) + (parseInt(arr[1]));
-    } else {
+    } else if(arr.length === 1 ) { // only minutes
+      return (parseInt(arr[0]));
+    } else { 
       return str;
     }
   }
@@ -694,22 +623,32 @@
       var o = this;      
       o.profile = JawboneService.extractData('profile', user);
       o.name = o.profile.first + ' ' + o.profile.last;
-      //o.elems = JawboneService.extractData('sleeps', user);
-      //o.elements = [];
-
       // get the elements to construct the chart
       o.getElementsObj = JawboneService.makeBatch('sleeps');
-      // o.getElements = function(data) {      
-      //   //$log.info('sleeps chart builder call to get elements: ' + JSON.stringify(o.elems));  
-      //   var deferred = $q.defer();
-      //   deferred.resolve(data || o.elems);
-      //   return deferred.promise;
+
+      // o.plotParams = {
+      //   range : [new Date(2016, 11, 1), new Date(2017, 2, 20)],
+      //   plotName : o.profile.first
       // };
 
       // make an element
       o.makeElement = function(rawElem) {
         return new SleepObj(rawElem);
       };
+
+      o.makePlotParams = function(profile) {
+        profile = profile || o.profile;
+        return {
+          range : [new Date(2016, 11, 1), new Date(2017, 2, 20)],
+          plotName : profile.first          
+        }
+      };
+
+      o.preprocessElements = function(arr) {
+        // reverse the ordering in array - sleeps buts the 
+        // newest first
+        return arr.reverse();
+      }
 
       // get the plot labels
       o.getPlotNames = function() {
@@ -725,7 +664,20 @@
       };
 
       function randomrange(min, max) {
-        return Math.random() * (max - min) + min;
+        return parseInt(Math.random() * (max - min) + min);
+      }
+
+      function randomize(data) {
+        $log.info('data is: ' + JSON.stringify(data));
+        var randomizedData = data.data.slice();
+        angular.forEach(randomizedData, function(val) {
+          var hr = randomrange(1, 3);
+          var min = randomrange(1, 60);
+          val.title = hr + 'h ' + min + 'm';
+        }, randomizedData);
+
+        data.data = randomizedData;
+        return data;
       }
 
       o.extractFromUser = function(user) {
@@ -734,18 +686,8 @@
         var batch = JawboneService.makeBatch('sleeps', user._id);
         return batch.get()
         .then(function(response) {
-          $log.info('return the sleeps response: ' + JSON.stringify(response));
-          return response;
+          return randomize(response);
         });
-
-        // fake some data for now
-        // var fakedata = o.elems.slice();
-        // angular.forEach(fakedata, function(val) {
-        //   val.title = randomrange(50, 100);
-        // }, fakedata);
-
-        // return fakedata;
-        //return JawboneService.extractData('trends', user);
       };
 
       o.extract = function(obj, fieldIdx) {
@@ -1059,20 +1001,86 @@
 
   angular
     .module('jawboneApp')
+    .factory('PatientSummObj', PatientSummObjFtn)
+    .controller('PatientSummCtrl', PatientSummCtrlFtn)
+    .directive('patientSummary', patientSummaryFtn);
+
+  function PatientSummObjFtn($log) {
+    var PatientSummObj = function(user) {
+      $log.info('patient summary obj : ' + JSON.stringify(user));
+
+      var obj = this;
+      obj.user = user || {};
+      // TODO temp assign here but pass into this object
+      obj.actionBar = 'app/patient/_patient-summary-action-bar-tpl.html';
+    };
+
+    return PatientSummObj;
+  }
+
+  function PatientSummCtrlFtn($scope, $log, PatientSummObj) {
+    var vm = this;
+    vm.pso = null;
+  
+    $scope.$watch(function(scope) {
+      return (vm.obj);
+    }, function(newval, oldval) {
+      if(newval) {
+        $log.info('assign patient summ obj : ' + JSON.stringify(newval));
+        vm.pso = vm.obj;
+      }
+    });
+  }
+
+  function patientSummaryFtn($log) {
+    var directive = {
+      restrict: 'E',
+        scope: {},
+        controller: 'PatientSummCtrl',
+        controllerAs: 'ctrl',
+      bindToController: {
+        obj : '='
+      },
+      templateUrl: 'app/patient/_patient-summary-tpl.html'
+    };
+    return directive;   
+  }
+
+
+})();
+(function() {
+  'use strict';
+
+  angular
+    .module('jawboneApp')
     .factory('PatientsComponentBuilder', PatientsComponentBuilderFtn)
     .factory('PatientObj', PatientObjFtn)
+    .filter('defaultPatient', defaultPatientFtn)
     .controller('PatientCtrl', PatientCtrlFtn)
     .directive('patientMgr', patientMgrFtn);
+
+  function buildPatientSummary($log, obj, user, PatientSummObj) {
+    obj.patientSummary = new PatientSummObj(user);
+    obj.patientSummary.parent = {
+      switchView: function() {
+        obj.mode = 'view';
+      },
+      downloadToCSV: function() {
+        $log.info('download to csv');
+      }
+    };
+  }
 
   function buildPatientSleeps($log, obj, SleepObj, batchRetriever) {
     obj.listobj = {};
     obj.listobj.template = 'app/sleeps/_sleeps-element-tpl.html';
+    obj.listobj.headerbar = 'app/sleeps/_sleeps-header-tpl.html';    
     obj.listobj.heading = 'Sleeps';
 
     obj.listobj.getElementsObj = batchRetriever;
 
     obj.listobj.makeElement = function(objElement) {
-      return new SleepObj(objElement)
+      return new SleepObj(objElement);
     };        
   }
 
@@ -1080,15 +1088,17 @@
     obj.sleepsChart = new SleepsChartBuilderObj(user);
   }
 
-  function buildCallbacks($log, obj, SleepObj, JawboneService, SleepsChartBuilderObj, user) {
+  function buildCallbacks($log, obj, SleepObj, JawboneService, SleepsChartBuilderObj, user, PatientSummObj) {
 
     obj.mode = 'view';
 
     obj.patientViewer.onSelect = function(ss) {
       $log.info('on select event fired for patients element: ' + JSON.stringify(ss));
       var bsleeps = JawboneService.makeBatch('sleeps', ss.data.user._id);
+      buildPatientSummary($log, obj, ss.data.user, PatientSummObj);
+      //$log.info('deee patient summary object: ' + JSON.stringify(obj.patientSummary));
       buildPatientSleeps($log, obj.sleepsViewer, SleepObj, bsleeps);
-      buildPatientGraph($log, obj, user, SleepsChartBuilderObj);
+      buildPatientGraph($log, obj, ss.data.user, SleepsChartBuilderObj);
       obj.mode = 'edit';
     };
   }
@@ -1106,7 +1116,16 @@
 
   }
 
-  function PatientsComponentBuilderFtn($q, $log, PatientObj, SleepObj, JawboneService, SleepsChartBuilderObj) {
+  function defaultPatientFtn($log) {
+    return function(img) {  
+      if(!img) {
+        return 'assets/users.png';
+      }
+      return img;
+    }     
+  }
+
+  function PatientsComponentBuilderFtn($q, $log, PatientObj, SleepObj, JawboneService, SleepsChartBuilderObj, PatientSummObj) {
     var PatientsComponentBuilder = function(user) {
       var obj = this;
 
@@ -1115,6 +1134,7 @@
       obj.patients = JawboneService.extractData('patients', user);
       obj.mode = 'view';
       
+      obj.patientSummary = {};
       obj.patientViewer = {};
       obj.sleepsViewer = {};
       obj.sleepsChart = {};
@@ -1122,7 +1142,7 @@
       var bobj = JawboneService.makeBatch('patients');
       $log.info('bobj: ' + JSON.stringify(bobj));
 
-      buildCallbacks($log, obj, SleepObj, JawboneService, SleepsChartBuilderObj, user);
+      buildCallbacks($log, obj, SleepObj, JawboneService, SleepsChartBuilderObj, user, PatientSummObj);
       buildListViewer($q, $log, obj.patientViewer, PatientObj, bobj);
 
       $log.info('patient comp builder ran: ' );
@@ -2045,6 +2065,9 @@
 	  		else if(dataname === 'groups') {
 	  			return extractGroups(data);
 	  		}
+	  		else if(dataname === 'userImage') {
+	  			return extractUserImage(data);
+	  		}
 	  		$log.info('jawbone service: call to extract unknown data: ' + dataname);
 	  		return {};
 	  	}
@@ -2070,6 +2093,19 @@
 	  	function extractGroups(data) {
 	  		$log.info('groups from user: ' + JSON.stringify(data));
 	  		return data.groups;
+	  	}
+
+	  	function extractUserImage(data) {
+	  		var jbdata = data.jbdata || {};
+	  		var prof = jbdata.profile || {};
+	  		var jbprof = prof[0] || {};
+
+	  		if(!jbprof.image) {
+	  			$log.info('no image found - return null');
+	  			return null;
+	  		} else {
+	  			return 'https://jawbone.com/' + jbprof.image;
+	  		}
 	  	}
 	}
 })();
@@ -2393,6 +2429,64 @@
   }
 })();
 (function() {
+  'use strict';
+
+  angular
+    .module('jawboneApp')
+    .factory('FileDownload', FileDownloadFtn)
+    .factory('FileObj', FileObjFtn)
+    .controller('FileDownloadCtrl', FileDownloadCtrl)
+    .directive('fileDownloader', fileDownloader);
+
+  function FileDownloadFtn($q, $log, FileObj, JawboneService) {
+    var FileDownload = function() {
+      var obj = this;
+    };
+    return FileDownload;
+  }
+
+  function FileObjFtn($log) {
+    var FileObj = function(data) {
+      var obj = this;
+      obj.data = data || {};
+
+      obj.onClick = function() {
+        $log.info('on click ftn called');
+      };
+
+    };
+    return FileObj;
+  }
+
+  function FileDownloadCtrl($scope, FileObj) {
+    var vm = this;
+    vm.do = new FileObj();
+
+    $scope.$watch(function(scope) {
+      return (vm.obj);
+    }, function(newval, oldval) {
+      if(newval) {
+        vm.do = vm.obj;
+      }
+    });
+  }
+
+  function fileDownloader() {
+    var directive = {
+      restrict: 'E',
+        scope: {},
+        controller: 'FileDownloadCtrl',
+        controllerAs: 'ctrl',
+      bindToController: {
+        obj : '='
+      },
+      templateUrl: 'app/fileHandler/_file-download-tpl.html'
+    };
+    return directive;       
+  }
+
+})();
+(function() {
 	'use strict';
 
 	angular
@@ -2556,11 +2650,18 @@
             }, result);
         };
 
-        PlotGenerator.preparePlot = function(start, end, data, plotnames) {                    
-            plotnames = plotnames || [];
+        //PlotGenerator.preparePlot = function(start, end, data, plotnames) {                    
+        PlotGenerator.preparePlot = function(data, plotParams) {    
+            $log.info('plot names: ' + JSON.stringify(plotParams));       
+            var pname = plotParams.plotName || [ 'blank' ];
+            pname = (Array.isArray(pname) ? pname : [pname]);
+            var plotnames = pname;
             plotnames.unshift('date');
 
             var arr = [];
+            //var dateArr = createDateRange(start, end); 
+            var start = plotParams.range[0];
+            var end = plotParams.range[1];
             var dateArr = createDateRange(start, end); 
             var idx = 0;
 
@@ -2569,7 +2670,8 @@
                 this.push(PlotGenerator.createEmpty(value));
             }, arr); 
 
-            $log.info('dae arr: ' + JSON.stringify(dateArr));
+            //$log.info('dae arr: ' + JSON.stringify(dateArr));
+            //data = data.reverse();
 
             // populate for every data entry within the date range
             angular.forEach(data, function(value) {            
@@ -2580,6 +2682,9 @@
                     // $log.info('date is ' + elem.toDateString() + ' jsdate: ' + jsdate.toDateString());
                     return (elem.toDateString() === jsdate.toDateString());  
                 }, idx);     
+
+                // $log.info('value: ' + JSON.stringify(value));
+                // $log.info('position in date: ' + idx);
 
                 if(idx === -1) {
                     return;
@@ -2592,11 +2697,11 @@
             return { names: plotnames, data: arr };
         };        
 
-        PlotGenerator.appendPlot = function(original, dataToAppend, plotnames) {
+        PlotGenerator.appendPlot = function(original, dataToAppend, plotParams) {
             var arrData = original.data;
-            var start = arrData[0].x;
-            var end = arrData[arrData.length - 1].x;
-            var append = PlotGenerator.preparePlot(start, end, dataToAppend, plotnames);
+            // var start = arrData[0].x;
+            // var end = arrData[arrData.length - 1].x;
+            var append = PlotGenerator.preparePlot(dataToAppend, plotParams);
             var appArray = append.data;
 
             for(var i = 0; i < arrData.length; i++) {
@@ -2636,7 +2741,8 @@
           })
           .then(function(data) {
             //$log.info('got data: ' + JSON.stringify(data));
-            obj.chart.addCompareData(data.data);
+            $log.info('user name: ' + JSON.stringify(userChoice.data.profile.first));
+            obj.chart.addCompareData(data.data, userChoice.data.profile);
             JawboneService.setUser(userChoice);            
           });
         }))
@@ -2668,6 +2774,13 @@
         'explorer': { 
           'actions': ['dragToZoom', 'rightClickToReset'],
           'keepInBounds': true
+        },
+        'hAxis' : {
+          'title': 'date'
+        },
+        'vAxis' : {
+          'title' : 'minutes',
+          'count' : 60
         }
       };
 
@@ -2681,7 +2794,7 @@
 
       data.getElementsObj.get()
       .then(function(result) {
-        processElements(result.data);
+        processElements(result.data, data.makePlotParams());
       });
 
       function convertToArr(graphData, yValueField) {
@@ -2708,7 +2821,7 @@
         }        
       }
 
-      function processElements(elems) {
+      function processElements(elems, plotParams) {
 
         //$log.info('elements: ' + JSON.stringify(elems));
 
@@ -2717,11 +2830,15 @@
           this.push(data.makeElement(value));
         }, obj.elements);
 
-        var startDate = new Date(2016, 11, 1);
-        var endDate = new Date(2017, 2, 20);
+        data.preprocessElements(obj.elements);
+
+        // var startDate = new Date(2016, 11, 1);
+        // var endDate = new Date(2017, 2, 20);
 
         // preapare plot data
-        obj.graphData = PlotGenerator.preparePlot(startDate, endDate, obj.elements, ['craig']);  
+        $log.info('plot params: ' + JSON.stringify(plotParams));
+        //obj.graphData = PlotGenerator.preparePlot(startDate, endDate, obj.elements, ['craig']);  
+        obj.graphData = PlotGenerator.preparePlot(obj.elements, plotParams);  
         obj.selectPlot(0, obj.graphData);
       }
 
@@ -2736,7 +2853,7 @@
         obj.chart.data = google.visualization.arrayToDataTable(obj.chartdata);
       };
 
-      obj.addCompareData = function(dataToAdd) {
+      obj.addCompareData = function(dataToAdd, userProfile) {
         //$log.info('add this compare data: ' + JSON.stringify(dataToAdd));
         //data.getElements(dataToAdd)
         //.then(function(response) {
@@ -2745,7 +2862,8 @@
           angular.forEach(dataToAdd, function(val) {
             this.push(data.makeElement(val));
           }, result);      
-          obj.graphData = PlotGenerator.appendPlot(obj.graphData, result, ['name']);   
+          var plotParams = data.makePlotParams(userProfile);
+          obj.graphData = PlotGenerator.appendPlot(obj.graphData, result, plotParams);   
           obj.selectPlot(0, obj.graphData); 
         //});        
       };
@@ -2791,9 +2909,10 @@ angular.module("jbtemplates").run(["$templateCache", function($templateCache) {$
 $templateCache.put("app/_modal-frame-tpl.html","<div class=\"modal-body\" id=\"modal-body\" style=\"padding: 4px;\"><div ng-include=\"ctrl.template\"></div></div><div class=\"modal-footer\" style=\"padding: 4px;\"><button class=\"btn btn-primary\" type=\"button\" ng-click=\"ctrl.ok()\">OK</button> <button class=\"btn btn-warning\" type=\"button\" ng-click=\"ctrl.cancel()\">Cancel</button></div>");
 $templateCache.put("app/main.html","<div class=\"container\"><div ui-view=\"\"></div></div>");
 $templateCache.put("app/user.html","<div class=\"container\"><a href=\"/login/jawbone\">login jawbone</a><div ui-view=\"\"></div></div>");
-$templateCache.put("app/chart/_chart-tpl.html","<div class=\"chart-area\"><div class=\"chart-header\"><span uib-dropdown=\"\"><a class=\"btn btn-default\" uib-dropdown-toggle=\"\">{{ctrl.co.chart.selected || \'select a plot...\'}} <span class=\"caret\"></span></a><ul uib-dropdown-menu=\"\"><li ng-repeat=\"item in ctrl.co.chart.plots track by $index\"><span ng-click=\"ctrl.co.chart.selectPlot($index)\">{{item}}</span></li></ul></span> <span class=\"btn btn-default\" ng-click=\"ctrl.co.onClick()\">add plot</span></div><div class=\"chart-body\"><div class=\"chart-element\"><div google-chart=\"\" chart=\"ctrl.co.chart.chart\" style=\"height:300px; width:570px; border: 1px solid #fff;\"></div></div></div></div>");
+$templateCache.put("app/chart/_chart-tpl.html","<div class=\"chart-area\"><div class=\"chart-header\"><span uib-dropdown=\"\"><a class=\"btn btn-default\" uib-dropdown-toggle=\"\">{{ctrl.co.chart.selected || \'select a plot...\'}} <span class=\"caret\"></span></a><ul uib-dropdown-menu=\"\"><li ng-repeat=\"item in ctrl.co.chart.plots track by $index\"><span ng-click=\"ctrl.co.chart.selectPlot($index)\">{{item}}</span></li></ul></span> <span class=\"btn btn-default\" ng-click=\"ctrl.co.onClick()\">compare with</span></div><div class=\"chart-body\"><div class=\"chart-element\"><div google-chart=\"\" chart=\"ctrl.co.chart.chart\" style=\"height:300px; width:570px; border: 1px solid #fff;\"></div></div></div></div>");
 $templateCache.put("app/dropdown/_default-dropdown-tpl.html","<span class=\"glyphicon glyphicon-menu-hamburger obi-default-dropdown-box\"></span>");
 $templateCache.put("app/dropdown/_dropdown-tpl.html","<div class=\"obi-dropdown-container\" ng-class=\"{ \'obi-show\': ctrl.visible }\" obi-click-elsewhere=\"ctrl.onDeselect()\"><div class=\"obi-dropdown-display\" ng-click=\"ctrl.show();\" ng-class=\"{ \'clicked\': ctrl.visible }\"><span ng-include=\"ctrl.ddobj.templateUrl\"></span></div><div class=\"obi-dropdown-list\"><ul><li ng-repeat=\"$item in ctrl.ddobj.filters track by $index\" ng-click=\"ctrl.setSelected($index)\"><h5 ng-if=\"ctrl.ddobj.selectedFilterIdx === $index\">{{$item}} <small><span class=\"glyphicon glyphicon-ok\"></span></small></h5><h5 ng-if=\"ctrl.ddobj.selectedFilterIdx !== $index\">{{$item}} &nbsp;</h5></li></ul></div></div>");
+$templateCache.put("app/fileHandler/_file-download-tpl.html","<div class=\"btn btn-primary\" ng-click=\"ctrl.do.onClick()\">download</div>download object: {{ctrl.do | json}}");
 $templateCache.put("app/friends/_friends-tpl.html","<div><h3>Friends</h3><p>Data: {{ctrl.fo.data | json}}</p></div>");
 $templateCache.put("app/goals/_goals-tpl.html","<div><h3>Goals</h3><p>Sleep Total: {{ctrl.go.sleepTotal}}</p><p>Move Steps: {{ctrl.go.moveSteps}}</p><p>Sleep Remaining: {{ctrl.go.sleepRem}}</p><p>Intake Calories Remaining: {{ctrl.go.intakeCaloriesRem | number:2}}</p><p>Move Steps Remaining: {{ctrl.go.moveStepsRem}}</p></div>");
 $templateCache.put("app/groups/_group-element-tpl.html","<div class=\"user-list-element\" ng-class=\"{\'active\' : ctrl.obj.element.selected }\"><img ng-src=\"assets/group.png\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.element.name}}</div><div class=\"features\"><p>{{ctrl.obj.element.description}}</p><p>{{ctrl.obj.element.size}} members</p></div></div></div>");
@@ -2804,7 +2923,9 @@ $templateCache.put("app/moods/_moods-tpl.html","<div><h3>Moods</h3><p>Data: {{ct
 $templateCache.put("app/moves/_move-tpl.html","<p>date : {{ctrl.mo.date | jbDate}} title : {{ctrl.mo.title}}</p>");
 $templateCache.put("app/moves/_moves-tpl.html","<div><h3>Moves</h3><div ng-repeat=\"elem in ctrl.mo.elements\"><move obj=\"elem\"></move></div></div>");
 $templateCache.put("app/patient/_patient-element-tpl.html","<div class=\"user-list-element\" ng-class=\"{\'active\' : ctrl.obj.element.selected }\"><img ng-src=\"assets/users.png\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.element.first}} {{ctrl.obj.element.last}}</div><div class=\"features\"><p>Weight: {{ctrl.obj.element.weight | number: 2}}</p><p>Gender: {{ctrl.obj.element.gender}}</p><p>Height: {{ctrl.obj.element.height}}</p></div></div></div>");
-$templateCache.put("app/patient/_patient-mgr-tpl.html","<div ng-if=\'ctrl.obj.mode === \"view\"\'><listviewer obj=\"ctrl.obj.patientViewer\"></listviewer></div><div ng-if=\'ctrl.obj.mode === \"edit\"\'><div class=\"btn btn-primary\" ng-click=\'ctrl.obj.mode = \"view\"\'>exit</div><chart obj=\"ctrl.obj.sleepsChart\"></chart><listviewer obj=\"ctrl.obj.sleepsViewer\"></listviewer></div>");
+$templateCache.put("app/patient/_patient-mgr-tpl.html","<div class=\"patient-area\" ng-if=\'ctrl.obj.mode === \"view\"\'><listviewer obj=\"ctrl.obj.patientViewer\"></listviewer></div><div class=\"patient-area\" ng-if=\'ctrl.obj.mode === \"edit\"\'><patient-summary obj=\"ctrl.obj.patientSummary\"></patient-summary><chart obj=\"ctrl.obj.sleepsChart\"></chart><listviewer obj=\"ctrl.obj.sleepsViewer\"></listviewer></div>");
+$templateCache.put("app/patient/_patient-summary-action-bar-tpl.html","<div class=\"btn btn-default\" ng-click=\"ctrl.pso.parent.switchView()\" style=\"float : left;\">back to patients view</div><div class=\"btn btn-default\" style=\"float: right;\" ng-click=\"ctrl.pso.parent.downloadToCSV()\">download to csv file</div><div style=\"clear: both;\"></div>");
+$templateCache.put("app/patient/_patient-summary-tpl.html","<div class=\"patient-header\"><div class=\"patient-info\"><img ng-src=\"{{ctrl.pso.user.profile.image | defaultPatient }}\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.pso.user.profile.first}} {{ctrl.pso.user.profile.last}}</div><div class=\"features\"><p>Weight: {{ctrl.pso.user.profile.weight | number: 2}}</p><p>Gender: {{ctrl.pso.user.profile.gender}}</p><p>Height: {{ctrl.pso.user.profile.height}}</p></div></div></div><hr><div style=\"clear: both;\"></div><div ng-include=\"ctrl.pso.actionBar\"></div></div>");
 $templateCache.put("app/profile/_sleeps-element-tpl.html","<div class=\"trends-element-style\">date : {{ctrl.obj.date | jbDate}} title : {{ctrl.obj.title}} sounds : {{ctrl.obj.sounds}} awakenings : {{ctrl.obj.awakenings}} light : {{ctrl.obj.light}}</div>");
 $templateCache.put("app/profile/friends.html","friends");
 $templateCache.put("app/profile/moves.html","");
@@ -2822,6 +2943,7 @@ $templateCache.put("app/superuser/profile-main.html","<div class=\"profile-side-
 $templateCache.put("app/trends/_trends-element-tpl.html","<div class=\"trends-element-style\" ng-class=\"{\'active\' : ctrl.obj.element.selected }\"><span>{{ctrl.obj.element.date | jbDate}}</span> <span>{{ctrl.obj.element.weight | number: 2}}</span> <span>{{ctrl.obj.element.height | number: 2}}</span> <span>{{ctrl.obj.element.bmr | number: 2}}</span> <span>{{ctrl.obj.element.totalCalories | number: 2}}</span> <span>{{ctrl.obj.element.age | number: 0}}</span></div>");
 $templateCache.put("app/trends/_trends-header.html","<div class=\"trends-header-bar\"><span>date</span> <span>weight</span> <span>height</span> <span>bmr</span> <span>total calories</span> <span>age</span></div>");
 $templateCache.put("app/user/_default-modal-tpl.html","default modal template");
-$templateCache.put("app/user/_user-element-tpl.html","<div class=\"user-list-element\" ng-class=\"{\'active\' : ctrl.obj.element.selected }\"><img ng-src=\"assets/users.png\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.element.first}} {{ctrl.obj.element.last}}</div><div class=\"features\"><p>Weight: {{ctrl.obj.element.weight | number: 2}}</p><p>Gender: {{ctrl.obj.element.gender}}</p><p>Height: {{ctrl.obj.element.height}}</p></div></div></div>");
+$templateCache.put("app/user/_default-user-detail-tpl.html","<h5>Weight {{ctrl.uo.profile.weight}}</h5><h5>Gender {{ctrl.uo.profile.gender}}</h5><h5>Height {{ctrl.uo.profile.height}}</h5>");
+$templateCache.put("app/user/_user-element-tpl.html","<div class=\"user-list-element\" ng-class=\"{\'active\' : ctrl.obj.element.selected }\"><img ng-src=\"{{ctrl.uo.profile.image}}\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.element.first}} {{ctrl.obj.element.last}}</div><div class=\"features\"><p>Weight: {{ctrl.obj.element.weight | number: 2}}</p><p>Gender: {{ctrl.obj.element.gender}}</p><p>Height: {{ctrl.obj.element.height}}</p></div></div></div>");
 $templateCache.put("app/user/_user-select-modal-tpl.html","<listviewer obj=\"ctrl.resolveArg.userlist\"></listviewer>");
-$templateCache.put("app/user/_user-tpl.html","<div class=\"user-outer-box\"><div class=\"img-container\" ng-click=\"ctrl.uo.onClick()\"><img ng-src=\"/assets/me.png\" alt=\"image\" width=\"200px\" height=\"200px\"><p>{{ctrl.uo.profile.first}} {{ctrl.uo.profile.last}}</p></div><h5>Weight {{ctrl.uo.profile.weight}}</h5><h5>Gender {{ctrl.uo.profile.gender}}</h5><h5>Height {{ctrl.uo.profile.height}}</h5></div>");}]);
+$templateCache.put("app/user/_user-tpl.html","<div class=\"user-outer-box\"><div class=\"img-container\" ng-click=\"ctrl.uo.onClick()\"><img ng-src=\"{{ctrl.uo.profile.image}}\" alt=\"image\" width=\"200px\" height=\"200px\"><p>{{ctrl.uo.profile.first}} {{ctrl.uo.profile.last}}</p></div><div ng-include=\"\'app/user/_default-user-detail-tpl.html\'\"></div></div>");}]);

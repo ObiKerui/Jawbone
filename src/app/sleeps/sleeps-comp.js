@@ -56,10 +56,13 @@
 
   function convertToMinutes(str, $log) {
     str = str.toString();
+
     var arr = str.match(/\d+/g);
-    if(arr.length === 2) {
+    if(arr.length === 2) { // hours and minutes
       return (parseInt(arr[0]) * 60) + (parseInt(arr[1]));
-    } else {
+    } else if(arr.length === 1 ) { // only minutes
+      return (parseInt(arr[0]));
+    } else { 
       return str;
     }
   }

@@ -90,7 +90,7 @@
   function UserCompFtn($log, UserObj, ModalService, UserSelectorObj, JawboneService) {
     var UserComp = function(userdata) {
 
-      //$log.info('data to user control: ' + JSON.stringify(userdata.profile));
+      $log.info('data to user control: ' + JSON.stringify(userdata));
 
       var obj = this;
       obj.profiledata = userdata || {};
@@ -114,9 +114,9 @@
     return UserComp;
   }
 
-  function UserObjFtn($log) {
+  function UserObjFtn($log, JawboneService) {
     var UserObj = function(objElement) {
-      //$log.info('obj supplied to UserObj: ' + JSON.stringify(objElement));
+      $log.info('obj supplied to UserObj: ' + JSON.stringify(objElement));
       //$log.info('profile userobject user: ' + JSON.stringify(objElement.profile));
       var o = this;
       o.data = objElement || {};
@@ -127,6 +127,7 @@
       o.weight = o.obj.weight || 'blank weight';
       o.gender = o.obj.gender || 'no gender';
       o.height = o.obj.height || 'no height';
+      o.image = JawboneService.extractData('userImage', objElement);
 
       o.selected = false;
 

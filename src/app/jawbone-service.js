@@ -159,6 +159,9 @@
 	  		else if(dataname === 'groups') {
 	  			return extractGroups(data);
 	  		}
+	  		else if(dataname === 'userImage') {
+	  			return extractUserImage(data);
+	  		}
 	  		$log.info('jawbone service: call to extract unknown data: ' + dataname);
 	  		return {};
 	  	}
@@ -184,6 +187,19 @@
 	  	function extractGroups(data) {
 	  		$log.info('groups from user: ' + JSON.stringify(data));
 	  		return data.groups;
+	  	}
+
+	  	function extractUserImage(data) {
+	  		var jbdata = data.jbdata || {};
+	  		var prof = jbdata.profile || {};
+	  		var jbprof = prof[0] || {};
+
+	  		if(!jbprof.image) {
+	  			$log.info('no image found - return null');
+	  			return null;
+	  		} else {
+	  			return 'https://jawbone.com/' + jbprof.image;
+	  		}
 	  	}
 	}
 })();

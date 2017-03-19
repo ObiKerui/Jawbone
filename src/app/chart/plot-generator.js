@@ -95,11 +95,18 @@
             }, result);
         };
 
-        PlotGenerator.preparePlot = function(start, end, data, plotnames) {                    
-            plotnames = plotnames || [];
+        //PlotGenerator.preparePlot = function(start, end, data, plotnames) {                    
+        PlotGenerator.preparePlot = function(data, plotParams) {    
+            $log.info('plot names: ' + JSON.stringify(plotParams));       
+            var pname = plotParams.plotName || [ 'blank' ];
+            pname = (Array.isArray(pname) ? pname : [pname]);
+            var plotnames = pname;
             plotnames.unshift('date');
 
             var arr = [];
+            //var dateArr = createDateRange(start, end); 
+            var start = plotParams.range[0];
+            var end = plotParams.range[1];
             var dateArr = createDateRange(start, end); 
             var idx = 0;
 
@@ -108,7 +115,8 @@
                 this.push(PlotGenerator.createEmpty(value));
             }, arr); 
 
-            $log.info('dae arr: ' + JSON.stringify(dateArr));
+            //$log.info('dae arr: ' + JSON.stringify(dateArr));
+            //data = data.reverse();
 
             // populate for every data entry within the date range
             angular.forEach(data, function(value) {            
@@ -119,6 +127,9 @@
                     // $log.info('date is ' + elem.toDateString() + ' jsdate: ' + jsdate.toDateString());
                     return (elem.toDateString() === jsdate.toDateString());  
                 }, idx);     
+
+                // $log.info('value: ' + JSON.stringify(value));
+                // $log.info('position in date: ' + idx);
 
                 if(idx === -1) {
                     return;
@@ -131,11 +142,11 @@
             return { names: plotnames, data: arr };
         };        
 
-        PlotGenerator.appendPlot = function(original, dataToAppend, plotnames) {
+        PlotGenerator.appendPlot = function(original, dataToAppend, plotParams) {
             var arrData = original.data;
-            var start = arrData[0].x;
-            var end = arrData[arrData.length - 1].x;
-            var append = PlotGenerator.preparePlot(start, end, dataToAppend, plotnames);
+            // var start = arrData[0].x;
+            // var end = arrData[arrData.length - 1].x;
+            var append = PlotGenerator.preparePlot(dataToAppend, plotParams);
             var appArray = append.data;
 
             for(var i = 0; i < arrData.length; i++) {

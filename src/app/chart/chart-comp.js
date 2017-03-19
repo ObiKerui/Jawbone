@@ -22,7 +22,8 @@
           })
           .then(function(data) {
             //$log.info('got data: ' + JSON.stringify(data));
-            obj.chart.addCompareData(data.data);
+            $log.info('user name: ' + JSON.stringify(userChoice.data.profile.first));
+            obj.chart.addCompareData(data.data, userChoice.data.profile);
             JawboneService.setUser(userChoice);            
           });
         }))
@@ -54,6 +55,13 @@
         'explorer': { 
           'actions': ['dragToZoom', 'rightClickToReset'],
           'keepInBounds': true
+        },
+        'hAxis' : {
+          'title': 'date'
+        },
+        'vAxis' : {
+          'title' : 'minutes',
+          'count' : 60
         }
       };
 
@@ -67,7 +75,7 @@
 
       data.getElementsObj.get()
       .then(function(result) {
-        processElements(result.data);
+        processElements(result.data, data.makePlotParams());
       });
 
       function convertToArr(graphData, yValueField) {
@@ -94,7 +102,7 @@
         }        
       }
 
-      function processElements(elems) {
+      function processElements(elems, plotParams) {
 
         //$log.info('elements: ' + JSON.stringify(elems));
 
@@ -103,11 +111,15 @@
           this.push(data.makeElement(value));
         }, obj.elements);
 
-        var startDate = new Date(2016, 11, 1);
-        var endDate = new Date(2017, 2, 20);
+        data.preprocessElements(obj.elements);
+
+        // var startDate = new Date(2016, 11, 1);
+        // var endDate = new Date(2017, 2, 20);
 
         // preapare plot data
-        obj.graphData = PlotGenerator.preparePlot(startDate, endDate, obj.elements, ['craig']);  
+        $log.info('plot params: ' + JSON.stringify(plotParams));
+        //obj.graphData = PlotGenerator.preparePlot(startDate, endDate, obj.elements, ['craig']);  
+        obj.graphData = PlotGenerator.preparePlot(obj.elements, plotParams);  
         obj.selectPlot(0, obj.graphData);
       }
 
@@ -122,7 +134,7 @@
         obj.chart.data = google.visualization.arrayToDataTable(obj.chartdata);
       };
 
-      obj.addCompareData = function(dataToAdd) {
+      obj.addCompareData = function(dataToAdd, userProfile) {
         //$log.info('add this compare data: ' + JSON.stringify(dataToAdd));
         //data.getElements(dataToAdd)
         //.then(function(response) {
@@ -131,7 +143,8 @@
           angular.forEach(dataToAdd, function(val) {
             this.push(data.makeElement(val));
           }, result);      
-          obj.graphData = PlotGenerator.appendPlot(obj.graphData, result, ['name']);   
+          var plotParams = data.makePlotParams(userProfile);
+          obj.graphData = PlotGenerator.appendPlot(obj.graphData, result, plotParams);   
           obj.selectPlot(0, obj.graphData); 
         //});        
       };

@@ -5,18 +5,32 @@
     .module('jawboneApp')
     .factory('PatientsComponentBuilder', PatientsComponentBuilderFtn)
     .factory('PatientObj', PatientObjFtn)
+    .filter('defaultPatient', defaultPatientFtn)
     .controller('PatientCtrl', PatientCtrlFtn)
     .directive('patientMgr', patientMgrFtn);
+
+  function buildPatientSummary($log, obj, user, PatientSummObj) {
+    obj.patientSummary = new PatientSummObj(user);
+    obj.patientSummary.parent = {
+      switchView: function() {
+        obj.mode = 'view';
+      },
+      downloadToCSV: function() {
+        $log.info('download to csv');
+      }
+    };
+  }
 
   function buildPatientSleeps($log, obj, SleepObj, batchRetriever) {
     obj.listobj = {};
     obj.listobj.template = 'app/sleeps/_sleeps-element-tpl.html';
+    obj.listobj.headerbar = 'app/sleeps/_sleeps-header-tpl.html';    
     obj.listobj.heading = 'Sleeps';
 
     obj.listobj.getElementsObj = batchRetriever;
 
     obj.listobj.makeElement = function(objElement) {
-      return new SleepObj(objElement)
+      return new SleepObj(objElement);
     };        
   }
 
@@ -24,15 +38,17 @@
     obj.sleepsChart = new SleepsChartBuilderObj(user);
   }
 
-  function buildCallbacks($log, obj, SleepObj, JawboneService, SleepsChartBuilderObj, user) {
+  function buildCallbacks($log, obj, SleepObj, JawboneService, SleepsChartBuilderObj, user, PatientSummObj) {
 
     obj.mode = 'view';
 
     obj.patientViewer.onSelect = function(ss) {
       $log.info('on select event fired for patients element: ' + JSON.stringify(ss));
       var bsleeps = JawboneService.makeBatch('sleeps', ss.data.user._id);
+      buildPatientSummary($log, obj, ss.data.user, PatientSummObj);
+      //$log.info('deee patient summary object: ' + JSON.stringify(obj.patientSummary));
       buildPatientSleeps($log, obj.sleepsViewer, SleepObj, bsleeps);
-      buildPatientGraph($log, obj, user, SleepsChartBuilderObj);
+      buildPatientGraph($log, obj, ss.data.user, SleepsChartBuilderObj);
       obj.mode = 'edit';
     };
   }
@@ -50,7 +66,16 @@
 
   }
 
-  function PatientsComponentBuilderFtn($q, $log, PatientObj, SleepObj, JawboneService, SleepsChartBuilderObj) {
+  function defaultPatientFtn($log) {
+    return function(img) {  
+      if(!img) {
+        return 'assets/users.png';
+      }
+      return img;
+    }     
+  }
+
+  function PatientsComponentBuilderFtn($q, $log, PatientObj, SleepObj, JawboneService, SleepsChartBuilderObj, PatientSummObj) {
     var PatientsComponentBuilder = function(user) {
       var obj = this;
 
@@ -59,6 +84,7 @@
       obj.patients = JawboneService.extractData('patients', user);
       obj.mode = 'view';
       
+      obj.patientSummary = {};
       obj.patientViewer = {};
       obj.sleepsViewer = {};
       obj.sleepsChart = {};
@@ -66,7 +92,7 @@
       var bobj = JawboneService.makeBatch('patients');
       $log.info('bobj: ' + JSON.stringify(bobj));
 
-      buildCallbacks($log, obj, SleepObj, JawboneService, SleepsChartBuilderObj, user);
+      buildCallbacks($log, obj, SleepObj, JawboneService, SleepsChartBuilderObj, user, PatientSummObj);
       buildListViewer($q, $log, obj.patientViewer, PatientObj, bobj);
 
       $log.info('patient comp builder ran: ' );

@@ -11,22 +11,32 @@
       var o = this;      
       o.profile = JawboneService.extractData('profile', user);
       o.name = o.profile.first + ' ' + o.profile.last;
-      //o.elems = JawboneService.extractData('sleeps', user);
-      //o.elements = [];
-
       // get the elements to construct the chart
       o.getElementsObj = JawboneService.makeBatch('sleeps');
-      // o.getElements = function(data) {      
-      //   //$log.info('sleeps chart builder call to get elements: ' + JSON.stringify(o.elems));  
-      //   var deferred = $q.defer();
-      //   deferred.resolve(data || o.elems);
-      //   return deferred.promise;
+
+      // o.plotParams = {
+      //   range : [new Date(2016, 11, 1), new Date(2017, 2, 20)],
+      //   plotName : o.profile.first
       // };
 
       // make an element
       o.makeElement = function(rawElem) {
         return new SleepObj(rawElem);
       };
+
+      o.makePlotParams = function(profile) {
+        profile = profile || o.profile;
+        return {
+          range : [new Date(2016, 11, 1), new Date(2017, 2, 20)],
+          plotName : profile.first          
+        }
+      };
+
+      o.preprocessElements = function(arr) {
+        // reverse the ordering in array - sleeps buts the 
+        // newest first
+        return arr.reverse();
+      }
 
       // get the plot labels
       o.getPlotNames = function() {
@@ -42,7 +52,20 @@
       };
 
       function randomrange(min, max) {
-        return Math.random() * (max - min) + min;
+        return parseInt(Math.random() * (max - min) + min);
+      }
+
+      function randomize(data) {
+        $log.info('data is: ' + JSON.stringify(data));
+        var randomizedData = data.data.slice();
+        angular.forEach(randomizedData, function(val) {
+          var hr = randomrange(1, 3);
+          var min = randomrange(1, 60);
+          val.title = hr + 'h ' + min + 'm';
+        }, randomizedData);
+
+        data.data = randomizedData;
+        return data;
       }
 
       o.extractFromUser = function(user) {
@@ -51,18 +74,8 @@
         var batch = JawboneService.makeBatch('sleeps', user._id);
         return batch.get()
         .then(function(response) {
-          $log.info('return the sleeps response: ' + JSON.stringify(response));
-          return response;
+          return randomize(response);
         });
-
-        // fake some data for now
-        // var fakedata = o.elems.slice();
-        // angular.forEach(fakedata, function(val) {
-        //   val.title = randomrange(50, 100);
-        // }, fakedata);
-
-        // return fakedata;
-        //return JawboneService.extractData('trends', user);
       };
 
       o.extract = function(obj, fieldIdx) {

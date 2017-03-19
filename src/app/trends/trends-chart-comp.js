@@ -24,6 +24,18 @@
       //   return deferred.promise;
       // };
 
+      o.makePlotParams = function(profile) {
+        profile = profile || o.profile;
+        return {
+          range : [new Date(2016, 11, 1), new Date(2017, 2, 20)],
+          plotName : profile.first          
+        }
+      };
+
+      o.preprocessElements = function(arr) {
+        return arr;
+      };
+
       // make an element
       o.makeElement = function(rawElem) {
         return new TrendObj(rawElem);

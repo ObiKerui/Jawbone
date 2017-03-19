@@ -80,7 +80,7 @@ var update = function(UpdateObj, id, cb) {
 */
 var get = function(id, cb) {
 
-    var q = Group.findOne({_id : id}).populate('members.user').lean();
+    var q = Group.findOne({_id : id}).populate('members.user', '-jbdata').lean();
     q.exec(function(err, result) {
       if(err) {
       	return cb(err);
