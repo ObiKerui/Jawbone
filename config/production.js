@@ -24,7 +24,7 @@ module.exports = {
 	        'consumerKey'       : process.env.TW_CLIENT_KEY,
 	        'consumerSecret'    : process.env.TW_CLIENT_SECRET,
 	        'callbackURL'       : process.env.TW_CB_URL
-	    }
+	    },
 
 	    'googleAuth' : {
 	        'clientID'      : process.env.GO_CLIENT_ID,
