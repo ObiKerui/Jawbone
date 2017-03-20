@@ -4,7 +4,7 @@ module.exports = {
   	PORT: process.env.PORT || 80,
   	DB_URL : process.env.DB_URL,
 
-	ids = {
+	ids : {
 
 	    'jawboneAuth' : {
 	        'clientID': process.env.JB_CLIENT_ID,

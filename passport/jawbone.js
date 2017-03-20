@@ -66,6 +66,7 @@ var storeUpData = function(data, callback) {
 *   PASSPORT JAWBONE STRATEGY
 */
 module.exports = function(passport, configIds) {
+
 	passport.use('jawbone', new JawboneStrategy({
 	  clientID: configIds.jawboneAuth.clientID,
 	  clientSecret: configIds.jawboneAuth.clientSecret,
