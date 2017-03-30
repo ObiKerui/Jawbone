@@ -20,6 +20,9 @@
     'googlechart',
     'jbtemplates'
   ])
+  angular.module('jawboneGatewayApp', [
+    'jawboneApp'
+  ])
   angular.module('jawboneUApp', [
     'jawboneApp',
     'PreloadedData'

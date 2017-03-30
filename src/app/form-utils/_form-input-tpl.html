@@ -1,0 +1,31 @@
+<div class="form-group jbv-form-group" ng-class="{ 'has-error' : ctrl.fo.email.$invalid && !ctrl.fo.email.$pristine }">
+    <label for="email">Email address:</label>
+
+    {{ctrl.fo.email | json}}
+    <p>{{ctrl.fo.name}}</p>
+    <p>{{ctrl.name}}</p>
+    
+    <div class="jbv-input">
+
+        <p>{{ctrl.fo.name}}</p>
+
+        <input type="email" name="{{ctrl.fo.name}}" class="form-control" id="email" required
+            ng-minlength="5"
+            ng-model='ctrl.fo.model.email'>
+
+        <div ng-if="ctrl.fo.email.$valid" class="jbv-input-status-ok"><span class="glyphicon glyphicon-ok ok"></span></div>
+        <div ng-if="ctrl.fo.email.$dirty && ctrl.fo.email.$invalid" class="jbv-input-status-bad"><span class="glyphicon glyphicon-remove invalid"></span></div>
+
+    </div>
+
+    <p ng-show="ctrl.fo.email.$invalid && ctrl.fo.email.$touched" class="help-block jbv-input-status-msg">invalid email!</p>
+
+</div>
+
+<div class="form-group" ng-class="{ 'has-error' : registerForm.emailrt.$invalid && !registerForm.emailrt.$pristine }">
+    <label for="email">Confirm Email address:</label>
+    <input type="email" name="emailrt" class="form-control" id="emailrt" 
+        compare-to='gateway.credentials.email'
+        ng-model='register.emailrt'>
+    <p ng-show="registerForm.emailrt.$invalid && registerForm.emailrt.$touched">Emails do not match!</p>
+</div>

@@ -3,6 +3,11 @@ var User = require('../models/user');
 
 var users = {
 
+	register : function(req, res) {
+		console.log('register user ctrl ftn');
+		//console.log('username: ' + req.locals.)
+	},
+
 	allRestricted: function(req, res) {
 	    console.log('request for events from user: ' + res.locals.user.username);
 

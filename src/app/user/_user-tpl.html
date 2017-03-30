@@ -1,6 +1,6 @@
 <div class="user-outer-box">	
 	<div class="img-container" ng-click='ctrl.uo.onClick()'>
-		<img ng-src={{ctrl.uo.profile.image}} alt="image" width="200px" height="200px"></img>
+		<img ng-src="{{ctrl.uo.profile.image | defaultPatient }}" alt="image" width="200px" height="200px"></img>
 		<p>{{ctrl.uo.profile.first}} {{ctrl.uo.profile.last}}</p>
 	</div>
 	<div ng-include="'app/user/_default-user-detail-tpl.html'"></div>

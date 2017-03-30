@@ -1,0 +1,28 @@
+.jbv-form-group {
+	position: relative;
+	overflow: hidden;
+	border: 1px solid #ddd;
+
+	.jbv-input-status-msg {
+		color: green;
+	}
+
+	.jbv-input {
+		position: relative;
+		overflow: hidden;		
+	
+		.jbv-input-status-ok {
+			right: 2%;
+			bottom: 20%;
+			position: absolute;
+			color: green;
+		}
+
+		.jbv-input-status-bad {
+			right: 2%;
+			bottom: 20%;
+			position: absolute;
+			color: red;
+		}
+	}
+}

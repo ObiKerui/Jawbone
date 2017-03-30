@@ -20,6 +20,9 @@
     'googlechart',
     'jbtemplates'
   ])
+  angular.module('jawboneGatewayApp', [
+    'jawboneApp'
+  ])
   angular.module('jawboneUApp', [
     'jawboneApp',
     'PreloadedData'
@@ -2096,15 +2099,14 @@
 	  	}
 
 	  	function extractUserImage(data) {
-	  		var jbdata = data.jbdata || {};
-	  		var prof = jbdata.profile || {};
-	  		var jbprof = prof[0] || {};
 
-	  		if(!jbprof.image) {
+	  		var prof = data.profile || {};
+
+	  		if(!prof.img) {
 	  			$log.info('no image found - return null');
 	  			return null;
 	  		} else {
-	  			return 'https://jawbone.com/' + jbprof.image;
+	  			return 'https://jawbone.com/' + prof.img;
 	  		}
 	  	}
 	}
@@ -2227,6 +2229,14 @@
   /** @ngInject */
   function config($httpProvider, $logProvider, $locationProvider) {
     // Enable log
+    
+    // // enable CORS for Oauth
+    // $httpProvider.defaults.useXDomain = true;
+    // delete $httpProvider.defaults.headers.common['X-Requested-With'];
+    // $httpProvider.defaults.withCredentials = true;
+
+    console.info('set up Cors access');
+
     $logProvider.debugEnabled(true);
     //$locationProvider.html5Mode(true);
   }
@@ -2388,6 +2398,105 @@
   'use strict';
 
   angular
+    .module('jawboneGatewayApp')
+    .config(config)
+    .run(runBlock);
+
+  /** @ngInject */
+  function config($httpProvider, $logProvider, $locationProvider, $stateProvider, $urlRouterProvider) {
+    console.log('ran gateway config');
+    // Enable log
+    $logProvider.debugEnabled(true);
+    //$locationProvider.html5Mode(true);
+
+    $urlRouterProvider
+    .when('/?code', 'profile.user');
+    
+    // this is required rather than the line above to prevent an
+    // infinite digest loop
+    $urlRouterProvider.otherwise(function($injector, $location) {
+      var $state = $injector.get("$state");
+      $state.go('gateway.home');
+    });
+
+    $stateProvider
+      .state('gateway', {
+        abstract: true,
+        templateUrl: 'app/gateway/gateway-main.html',
+        controller: 'GatewayCtrl',
+        controllerAs: 'gateway'
+      })
+      .state('gateway.home', {
+        url: 'home',
+        templateUrl: 'app/gateway/home.html'
+      })
+      .state('gateway.about', {
+        url: 'about',
+        templateUrl: 'app/gateway/about.html'
+      });
+  }
+
+  function runBlock($log, JawboneService) {
+   $log.info('we did execute the run block of gateway app');
+   //JawboneService.init(JawboneData);
+  }
+
+})();
+
+(function() {
+  'use strict';
+
+  angular
+    .module('jawboneGatewayApp')
+    .controller('GatewayCtrl', GatewayCtrl);
+
+  /** @ngInject */
+  function GatewayCtrl($log, $scope) {
+
+    var vm = this;
+    vm.mode = 'patient';
+    vm.loginUser = '/login/user';
+    vm.loginSuperUser = '/login/superuser';
+    vm.loginUserMsg = 'login to view Jawbone data';
+    vm.loginSuperUserMsg = 'login to manage patients';
+
+    vm.credentials =  {
+      email: null,
+      password : null
+    };
+
+    vm.showPatient = function() {
+      $log.info('show patient');
+      vm.mode = 'patient';
+    };
+
+    vm.showTherapist = function() {
+      $log.info('show therapist');
+      vm.mode = 'therapist';
+    };
+
+    vm.getLogin = function() {
+      if(vm.mode === 'patient') {
+        return vm.loginUser;
+      }
+      return vm.loginSuperUser;
+    };
+
+    vm.getLoginMessage = function() {
+      if(vm.mode === 'patient') {
+        return vm.loginUserMsg;        
+      }
+      return vm.loginSuperUserMsg;
+    };
+
+    $log.info('gateway ctrl ran');
+
+  }	
+})();
+(function() {
+  'use strict';
+
+  angular
     .module('jawboneApp')
     .factory('FriendsObj', FriendsObjFtn)
     .controller('FriendsCtrl', FriendsCtrl)
@@ -2427,6 +2536,109 @@
     };
     return directive;   
   }
+})();
+(function() {
+  'use strict';
+
+  angular
+    .module('jawboneApp')
+    .factory('FormInputObj', FormInputObjFtn)
+    .controller('FormFieldCtrl', FormFieldCtrlFtn)
+    .directive('jbvFormField', formFieldFtn)
+    .directive('dynamicName', dynamicNameFtn)
+    .directive('compareTo', compareToFtn)
+    .directive('backgroundImg', backgroundImgFtn);
+
+  function FormInputObjFtn($log) {
+    var FormInputObj = function(obj) {
+      var o = this;
+      o.regobj = obj || {};
+      o.form = o.regobj.form || {};
+      o.email = o.form.email;
+      o.name = 'email';
+
+      //$log.info('obj: ' + JSON.stringify(obj));
+    };
+    return FormInputObj;
+  }
+
+  function FormFieldCtrlFtn($scope, $log, FormInputObj) {
+    var vm = this;    
+    vm.name = '';
+
+    $scope.$watch(function(scope) {
+      return (vm.obj);
+    }, function(newval, oldval) {
+      if(newval) {
+        vm.name = newval.name;
+        $log.info('name: ' + vm.name);
+      }
+    });
+  }
+
+  function formFieldFtn($log) {
+    var directive = {
+      restrict: 'E',
+      scope: {},
+      controller: 'FormFieldCtrl',
+      controllerAs: 'ctrl',
+      bindToController: {
+      obj : '='
+      },
+      templateUrl: 'app/form-utils/_form-input-tpl.html'
+    };
+    return directive;
+  }
+
+  function dynamicNameFtn($log, $parse, $compile) {
+    var directive = {
+      restrict: 'A',
+      terminal: true,
+      priority: 100000,
+      link: function(scope, elem) {
+        var name = $parse(elem.attr('dynamic-name'))(scope);
+        elem.removeAttr('dynamic-name');
+        elem.attr('name', name);
+        $compile(elem)(scope);
+
+        $log.info('name ' + name);
+      }
+    };
+    return directive;
+  }
+
+  function compareToFtn($log) {
+    var directive = {
+      require: "ngModel",
+      scope: {
+        otherModelValue: "=compareTo"
+      },
+      link: function(scope, element, attributes, ngModel) {
+             
+        ngModel.$validators.compareTo = function(modelValue) {
+            var same = (modelValue == scope.otherModelValue);
+            $log.info('compare = ' + modelValue + " with " + scope.otherModelValue + " same: " + same);
+            return same;
+        };
+ 
+        scope.$watch("otherModelValue", function() {
+            ngModel.$validate();
+        });
+      }    
+    };
+    return directive;   
+  }
+
+  function backgroundImgFtn($log) {
+    return function(scope, element, attrs){
+        var url = attrs.backgroundImg;
+        element.css({
+            'background-image': 'url(' + url +')',
+            'background-size' : 'cover'
+        });
+    };
+  }
+
 })();
 (function() {
   'use strict';
@@ -2910,10 +3122,14 @@ $templateCache.put("app/_modal-frame-tpl.html","<div class=\"modal-body\" id=\"m
 $templateCache.put("app/main.html","<div class=\"container\"><div ui-view=\"\"></div></div>");
 $templateCache.put("app/user.html","<div class=\"container\"><a href=\"/login/jawbone\">login jawbone</a><div ui-view=\"\"></div></div>");
 $templateCache.put("app/chart/_chart-tpl.html","<div class=\"chart-area\"><div class=\"chart-header\"><span uib-dropdown=\"\"><a class=\"btn btn-default\" uib-dropdown-toggle=\"\">{{ctrl.co.chart.selected || \'select a plot...\'}} <span class=\"caret\"></span></a><ul uib-dropdown-menu=\"\"><li ng-repeat=\"item in ctrl.co.chart.plots track by $index\"><span ng-click=\"ctrl.co.chart.selectPlot($index)\">{{item}}</span></li></ul></span> <span class=\"btn btn-default\" ng-click=\"ctrl.co.onClick()\">compare with</span></div><div class=\"chart-body\"><div class=\"chart-element\"><div google-chart=\"\" chart=\"ctrl.co.chart.chart\" style=\"height:300px; width:570px; border: 1px solid #fff;\"></div></div></div></div>");
+$templateCache.put("app/fileHandler/_file-download-tpl.html","<div class=\"btn btn-primary\" ng-click=\"ctrl.do.onClick()\">download</div>download object: {{ctrl.do | json}}");
 $templateCache.put("app/dropdown/_default-dropdown-tpl.html","<span class=\"glyphicon glyphicon-menu-hamburger obi-default-dropdown-box\"></span>");
 $templateCache.put("app/dropdown/_dropdown-tpl.html","<div class=\"obi-dropdown-container\" ng-class=\"{ \'obi-show\': ctrl.visible }\" obi-click-elsewhere=\"ctrl.onDeselect()\"><div class=\"obi-dropdown-display\" ng-click=\"ctrl.show();\" ng-class=\"{ \'clicked\': ctrl.visible }\"><span ng-include=\"ctrl.ddobj.templateUrl\"></span></div><div class=\"obi-dropdown-list\"><ul><li ng-repeat=\"$item in ctrl.ddobj.filters track by $index\" ng-click=\"ctrl.setSelected($index)\"><h5 ng-if=\"ctrl.ddobj.selectedFilterIdx === $index\">{{$item}} <small><span class=\"glyphicon glyphicon-ok\"></span></small></h5><h5 ng-if=\"ctrl.ddobj.selectedFilterIdx !== $index\">{{$item}} &nbsp;</h5></li></ul></div></div>");
-$templateCache.put("app/fileHandler/_file-download-tpl.html","<div class=\"btn btn-primary\" ng-click=\"ctrl.do.onClick()\">download</div>download object: {{ctrl.do | json}}");
+$templateCache.put("app/form-utils/_form-input-tpl.html","<div class=\"form-group jbv-form-group\" ng-class=\"{ \'has-error\' : ctrl.fo.email.$invalid && !ctrl.fo.email.$pristine }\"><label for=\"email\">Email address:</label> {{ctrl.fo.email | json}}<p>{{ctrl.fo.name}}</p><p>{{ctrl.name}}</p><div class=\"jbv-input\"><p>{{ctrl.fo.name}}</p><input type=\"email\" name=\"{{ctrl.fo.name}}\" class=\"form-control\" id=\"email\" required=\"\" ng-minlength=\"5\" ng-model=\"ctrl.fo.model.email\"><div ng-if=\"ctrl.fo.email.$valid\" class=\"jbv-input-status-ok\"><span class=\"glyphicon glyphicon-ok ok\"></span></div><div ng-if=\"ctrl.fo.email.$dirty && ctrl.fo.email.$invalid\" class=\"jbv-input-status-bad\"><span class=\"glyphicon glyphicon-remove invalid\"></span></div></div><p ng-show=\"ctrl.fo.email.$invalid && ctrl.fo.email.$touched\" class=\"help-block jbv-input-status-msg\">invalid email!</p></div><div class=\"form-group\" ng-class=\"{ \'has-error\' : registerForm.emailrt.$invalid && !registerForm.emailrt.$pristine }\"><label for=\"email\">Confirm Email address:</label> <input type=\"email\" name=\"emailrt\" class=\"form-control\" id=\"emailrt\" compare-to=\"gateway.credentials.email\" ng-model=\"register.emailrt\"><p ng-show=\"registerForm.emailrt.$invalid && registerForm.emailrt.$touched\">Emails do not match!</p></div>");
 $templateCache.put("app/friends/_friends-tpl.html","<div><h3>Friends</h3><p>Data: {{ctrl.fo.data | json}}</p></div>");
+$templateCache.put("app/gateway/about.html","<h4>our about page</h4>");
+$templateCache.put("app/gateway/gateway-main.html","<div ui-view=\"\"></div>");
+$templateCache.put("app/gateway/home.html","<div id=\"mainarea\"><div id=\"sidebar\"><span class=\"btn btn-default\" ng-click=\"gateway.showPatient()\" ng-class=\"{ \'active\' : gateway.mode === \'therapist\'}\">Patient</span> <span class=\"btn btn-default\" ng-click=\"gateway.showTherapist()\" ng-class=\"{ \'active\' : gateway.mode === \'patient\'}\">Therapist</span><div class=\"form-area\"><label>{{gateway.getLoginMessage()}}</label></div><form name=\"loginForm\" class=\"form-area\" action=\"{{gateway.getLogin()}}\" method=\"post\" ng-show=\"gateway.mode === \'patient\' || gateway.mode === \'therapist\'\" novalidate=\"\"><div class=\"form-group\"><label for=\"email\">Email address:</label> <input type=\"email\" name=\"email\" class=\"form-control\" id=\"email\"></div><div class=\"form-group\"><label for=\"pwd\">Password:</label> <input type=\"password\" name=\"password\" class=\"form-control\" id=\"pwd\"></div><div class=\"checkbox\"><label><input type=\"checkbox\"> Remember me</label></div><button type=\"submit\" class=\"btn btn-default\">Login</button></form><div class=\"form-area\" ng-show=\"gateway.mode === \'patient\'\"><label>..or register as a new user:</label></div><form name=\"registerForm\" class=\"form-area\" action=\"/register/user\" method=\"post\" ng-show=\"gateway.mode === \'patient\'\" novalidate=\"\"><div class=\"form-group jbv-form-group\" ng-class=\"{ \'has-error\' : registerForm.email.$invalid && !registerForm.email.$pristine }\"><label for=\"email\">Email address:</label><div class=\"jbv-input\"><input type=\"email\" name=\"email\" class=\"form-control\" id=\"email\" required=\"\" ng-minlength=\"5\" ng-model=\"gateway.credentials.email\"><div ng-if=\"registerForm.email.$touched && registerForm.email.$valid\" class=\"jbv-input-status-ok\"><span class=\"glyphicon glyphicon-ok ok\"></span></div><div ng-if=\"registerForm.email.$touched && registerForm.email.$invalid\" class=\"jbv-input-status-bad\"><span class=\"glyphicon glyphicon-remove invalid\"></span></div></div><p ng-show=\"registerForm.email.$invalid && registerForm.email.$touched\" class=\"help-block jbv-input-status-msg\">invalid email!</p></div><div class=\"form-group jbv-form-group\" ng-class=\"{ \'has-error\' : registerForm.emailrt.$invalid && !registerForm.emailrt.$pristine }\"><label for=\"email\">Confirm Email address:</label><div class=\"jbv-input\"><input type=\"email\" name=\"emailrt\" class=\"form-control\" id=\"emailrt\" compare-to=\"gateway.credentials.email\" ng-model=\"register.emailrt\"><div ng-if=\"registerForm.emailrt.$touched && registerForm.emailrt.$valid\" class=\"jbv-input-status-ok\"><span class=\"glyphicon glyphicon-ok ok\"></span></div><div ng-if=\"registerForm.emailrt.$touched && registerForm.emailrt.$invalid\" class=\"jbv-input-status-bad\"><span class=\"glyphicon glyphicon-remove invalid\"></span></div></div><p ng-show=\"registerForm.emailrt.$invalid && registerForm.emailrt.$touched\" class=\"help-block jbv-input-status-msg\">Emails do not match!</p></div><div class=\"form-group jbv-form-group\" ng-class=\"{ \'has-error\' : registerForm.password.$invalid && registerForm.password.$touched }\"><label for=\"pwd\">Password:</label><div class=\"jbv-input\"><input type=\"password\" name=\"password\" class=\"form-control\" id=\"pwd\" ng-model=\"gateway.credentials.password\" ng-minlength=\"4\" ng-maxlength=\"20\"><div ng-if=\"registerForm.password.$touched && registerForm.password.$valid\" class=\"jbv-input-status-ok\"><span class=\"glyphicon glyphicon-ok ok\"></span></div><div ng-if=\"registerForm.password.$touched && registerForm.password.$invalid\" class=\"jbv-input-status-bad\"><span class=\"glyphicon glyphicon-remove invalid\"></span></div></div><p ng-show=\"registerForm.password.$error.minlength && registerForm.password.$touched\" class=\"help-block jbv-input-status-msg\">password is too short.</p><p ng-show=\"registerForm.password.$error.maxlength\" class=\"help-block jbv-input-status-msg\">password is too long.</p></div><div class=\"form-group jbv-form-group\" ng-class=\"{ \'has-error\' : registerForm.pwdrt.$invalid && !registerForm.pwdrt.$pristine }\"><label for=\"pwdrt\">Confirm Password:</label><div class=\"jbv-input\"><input type=\"password\" name=\"pwdrt\" class=\"form-control\" id=\"pwdrt\" compare-to=\"gateway.credentials.password\" ng-model=\"register.pwdrt\"><div ng-if=\"registerForm.password.$touched && registerForm.pwdrt.$valid\" class=\"jbv-input-status-ok\"><span class=\"glyphicon glyphicon-ok ok\"></span></div><div ng-if=\"registerForm.pwdrt.$touched && registerForm.pwdrt.$invalid\" class=\"jbv-input-status-bad\"><span class=\"glyphicon glyphicon-remove invalid\"></span></div></div><p ng-show=\"registerForm.pwdrt.$invalid && registerForm.pwdrt.$touched\" class=\"help-block jbv-input-status-msg\">Passwords do not match!</p></div><button type=\"submit\" class=\"btn btn-default\" ng-disabled=\"registerForm.$invalid || registerForm.$pristine\">Register</button></form></div><div id=\"jbv-maincontent\"><h4>main bar here</h4></div></div>");
 $templateCache.put("app/goals/_goals-tpl.html","<div><h3>Goals</h3><p>Sleep Total: {{ctrl.go.sleepTotal}}</p><p>Move Steps: {{ctrl.go.moveSteps}}</p><p>Sleep Remaining: {{ctrl.go.sleepRem}}</p><p>Intake Calories Remaining: {{ctrl.go.intakeCaloriesRem | number:2}}</p><p>Move Steps Remaining: {{ctrl.go.moveStepsRem}}</p></div>");
 $templateCache.put("app/groups/_group-element-tpl.html","<div class=\"user-list-element\" ng-class=\"{\'active\' : ctrl.obj.element.selected }\"><img ng-src=\"assets/group.png\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.element.name}}</div><div class=\"features\"><p>{{ctrl.obj.element.description}}</p><p>{{ctrl.obj.element.size}} members</p></div></div></div>");
 $templateCache.put("app/list-viewer/_default-headerbar-tpl.html","<div class=\"trends-header-bar\"><span>&nbsp;</span></div>");
@@ -2946,4 +3162,4 @@ $templateCache.put("app/user/_default-modal-tpl.html","default modal template");
 $templateCache.put("app/user/_default-user-detail-tpl.html","<h5>Weight {{ctrl.uo.profile.weight}}</h5><h5>Gender {{ctrl.uo.profile.gender}}</h5><h5>Height {{ctrl.uo.profile.height}}</h5>");
 $templateCache.put("app/user/_user-element-tpl.html","<div class=\"user-list-element\" ng-class=\"{\'active\' : ctrl.obj.element.selected }\"><img ng-src=\"{{ctrl.uo.profile.image}}\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.element.first}} {{ctrl.obj.element.last}}</div><div class=\"features\"><p>Weight: {{ctrl.obj.element.weight | number: 2}}</p><p>Gender: {{ctrl.obj.element.gender}}</p><p>Height: {{ctrl.obj.element.height}}</p></div></div></div>");
 $templateCache.put("app/user/_user-select-modal-tpl.html","<listviewer obj=\"ctrl.resolveArg.userlist\"></listviewer>");
-$templateCache.put("app/user/_user-tpl.html","<div class=\"user-outer-box\"><div class=\"img-container\" ng-click=\"ctrl.uo.onClick()\"><img ng-src=\"{{ctrl.uo.profile.image}}\" alt=\"image\" width=\"200px\" height=\"200px\"><p>{{ctrl.uo.profile.first}} {{ctrl.uo.profile.last}}</p></div><div ng-include=\"\'app/user/_default-user-detail-tpl.html\'\"></div></div>");}]);
+$templateCache.put("app/user/_user-tpl.html","<div class=\"user-outer-box\"><div class=\"img-container\" ng-click=\"ctrl.uo.onClick()\"><img ng-src=\"{{ctrl.uo.profile.image | defaultPatient }}\" alt=\"image\" width=\"200px\" height=\"200px\"><p>{{ctrl.uo.profile.first}} {{ctrl.uo.profile.last}}</p></div><div ng-include=\"\'app/user/_default-user-detail-tpl.html\'\"></div></div>");}]);

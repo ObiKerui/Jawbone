@@ -1,40 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="jawboneGatewayApp">
 <head>
     <% include ../partials/head %>
 </head>
-<body class="container">
+<body class="container" ng-style="{ 'background-image': 'url(assets/bandsOpac.png)' }">
 
     <header>
         <% include ../partials/header %>
     </header>
 
-    <main>  
+    <div ui-view><div>
 
-	    <div class="jumbotron">
-	        <h1>Jawbone Viewer</h1>
-	        <p>Welcome to Jawbone Viewer App. Log in to see your latest sleep data.</p>
-            <a href="/login/jawbone" class="btn"><img src="assets/up2.png" width='50px' height='50px'></img> Login with UP</a>
-	    </div>
-
-        <p>Login as supervisor to manage patients</p>
-<!--         <a href="/login/superuser" class="btn"><img src="assets/st.png" width='50px' height='50px'></img> Login as supervisor</a> -->
-
-        <form action="/login/superuser" method="post">
-            <div>
-                <label>Username:</label>
-                <input type="text" name="username"/>
-            </div>
-            <div>
-                <label>Password:</label>
-                <input type="password" name="password"/>
-            </div>
-            <div>
-                <input type="submit" value="Log In"/>
-            </div>
-        </form>
-
-    </main>
+    <script type="text/javascript" src="scripts/vendor.js"></script>
+    <script type="text/javascript" src="scripts/jawbone-app.js"></script>
 
     <footer>
         <% include ../partials/footer %>

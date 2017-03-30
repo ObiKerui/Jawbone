@@ -1,0 +1,33 @@
+$sidebar-width: 300px;
+
+#mainarea {
+	overflow : hidden;
+	clear : both;
+}
+
+#sidebar {
+	float : left;
+	//border : 1px solid #ddd;
+	min-width : $sidebar-width;
+	//padding: 8px;
+	border-radius : 4px;
+}
+
+#jbv-maincontent {
+	border : 1px solid blue;
+	margin : $sidebar-width + 10px;
+}
+
+.form-area {
+	border : 1px solid #ddd;
+	min-width : $sidebar-width;
+	padding: 8px;
+	border-radius : 4px;	
+	margin-top : 4px;
+	background: #fff;
+}
+
+.active {
+	background : black;
+}
+

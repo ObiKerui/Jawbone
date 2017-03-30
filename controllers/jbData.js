@@ -1,5 +1,6 @@
 var JBDataModel = require('../models/user').JBData;
 var Groups = require('../models/jbGroup');
+var Jawbone = require('../models/jawboneData');
 var ErrorHandler = require('./error-handler');
 
 // var ErrorHandler = require('./error-handler');
@@ -15,15 +16,24 @@ var JBData = {
 	      	sortBy : req.query.sortBy
 	    };
 
-	    console.log('request for sleeps id : ' + req.params.id);
+	    //console.log('request for sleeps id : ' + req.params.id);
 	    // console.log('sleeps max : ' + params.max + ' offset: ' + params.offset + ' sortBy: ' + params.sortBy);
 
-	    JBDataModel.sleeps(req.user, params, function(err, sleeps) {
-	      if(err) {
-	        return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});
-	      }
-	      res.json(sleeps);
-	    });
+	    Jawbone.sleeps(req.user, params, function(err, sleeps) {
+	    	if(err) {				
+				return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});
+	    	} 
+	    	console.log('got sleeps: ' + JSON.stringify(sleeps));
+
+	    	res.json(sleeps);
+	    })
+
+	    // JBDataModel.sleeps(req.user, params, function(err, sleeps) {
+	    //   if(err) {
+	    //     return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});
+	    //   }
+	    //   res.json(sleeps);
+	    // });
 	},
 
 	getTrends: function(req, res) {
@@ -37,7 +47,7 @@ var JBData = {
 
 	    // console.log('trends max : ' + params.max + ' offset: ' + params.offset + ' sortBy: ' + params.sortBy);
 
-	    JBDataModel.trends(req.user, params, function(err, trends) {
+	    Jawbone.trends(req.user, params, function(err, trends) {
 	      if(err) {
 	        return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});
 	      }

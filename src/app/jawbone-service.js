@@ -190,15 +190,14 @@
 	  	}
 
 	  	function extractUserImage(data) {
-	  		var jbdata = data.jbdata || {};
-	  		var prof = jbdata.profile || {};
-	  		var jbprof = prof[0] || {};
 
-	  		if(!jbprof.image) {
+	  		var prof = data.profile || {};
+
+	  		if(!prof.img) {
 	  			$log.info('no image found - return null');
 	  			return null;
 	  		} else {
-	  			return 'https://jawbone.com/' + jbprof.image;
+	  			return 'https://jawbone.com/' + prof.img;
 	  		}
 	  	}
 	}

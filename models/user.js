@@ -6,13 +6,18 @@ var Schema = db.Schema;
 * User Schema
 */
 var user = new Schema({
-	jawboneId: { type: String, required: false, unique: true },
+	//jawboneId: { type: String, required: false, unique: true },
   email: { type: String, required: false, unique: false },
 	password: { type: String, required: false, select: false },
   socialMediaUser : { type: String, required: false },  
 	roles: [{ type: String, required: true }],
   groups: [{ type: Schema.Types.ObjectId, ref: 'JbGroup' }], 
-	jbdata: { type: Object, required: false },
+  jawboneData : {
+    jawboneId : { type: String, required: false, unique: false },
+    access_token : { type: String, required: false },
+    refresh_token : { type: String, required: false }
+  },
+	//jbdata: { type: Object, required: false },
 	profile: {
 		img: { data: Buffer, contentType: String, required: false },
 		first: { type: String, required: false },
@@ -89,6 +94,21 @@ var create = function(prof, data, cb) {
   //console.log('create a new user: ' + JSON.stringify(neObj));
 };
 
+var createRaw = function(email, pwd, cb) {
+  var newUser = new User({email: email, password: pwd});
+  bcrypt.hash(newUser.password, 10, function(err, hash) {
+    newUser.password = hash;
+    newUser.save(function(err, result) {
+      if(err) {
+        cb(err);
+      } else {
+        cb(null, result);
+      }
+
+    });
+  });
+};
+
 /**
 * get a specified user
 */
@@ -159,19 +179,33 @@ var all = function(params, cb) {
 /*
 * Update existing user in your database and return its id
 */
-var update = function(prof, newData, cb) {
-	// todo must belong to me - event should have owner field 
-	var upQuery = { jawboneId : prof.xid };	
-  var updateProf = { img: prof.img, first: prof.first, last: prof.last, weight: prof.weight, height: prof.height, gender: prof.gender };
-  var update = { $set:{ jbdata : newData, profile: updateProf } };
-	User.findOneAndUpdate(upQuery, update, {new: true, upsert: true, setDefaultsOnInsert: true}, function(err, result) {
-		if(err) {
+// var update = function(prof, newData, cb) {
+// 	// todo must belong to me - event should have owner field 
+// 	var upQuery = { jawboneId : prof.xid };	
+//   var updateProf = { img: prof.img, first: prof.first, last: prof.last, weight: prof.weight, height: prof.height, gender: prof.gender };
+//   var update = { $set:{ jbdata : newData, profile: updateProf } };
+// 	User.findOneAndUpdate(upQuery, update, {new: true, upsert: true, setDefaultsOnInsert: true}, function(err, result) {
+// 		if(err) {
+//       console.log('error updating user: ' + err);
+// 			return cb(err);
+// 		}
+//     console.log('udpated user: ' + result);
+// 		return cb(null, result);		
+// 	});
+// };
+
+var update = function(email, newData, cb) {
+  // todo must belong to me - event should have owner field 
+  var upQuery = { email : email }; 
+  var update = newData;
+  User.findOneAndUpdate(upQuery, update, {new: true, upsert: true, setDefaultsOnInsert: true}, function(err, result) {
+    if(err) {
       console.log('error updating user: ' + err);
-			return cb(err);
-		}
+      return cb(err);
+    }
     console.log('udpated user: ' + result);
-		return cb(null, result);		
-	});
+    return cb(null, result);    
+  });
 };
 
 /*
@@ -214,6 +248,19 @@ var addGroup = function(user, group, cb) {
     }
     return cb();
   });  
+};
+
+var distributeJawboneCredentials = function(user, callback) {
+  var jawboneCreds = user.jawboneData;
+  console.log('jawbone data: ' + JSON.stringify(jawboneCreds));
+
+  User.update({}, { $set:{jawboneData: jawboneCreds}}, { multi: true}, function(err, result) {
+    if(err) {
+      callback(err);
+    } else {
+      callback(null, result);
+    }
+  });
 };
 
 function extractSleeps(params, user) {
@@ -286,6 +333,7 @@ var JBData = {
 
 module.exports.User = User;
 module.exports.create = create;
+module.exports.createRaw = createRaw;
 module.exports.JBData = JBData;
 //module.exports.createSMUser = createSMUser;
 module.exports.get = get;
@@ -297,3 +345,4 @@ module.exports.update = update;
 module.exports.hashPassword = hashPassword;
 module.exports.comparePassword = comparePassword;
 module.exports.addGroup = addGroup;
+module.exports.distributeJawboneCredentials = distributeJawboneCredentials;
