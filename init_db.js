@@ -40,9 +40,9 @@ hashPassword = function(plainPass) {
 
 userData = [
 	{ 'email' : 'craig.jones@gmail.com', 'password' : hashPassword('pass'), 'roles' : ['ROLE_USER', 'ROLE_ADMIN'], 
-		'jawboneData' : { 'jawboneId' : 'dummy1' }, 'profile' : { 'img' : null, 'first': 'Craig', 'last': 'Jones', 'weight': '34', 'height': '1.54', 'gender': 'male' }},
+		'stats' : { 'nbrPatients' : 0, 'nbrGroups' : 0}, 'groups' : [], 'jawboneData' : { 'jawboneId' : 'dummy1' }, 'profile' : { 'img' : null, 'first': 'Craig', 'last': 'Jones', 'weight': '34', 'height': '1.88', 'gender': 'male' }},
 	{ 'email' : 'sarah.parker@gmail.com', 'password' : hashPassword('pass'), 'roles' : ['ROLE_USER'], 
-		'jawboneData' : { 'jawboneId' : 'dummy2' }, 'profile' : { 'img' : null, 'first': 'Sarah', 'last': 'Parker', 'weight': '84', 'height': '1.74', 'gender': 'female' }},
+		'stats' : { 'nbrPatients' : 0, 'nbrGroups' : 0}, 'jawboneData' : { 'jawboneId' : 'dummy2' }, 'profile' : { 'img' : null, 'first': 'Sarah', 'last': 'Parker', 'weight': '84', 'height': '1.74', 'gender': 'female' }},
 	{ 'email' : 'maria.johnson@gmail.com', 'password' : hashPassword('pass'), 'roles' : ['ROLE_USER'], 
 		'jawboneData' : { 'jawboneId' : 'dummy3' }, 'profile' : { 'img' : null, 'first': 'Maria', 'last': 'Johnson', 'weight': '77', 'height': '1.67', 'gender': 'female' }},
 	{ 'email' : 'lisa.walker@gmail.com', 'password' : hashPassword('pass'), 'roles' : ['ROLE_USER'], 
@@ -114,11 +114,11 @@ var createGroups = function(users, done) {
 			removeGroups(callback);
 		},
 		function(nbrRem, callback) {
-			console.log('nbr removed: ' + nbrRem);
+			//console.log('nbr removed: ' + nbrRem);
 			makeGroups(users, callback);
 		},
 		function(newGroup, callback) {
-			console.log('new group: ' + JSON.stringify(newGroup));
+			//console.log('new group: ' + JSON.stringify(newGroup));
 			addGroupMembers(newGroup, users, callback);			
 		}
 	], function(err, results) {
@@ -130,8 +130,8 @@ var createGroups = function(users, done) {
 initialise = function() {
 	createPopulation(userData, Users, userData.length, function(users) {
 		createGroups(users, function(err, results) {
-			console.log('err: ' + err);
-			console.log('results: ' + JSON.stringify(results));
+			//console.log('err: ' + err);
+			//console.log('results: ' + JSON.stringify(results));
 		});
 	});
 };

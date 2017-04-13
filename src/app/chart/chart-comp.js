@@ -28,7 +28,6 @@
           });
         }))
         .then(function(result) {
-          //$log.info('result of modal: ' + JSON.stringify(result)); 
         });
       };
 
@@ -68,6 +67,11 @@
       // get the plot names
       obj.plots = data.getPlotNames();
       obj.graphData = [];
+
+      // set the callback to access the graph data
+      data.getGraphDataCB = function() {
+          return obj.chartdata;
+      };
 
       var extractFtn = data.extract || function(obj, field) {        
         return 0;
@@ -113,12 +117,8 @@
 
         data.preprocessElements(obj.elements);
 
-        // var startDate = new Date(2016, 11, 1);
-        // var endDate = new Date(2017, 2, 20);
-
         // preapare plot data
-        $log.info('plot params: ' + JSON.stringify(plotParams));
-        //obj.graphData = PlotGenerator.preparePlot(startDate, endDate, obj.elements, ['craig']);  
+        //$log.info('plot params: ' + JSON.stringify(plotParams));
         obj.graphData = PlotGenerator.preparePlot(obj.elements, plotParams);  
         obj.selectPlot(0, obj.graphData);
       }
@@ -135,10 +135,6 @@
       };
 
       obj.addCompareData = function(dataToAdd, userProfile) {
-        //$log.info('add this compare data: ' + JSON.stringify(dataToAdd));
-        //data.getElements(dataToAdd)
-        //.then(function(response) {
-          //$log.info('add compare data: ' + JSON.stringify(dataToAdd));
           var result = [];
           angular.forEach(dataToAdd, function(val) {
             this.push(data.makeElement(val));
@@ -146,7 +142,6 @@
           var plotParams = data.makePlotParams(userProfile);
           obj.graphData = PlotGenerator.appendPlot(obj.graphData, result, plotParams);   
           obj.selectPlot(0, obj.graphData); 
-        //});        
       };
 
     };

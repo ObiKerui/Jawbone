@@ -9,7 +9,10 @@
 
   function HeaderBarFtn($log) {
     var HeaderBar = function(data) {
-      this.data = data || {};
+      var obj = this;
+      obj.data = data || {};
+      obj.message = 'hello there';
+
     };
     return HeaderBar;
   }
@@ -17,15 +20,16 @@
   /** @ngInject */
   function HeaderBarCtrl($log, $scope, HeaderBarObj) {
     var vm = this;  
+    vm.o = null;
 
-    $log.info('header bar: ' + JSON.stringify(vm.tpl));
-    // $scope.$watch(function(scope) {
-    //   return (vm.obj);
-    // }, function(newval, oldval) {
-    //   if(newval) {
-    //     vm.mo = new HeaderBarObj(vm.obj);
-    //   }
-    // }); 
+    //$log.info('header bar: ' + JSON.stringify(vm.tpl));
+    $scope.$watch(function(scope) {
+      return (vm.obj);
+    }, function(newval, oldval) {
+      if(newval) {
+        vm.o = newval;
+      }
+    }); 
   }	
 
   function headerBarFtn($log) {
@@ -35,9 +39,11 @@
         controller: 'HeaderBarCtrl',
         controllerAs: 'ctrl',
       bindToController: {
-        tpl : '='
+        tpl : '=',
+        obj : '='
       },
-      template: '<div ng-include=\'ctrl.tpl\'></div>'
+      template: '<div ng-include=\'ctrl.obj.headerbar\'></div>'
+      //template: '<div ng-include=\'ctrl.tpl\'></div>{{ctrl.tpl}} {{ctrl.obj.headerbar}}'
     };
     return directive;   
   }

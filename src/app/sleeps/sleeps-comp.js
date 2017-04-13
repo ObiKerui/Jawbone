@@ -45,7 +45,7 @@
       obj.profile = JawboneService.extractData('profile', user);
       obj.name = obj.profile.first + ' ' + obj.profile.last;
       obj.elems = JawboneService.extractData('sleeps', user);
-      var bobj = JawboneService.makeBatch('sleeps');
+      var bobj = JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps'));
 
       buildCallbacks($log, obj, obj.elems);
       buildListViewer($q, $log, obj, obj.elems, SleepObj, bobj);

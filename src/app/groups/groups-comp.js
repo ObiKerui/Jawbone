@@ -47,7 +47,7 @@
       obj.groups = JawboneService.extractData('groups', user);
       obj.elems = obj.groups || [];
 
-      var bobj = JawboneService.makeBatch('groups');
+      var bobj = JawboneService.makeBatch(JawboneService.makeEndpoint('groups'));
       $log.info('bobj: ' + JSON.stringify(bobj));
 
       buildCallbacks($log, obj, obj.elems);

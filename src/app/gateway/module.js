@@ -8,6 +8,7 @@
 
   /** @ngInject */
   function config($httpProvider, $logProvider, $locationProvider, $stateProvider, $urlRouterProvider) {
+    
     console.log('ran gateway config');
     // Enable log
     $logProvider.debugEnabled(true);

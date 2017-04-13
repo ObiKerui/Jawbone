@@ -4,26 +4,27 @@ var User = require('../models/user');
 module.exports = function(passport, configIds) {
 	passport.use('login', new LocalStrategy({
       usernameField: "email",
-      passwordField: "password"
+      passwordField: "password",
+      passReqToCallback: true
     },
-		function(email, password, cb) {
-			console.log('got email pwd: ' + email + ' ' + password);
-	   		User.getByEmail(email, function(err, user) {
-	      		if (err) { 
-	      			console.log('something went wrong in login strategy getting user: ' + err);
-	      			return cb(err); 
-	      		}
-	      		if (!user) { 
-	      			console.log('problem with user in local strategy');
-	      			return cb(null, false); 
-	      		}
-	      		if (!User.comparePassword(user, password)) { 
-              console.log('incorrect password for user');
-	      			return cb(null, false); 
-	      		}
-            console.log('success: return the user');
-	      		return cb(null, user);
-	    	});
+		function(req, email, password, cb) {
+			//console.log('got email pwd: ' + email + ' ' + password);
+   		User.getByEmail(email, function(err, user) {
+      		if (err) { 
+      			console.log('something went wrong in login strategy getting user: ' + err);
+      			return cb(err); 
+      		}
+      		if (!user) { 
+      			console.log('problem with user in local strategy');
+      			return cb(null, false, { message: 'cannot locate user'}); 
+      		}
+      		if (!User.comparePassword(user, password)) { 
+            console.log('incorrect password for user');
+      			return cb(null, false, { message: 'incorrect email or password'}); 
+      		}
+          console.log('success: return the user');
+      		return cb(null, user);
+    	});
 		}
 	)),
 

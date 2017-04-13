@@ -12,12 +12,16 @@
       o.profile = JawboneService.extractData('profile', user);
       o.name = o.profile.first + ' ' + o.profile.last;
       // get the elements to construct the chart
-      o.getElementsObj = JawboneService.makeBatch('sleeps');
+      o.getElementsObj = JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps'));
 
       // o.plotParams = {
       //   range : [new Date(2016, 11, 1), new Date(2017, 2, 20)],
       //   plotName : o.profile.first
       // };
+
+      o.getGraphDataCB = function() {
+        $log.info('implement this \'getGraphDataCB\' callback');
+      };
 
       // make an element
       o.makeElement = function(rawElem) {

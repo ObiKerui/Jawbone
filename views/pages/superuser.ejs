@@ -3,7 +3,7 @@
 <head>
     <% include ../partials/head %>
 </head>
-<body class="container">
+<body class="container" ng-style="{ 'background-image': 'url(assets/oobe_background_tile.png)' }">
 
   <header>
     <% include ../partials/header %>
@@ -11,10 +11,6 @@
 
   <main>
 
-<!--     <p>super user app</p>
-    <p><%- JSON.stringify(user) %></p>
-    <p><%= user.email %></p>
- -->    
     <div ui-view></div>
 
   </main>

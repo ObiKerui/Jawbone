@@ -14,8 +14,6 @@ var session = require('express-session');
 var cookieParser = require('cookie-parser');
 var flash = require('connect-flash');
 
-app.use(logger('dev'));
-
 var proxy = proxyMiddleware('/api', {
   target: 'https://restapi.com', // here we can specify a rest backend for api calls
   changeOrigin: true,             // for vhosted sites, changes host header to match to target's host
@@ -36,21 +34,23 @@ var allowCrossDomain = function(req, res, next) {
 
 console.log(__dirname);
 
+app.use(logger('dev'));
 app.use('/fonts', express.static(__dirname + '/public/fonts'));
 app.use('/assets', express.static(__dirname + '/public/assets'));
 app.use('/styles', express.static(__dirname + '/public/styles'));
 app.use('/scripts', express.static(__dirname + '/public/scripts'));
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
-//app.use(allowCrossDomain);
-//app.use(bodyParser.json({limit: '5mb'}));
+
+app.use(bodyParser.json({limit: '5mb'}));
 app.use(bodyParser.json({ type: 'application/json' }));
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser()); // read cookies (needed for auth)
-app.use(session({ secret: 'anappsessionsecretkeepssecretyes'}));
 
+// app.use(cookieParser('keyboard cat')); // read cookies (needed for auth)
+
+// //app.use(session({ secret: 'anappsessionsecretkeepssecretyes'}));
 // app.use(session({
-// secret: 'anappsessionsecretkeepssecretyes',
+//   secret: 'anappsessionsecretkeepssecretyes',
 //   resave: false,
 //   saveUninitialized: true,
 //   cookie: {
@@ -59,11 +59,35 @@ app.use(session({ secret: 'anappsessionsecretkeepssecretyes'}));
 //   }
 // }));
 
+// //app.use(flash());
+// //app.use(bodyParser.json({limit: '5mb'}));
+// app.use(bodyParser.json({ type: 'application/json' }));
+// app.use(bodyParser.urlencoded({ extended: true }));
+
+// app.use(passport.initialize());
+// app.use(passport.session()); // persistent login sessions
+// app.use(flash());
+
+// app.use(allowCrossDomain);
+
+// todo 
+// remove this
+//app.use(cookieParser('secret'));
+app.use(cookieParser());
+app.use(session({
+  secret: 'anappsessionsecretkeepssecretyes',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    secure: true,
+    maxAge: new Date(Date.now() + 3600000)
+  }
+}));
+
+app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
-app.use(flash());
 
-app.use(allowCrossDomain);
 require('./routes')(app, passport);
 
 //app.use('/api', proxy);

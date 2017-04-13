@@ -8,20 +8,14 @@
 
 <div class="patient-area" ng-if='ctrl.obj.mode === "edit"'>
 
-<!-- 	<div class="patient-header">
-		<div ng-include="'app/user/_user-element-tpl.html'"></div>
-		<hr/>
-		<div style="clear: both;"></div>
-		<div class="btn btn-default" ng-click='ctrl.obj.mode = "view"' style="float : left;">back to patients view</div>
-		<div class="btn btn-default" style="float: right;">download to csv file</div>
-		<div style="clear: both;"></div>
-	</div>
- -->
-
  	<patient-summary
  		obj='ctrl.obj.patientSummary'>
  	</patient-summary>
  	
+ 	<div ng-if='ctrl.obj.showWindow === true'>
+ 		<h3>show this</h3>
+ 	</div>
+
 	<chart obj='ctrl.obj.sleepsChart'></chart>
 
 	<listviewer

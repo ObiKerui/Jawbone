@@ -8,7 +8,9 @@
     .directive('jbvFormField', formFieldFtn)
     .directive('dynamicName', dynamicNameFtn)
     .directive('compareTo', compareToFtn)
-    .directive('backgroundImg', backgroundImgFtn);
+    .directive('backgroundImg', backgroundImgFtn)
+    .directive('minifier', minifierFtn)
+    .directive('expander', expanderFtn);
 
   function FormInputObjFtn($log) {
     var FormInputObj = function(obj) {
@@ -98,6 +100,46 @@
             'background-size' : 'cover'
         });
     };
+  }
+
+  function minifierFtn($log, $parse) {
+    var directive = {
+      restrict: 'E',
+      scope: {
+        text: '=',
+        limit: '='
+      },
+      templateUrl: 'app/form-utils/_minifier-tpl.html',
+      link : function(scope, elem, attrs) {
+        scope.textLimit = scope.limit;
+      }
+    };
+    return directive;     
+  }
+
+  function expanderFtn($log, $parse) {
+    var directive = {
+      restrict: 'E',
+      scope: {
+        text: '=',
+        limit: '='
+      },
+      templateUrl: 'app/form-utils/_expander-tpl.html',
+      link : function(scope, elem, attrs) {
+        scope.textLimit = scope.limit;
+        scope.expanded = false;
+        scope.expanderClick = function() {
+          if(scope.textLimit === scope.limit) {
+            scope.textLimit = scope.text.length;
+            scope.expanded = true;
+          } else {
+            scope.textLimit = scope.limit;
+            scope.expanded = false;
+          }
+        };
+      }
+    };
+    return directive;     
   }
 
 })();

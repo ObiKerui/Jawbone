@@ -9,9 +9,18 @@
         <% include ../partials/header %>
     </header>
 
+    <% if (message && message.length > 0) { %>
+        <div class="alert alert-danger"><%= message %></div>
+    <% } %>
+
     <div ui-view><div>
 
     <script type="text/javascript" src="scripts/vendor.js"></script>
+    <script>
+        angular.module('PreloadedData', [])
+            .constant('ServerMessage', <%- JSON.stringify(message) %>);
+    </script>
+
     <script type="text/javascript" src="scripts/jawbone-app.js"></script>
 
     <footer>

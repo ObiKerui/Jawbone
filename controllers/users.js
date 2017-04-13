@@ -117,7 +117,7 @@ var users = {
 	      } 
 	      res.status(200).json(removed); 
 	    });
-	}
+	},
 };
  
 module.exports = users;

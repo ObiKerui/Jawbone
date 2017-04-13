@@ -2,22 +2,27 @@ var db = require('../db');
 var bcrypt = require('bcryptjs');
 var Schema = db.Schema;
 
+var util = require('util');
+
 /*
 * User Schema
 */
 var user = new Schema({
-	//jawboneId: { type: String, required: false, unique: true },
   email: { type: String, required: false, unique: false },
 	password: { type: String, required: false, select: false },
   socialMediaUser : { type: String, required: false },  
 	roles: [{ type: String, required: true }],
-  groups: [{ type: Schema.Types.ObjectId, ref: 'JbGroup' }], 
+  groups: [{ type: Schema.Types.ObjectId, ref: 'JbGroup' }],
+  notes: [{ type: Schema.Types.ObjectId, ref: 'JbNote' }], 
   jawboneData : {
     jawboneId : { type: String, required: false, unique: false },
     access_token : { type: String, required: false },
     refresh_token : { type: String, required: false }
   },
-	//jbdata: { type: Object, required: false },
+  stats : {
+    nbrGroups: { type: Number, required: false },
+    nbrPatients: { type: Number, required: false }
+  },
 	profile: {
 		img: { data: Buffer, contentType: String, required: false },
 		first: { type: String, required: false },
@@ -42,6 +47,34 @@ user.pre('remove', function(next) {
   Group.remove({_owner: this._id}).exec();
   next();
 });
+
+user.post('findOneAndUpdate', function(doc) {
+  var newStats = {
+    nbrGroups: doc.groups.length,
+    nbrPatients: 8
+  };
+  doc.stats = newStats;
+  doc.save(function(err, result) {
+    if(err) {
+      console.log('error saving: ' + err);
+    } else {
+      console.log('saved');
+    }
+  });
+});
+
+// this doesn't work - sometimes $set is empty cos it wasn't the query
+// user.post('findOneAndUpdate', function(doc) {
+
+//   console.log('this doc: ' + JSON.stringify(doc));
+//   console.log('this getupdate doc: ' + JSON.stringify(this.getUpdate()));
+
+//   var newStats = {
+//     nbrGroups: this.getUpdate().$set.groups.length,
+//     nbrPatients: 0
+//   };
+//   this.findOneAndUpdate({},{ stats: newStats });
+// });
 
 /*
 * User Model
@@ -176,24 +209,6 @@ var all = function(params, cb) {
   });
 };
 
-/*
-* Update existing user in your database and return its id
-*/
-// var update = function(prof, newData, cb) {
-// 	// todo must belong to me - event should have owner field 
-// 	var upQuery = { jawboneId : prof.xid };	
-//   var updateProf = { img: prof.img, first: prof.first, last: prof.last, weight: prof.weight, height: prof.height, gender: prof.gender };
-//   var update = { $set:{ jbdata : newData, profile: updateProf } };
-// 	User.findOneAndUpdate(upQuery, update, {new: true, upsert: true, setDefaultsOnInsert: true}, function(err, result) {
-// 		if(err) {
-//       console.log('error updating user: ' + err);
-// 			return cb(err);
-// 		}
-//     console.log('udpated user: ' + result);
-// 		return cb(null, result);		
-// 	});
-// };
-
 var update = function(email, newData, cb) {
   // todo must belong to me - event should have owner field 
   var upQuery = { email : email }; 
@@ -236,20 +251,39 @@ var comparePassword = function(user, password) {
   return bcrypt.compareSync(password, user.password);
 };
 
+//----------------------------------------------------
+// ADD GROUP
+//----------------------------------------------------
 var addGroup = function(user, group, cb) {
+
   user.groups.push(group);
-  User.update(
-    { _id: user._id },
-    {$set:{groups: user.groups}}
-  )
-  .exec(function(err, savedUser) {
+  User.findOneAndUpdate({ _id: user._id }, { $set: { groups: user.groups }}, { new: true }, function(err, savedResult) {
     if(err) {
       return cb(err);
     }
-    return cb();
-  });  
+    console.log('updated user: ' + JSON.stringify(savedResult));
+    return cb(null, savedResult);
+  });
 };
 
+//----------------------------------------------------
+// ADD NOTE
+//----------------------------------------------------
+var addNote = function(user, note, cb) {
+
+  user.notes.push(note);
+  User.findOneAndUpdate({ _id: user._id }, { $set: { notes: user.notes }}, { new: true }, function(err, savedResult) {
+    if(err) {
+      return cb(err);
+    }
+    console.log('updated user: ' + JSON.stringify(savedResult));
+    return cb(null, savedResult);
+  });
+};
+
+//----------------------------------------------------
+// DISTRIBUTE JAWBONE CREDENTIALS
+//----------------------------------------------------
 var distributeJawboneCredentials = function(user, callback) {
   var jawboneCreds = user.jawboneData;
   console.log('jawbone data: ' + JSON.stringify(jawboneCreds));
@@ -345,4 +379,5 @@ module.exports.update = update;
 module.exports.hashPassword = hashPassword;
 module.exports.comparePassword = comparePassword;
 module.exports.addGroup = addGroup;
+module.exports.addNote = addNote;
 module.exports.distributeJawboneCredentials = distributeJawboneCredentials;

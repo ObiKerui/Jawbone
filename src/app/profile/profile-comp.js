@@ -49,8 +49,8 @@
       obj.trendschart = new TrendsChartBuilderObj(obj.user);
       obj.userprofile = new UserComp(jbUser, getUsers);
       obj.recentUsers = new RecentUsersObj(jbUser, getUsers);
-      obj.groups = new GroupsComponentBuilder(jbUser);
-      obj.patients = new PatientsComponentBuilder(jbUser);
+      obj.groups = new GroupsComponentBuilder(obj.user);
+      obj.patients = new PatientsComponentBuilder(obj.user);
     };
     return ProfileObj;
   }

@@ -38,6 +38,7 @@
       o.listobj = obj.listobj || {};
       o.heading = obj.listobj.heading || 'blank';
       o.headerbar = obj.listobj.headerbar || 'app/list-viewer/_default-headerbar-tpl.html';
+      o.headerObj = obj.listobj.headerObj || {};
       o.template = obj.listobj.template || 'app/list-viewer/_default-lve-tpl.html';
       o.chunksize = obj.listobj.chunksize || 4;
       o.getElements = o.listobj.getElements || function() {
@@ -54,8 +55,12 @@
 
       // set up callbacks
       //o.callbacks = obj.callbacks || {};
-      o.onSelect = obj.onSelect || function() {
+      o.onSelect = obj.onSelect || function(elem) {
         $log.info('supply on select function');
+      };
+
+      o.onDeselect = obj.onDeselect || function(elem) {
+        $log.info('supply on deselect function');
       };
 
       o.elements = [];
@@ -65,6 +70,7 @@
       o.notifyClicked = function(index) {        
         if(o.selected !== -1 && o.selected < o.elements.length) {
           o.elements[o.selected].onDeselected();
+          o.onDeselect(o.elements[o.selected].element);
         }
 
         if(o.selected !== index) {
@@ -76,32 +82,16 @@
 
       };
 
-      // function populate() {
-      //   // o.getElements()
-      //   o.getElementsObj.get()
-      //   .then(function(batch) {
-      //     angular.forEach(batch.data, function(value) { 
-      //       //$log.info('value gotten: ' + JSON.stringify(value));           
-      //       var e = o.makeElement(value); 
-      //       this.push(new ListViewerElemObj(o.notifyClicked, e));
-      //     }, o.elements);
-      //   })
-      //   .catch(function(err) {
-      //     $log.info('error getting elements: ' + err);
-      //   });        
-      // }
-
-      // // TODO implement
-      // function appendElements() {
-
-      // }
-
-      // o.listobj.onPopulate = function() {
-      //   populate();
-      // };
-
-      // populate();
-
+      // ensure all elements deselected
+      o.listobj.baseFtns = {
+        deselectAll : function() {
+          o.selected = -1;
+          angular.forEach(o.elements, function(value) {
+            value.onDeselected();
+            o.onDeselect(value.element);
+          }, o.elements);          
+        }
+      };
 
       function populate(list, batchObj) {
         // o.getElements()
@@ -115,6 +105,9 @@
             var e = o.makeElement(value); 
             this.push(new ListViewerElemObj(o.notifyClicked, e));
           }, list);
+
+          $log.info('size of list: ' + JSON.stringify(list.length));
+
         })
         .catch(function(err) {
           $log.info('error getting elements: ' + err);
@@ -122,10 +115,11 @@
       }
 
       // TODO implement
-      function appendElements() {
+      o.appendElements = function() {
+        $log.info('call to append elements...');
         o.getElementsObj = o.getElementsObj.next();
         populate(o.elements, o.getElementsObj);
-      }
+      };
 
       o.listobj.onPopulate = function() {
         populate(o.elements, o.getElementsObj);
@@ -152,17 +146,18 @@
     vm.nbrForwards = 100;
     vm.index = 0;
     vm.initcb = null;
+    vm.animating = false;
 
     vm.register = function(cb) {
       vm.initcb = cb;
     };
 
     vm.initialiseHeight = function(height) {
-      //$log.info('init height called: ' + height);
+      $log.info('init height called: ' + height);
       var chunksize = vm.lo.chunksize || 4;
       vm.frameHeight = chunksize * height;
       vm.moveDistance = parseInt(vm.frameHeight / 2);
-      vm.index = 0;
+      //vm.index = 0;
     };
 
     vm.getFrameHeight = function() {
@@ -172,9 +167,9 @@
     function adjust(length) {
       vm.nbrElems = vm.lo.listobj.elements.length;
       vm.nbrForwards = parseInt(vm.nbrElems / 2);
-      //$log.info('no. forwards: ' + vm.nbrForwards);
+      $log.info('no. forwards: ' + vm.nbrForwards);
       if(vm.initcb) {
-        vm.initcb();
+       vm.initcb();
       }
     }
 
@@ -192,22 +187,42 @@
 
     function init(obj) {
       vm.lo = new ListViewerCtrlObj(obj);
+      $log.info('calling init of listviewer : ' + JSON.stringify(vm.lo));
+
       vm.nbrElems = vm.lo.listobj.elements.length;
       vm.nbrForwards = parseInt(vm.nbrElems / 2);
 
       vm.back = function() {
         if(vm.atStart()) return;
+        if(vm.animating) return;
+        vm.animating = true;
         vm.index = (vm.index === 0 ? 0 : vm.index - 1);
-        //$log.info('clicked back: ' + vm.index);
-        $scope.$broadcast('clickback', vm.moveDistance);
+        $log.info('clicked back: ' + vm.index);
+        //$scope.$broadcast('clickback', vm.moveDistance);
+        $scope.$broadcast('clickback', {
+          dist: vm.moveDistance,
+          callback: function() {
+            vm.animating = false;
+          }
+        });
       };
 
       vm.forward = function() {
         if(vm.atEnd()) return;
+        if(vm.animating) return;
+        vm.animating = true;
         //$log.info('clicked forward');
         //$log.info('number of elements: ' + vm.nbrElems + ' move distance: ' + vm.moveDistance + ' forwards: ' + vm.nbrForwards);
         vm.index = (vm.index === vm.nbrForwards ? vm.nbrForwards : vm.index + 1);
-        $scope.$broadcast('clickforward', vm.moveDistance);
+        //$scope.$broadcast('clickforward', vm.moveDistance);
+        $scope.$broadcast('clickforward', { 
+          dist: vm.moveDistance, 
+          callback: function() { 
+            vm.animating = false;
+            $log.info('set animating to false: ' + vm.animating); 
+          }
+        });
+        vm.lo.listobj.appendElements();
       };
 
       vm.atStart = function() {
@@ -283,17 +298,22 @@
 
         scope.$on('clickback', function(event, data) {
           ul.velocity({
-            'top': '+='+ data
+            'top': '+='+ data.dist
           }, 400, function() {
             // Animation complete.
+            $log.info('animating complete invoke cb...')
+            data.callback();
           });          
         });
 
         scope.$on('clickforward', function(event, data) {
+          $log.info('click forwards event...');
           ul.velocity({
-            'top': '-='+ data
+            'top': '-='+ data.dist
           }, 400, function() {
             // Animation complete.
+            $log.info('animating complete invoke cb...');
+            data.callback();
           });                  
         });    
 

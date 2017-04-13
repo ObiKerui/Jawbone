@@ -1,5 +1,6 @@
 var userCtrl = require('../controllers/users');
 var groupCtrl = require('../controllers/jbGroups');
+var notesCtrl = require('../controllers/jbNotes');
 var JBDataCtrl = require('../controllers/jbData');
 var jbbuilder = require('../passport/jawboneProfile');
 
@@ -8,11 +9,12 @@ var userModel = require('../models/user');
 module.exports = function(app, passport) {
 
 	app.get('/', function(req, res) {
-	  res.render('pages/index');
+		console.log('get / render the index page');
+	  	res.render('pages/index', { message: req.flash('error') });
 	});
 
 	app.get('/about', function(req, res) {
-	  res.render('pages/about');
+	  	res.render('pages/about', { message: req.flash('error')});
 	});
 	
 	app.get('/users/me', isLoggedIn, userCtrl.getAll);
@@ -24,6 +26,12 @@ module.exports = function(app, passport) {
 	app.get('/trends/me', isLoggedIn, JBDataCtrl.getTrends);
 	app.get('/trends/:id', isLoggedIn, JBDataCtrl.getTrends);
 	app.get('/patients/me', isLoggedIn, JBDataCtrl.getPatients);
+
+	app.get('/notes/me', notesCtrl.getAllByCurrentUser);
+	app.get('/notes/:id', notesCtrl.getOne);
+	app.post('/notes', notesCtrl.create);
+	app.put('/notes/:id', notesCtrl.update);
+	app.delete('/notes/:id', notesCtrl.remove);
 
 	//------------------------------------------------------------------------
 	// register a new user - need to have a jawbone account
@@ -38,7 +46,7 @@ module.exports = function(app, passport) {
 	// login the user - ensure has a jawbone account (isJBUser)
 	//------------------------------------------------------------------------
 	app.post('/login/user', [
-		passport.authenticate('login', { failureRedirect: '/' }),
+		passport.authenticate('login', { failureRedirect: '/', failureFlash: true }),
 		isJBUser
 	], function(req, res) {
 		res.redirect('/userdata');
@@ -48,7 +56,7 @@ module.exports = function(app, passport) {
 	// login the superuser
 	//------------------------------------------------------------------------
 	app.post('/login/superuser',
-	  passport.authenticate('login', { failureRedirect: '/' }),
+	  passport.authenticate('login', { failureRedirect: '/', failureFlash: true }),
 	  function(req, res) {
 	  	res.redirect('/superuser');
 	});
@@ -108,14 +116,15 @@ module.exports = function(app, passport) {
 
 	// route middleware to make sure a user is logged in
 	function isLoggedIn(req, res, next) {
-
+		
 	    // if user is authenticated in the session, carry on 
 	    if (req.isAuthenticated()) {
-	        return next();
+	        next();
+	    } else {
+		    // if they aren't redirect them to the home page
+		    //return res.redirect('/');
+		    return res.status(401).redirect('/');
 	    }
-
-	    // if they aren't redirect them to the home page
-	    res.redirect('/');
 	}	
 
 	function isAuthorized(req, res, next) {
@@ -129,7 +138,9 @@ module.exports = function(app, passport) {
 		};
 
 		// user is not authorized to login as superuser
-		res.redirect(303, '/');
+		//res.redirect(301, '/');
+
+		res.redirect('/');
 	}
 
 	function isJBUser(req, res, next) {

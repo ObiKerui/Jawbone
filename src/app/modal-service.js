@@ -4,7 +4,8 @@
   angular
     .module('jawboneApp')
     .controller('DefaultModalInstanceCtrl', DefaultModalInstanceCtrl)
-    .factory('ModalService', ModalService);
+    .factory('ModalService', ModalService)
+    .factory('CommonModals', CommonModals);
 
 	function DefaultModalInstanceCtrl(resolveArg, $uibModalInstance, $log) {
 		var vm = this;
@@ -19,6 +20,28 @@
 		  $uibModalInstance.dismiss(vm.resolveArg);
 		};
 	 }
+
+	function CommonModals($log, $q, ModalService) {
+		var service = {
+			confirm: confirm
+		};
+		return service;
+
+		function confirm(msg) {
+			var ps = {};
+			ps.modalSize = 'sm';
+			ps.tpl = 'app/_default-confirm-modal-tpl.html';
+			ps.msg = msg || 'no message';
+			ps.confirmed = false;
+	  		ps.onConfirm = function() {
+	  			ps.confirmed = true;
+	  		};
+			return ModalService.onClick(ps)
+			.then(function(response) {
+				return response.confirmed;
+			});			
+		}
+	}
 
 	//------------------------------------------------------
 	//  JAWBONE DATA SERVICE 
@@ -41,7 +64,7 @@
 	  	* 	MODIFY THIS TO GET A SPECIFIED USER'S DATA FROM SERVER
 	  	*/
 	  	function onClick(params) {
-	  		$log.info('params: ' + JSON.stringify(params));
+	  		//$log.info('params: ' + JSON.stringify(params));
 	  		var ps = params || {};
 	  		var ctrl = ps.ctrl || 'DefaultModalInstanceCtrl';
 	  		var modalSize = ps.size || 'md';

@@ -9,58 +9,83 @@
     .controller('PatientCtrl', PatientCtrlFtn)
     .directive('patientMgr', patientMgrFtn);
 
-  function buildPatientSummary($log, obj, user, PatientSummObj) {
+  var log = null;
+  var jbservice = null;
+
+  function buildPatientSummary(obj, user, PatientSummObj) {
     obj.patientSummary = new PatientSummObj(user);
     obj.patientSummary.parent = {
       switchView: function() {
         obj.mode = 'view';
       },
+      showPatientNotes: function() {
+        log.info('implement show patient notes');
+      },
       downloadToCSV: function() {
-        $log.info('download to csv');
       }
     };
   }
 
-  function buildPatientSleeps($log, obj, SleepObj, batchRetriever) {
-    obj.listobj = {};
-    obj.listobj.template = 'app/sleeps/_sleeps-element-tpl.html';
-    obj.listobj.headerbar = 'app/sleeps/_sleeps-header-tpl.html';    
-    obj.listobj.heading = 'Sleeps';
+  function buildPatientSleeps(obj, user, SleepObj) {
+    obj.sleepsViewer.listobj = {};
+    obj.sleepsViewer.listobj.template = 'app/sleeps/_sleeps-element-tpl.html';
+    obj.sleepsViewer.listobj.headerbar = 'app/sleeps/_sleeps-header-tpl.html';    
+    obj.sleepsViewer.listobj.heading = 'Sleeps';
 
-    obj.listobj.getElementsObj = batchRetriever;
+    obj.sleepsViewer.listobj.getElementsObj = jbservice.makeBatch(jbservice.makeEndpoint('sleeps', user._id));
 
-    obj.listobj.makeElement = function(objElement) {
+    obj.sleepsViewer.listobj.makeElement = function(objElement) {
       return new SleepObj(objElement);
     };        
   }
 
-  function buildPatientGraph($log, obj, user, SleepsChartBuilderObj) {
+  function buildPatientGraph(obj, user, SleepsChartBuilderObj) {
     obj.sleepsChart = new SleepsChartBuilderObj(user);
   }
 
-  function buildCallbacks($log, obj, SleepObj, JawboneService, SleepsChartBuilderObj, user, PatientSummObj) {
+  function buildPatientDownloader(obj, SleepsChartDownloaderBuilder, ModalService) {
+        
+    obj.patientSummary.parent.downloadToCSV = function() {
+      ModalService.onClick(new SleepsChartDownloaderBuilder(obj, function() {
+        return obj.sleepsChart.getGraphDataCB();
+      }))
+      .then(function(result) {});
+    };
+  }
 
+  function buildPatientNotes(obj, ModalService) {
+    obj.patientSummary.parent.showPatientNotes = function() {
+      ModalService.onClick({
+        tpl : 'app/patient/_patient-notes-viewer-tpl.html'
+      })
+      .then(function(result) {});
+    };
+  }
+
+  function buildCallbacks(obj, SleepObj, SleepsChartBuilderObj, SleepsChartDownloaderBuilder, PatientSummObj, ModalService) {
+  
     obj.mode = 'view';
 
     obj.patientViewer.onSelect = function(ss) {
-      $log.info('on select event fired for patients element: ' + JSON.stringify(ss));
-      var bsleeps = JawboneService.makeBatch('sleeps', ss.data.user._id);
-      buildPatientSummary($log, obj, ss.data.user, PatientSummObj);
-      //$log.info('deee patient summary object: ' + JSON.stringify(obj.patientSummary));
-      buildPatientSleeps($log, obj.sleepsViewer, SleepObj, bsleeps);
-      buildPatientGraph($log, obj, ss.data.user, SleepsChartBuilderObj);
+      //log.info('on select event fired for patients element: ' + JSON.stringify(ss));
+
+      buildPatientSummary(obj, ss.data.user, PatientSummObj);
+      buildPatientSleeps(obj, ss.data.user, SleepObj);
+      buildPatientGraph(obj, ss.data.user, SleepsChartBuilderObj);
+      buildPatientDownloader(obj, SleepsChartDownloaderBuilder, ModalService);
+      buildPatientNotes(obj, ModalService);
       obj.mode = 'edit';
     };
   }
 
-  function buildListViewer($q, $log, obj, PatientObj, batchRetriever) {
-    obj.listobj = {};
-    obj.listobj.template = 'app/patient/_patient-element-tpl.html';
-    obj.listobj.heading = 'Patients';
+  function buildListViewer(obj, PatientObj) {
+    obj.patientViewer.listobj = {};
+    obj.patientViewer.listobj.template = 'app/patient/_patient-element-tpl.html';
+    obj.patientViewer.listobj.heading = 'Patients';
 
-    obj.listobj.getElementsObj = batchRetriever;
+    obj.patientViewer.listobj.getElementsObj = jbservice.makeBatch(jbservice.makeEndpoint('patients'));
 
-    obj.listobj.makeElement = function(objElement) {
+    obj.patientViewer.listobj.makeElement = function(objElement) {
       return new PatientObj(objElement)
     };    
 
@@ -75,8 +100,13 @@
     }     
   }
 
-  function PatientsComponentBuilderFtn($q, $log, PatientObj, SleepObj, JawboneService, SleepsChartBuilderObj, PatientSummObj) {
+  function PatientsComponentBuilderFtn($q, $log, PatientObj, SleepObj, JawboneService, SleepsChartBuilderObj, SleepsChartDownloaderBuilder, PatientSummObj, ModalService) {
     var PatientsComponentBuilder = function(user) {
+
+      // assign some scoped variables rather than pass these as args
+      log = $log;
+      jbservice = JawboneService;
+
       var obj = this;
 
       obj.profile = JawboneService.extractData('profile', user);
@@ -88,14 +118,13 @@
       obj.patientViewer = {};
       obj.sleepsViewer = {};
       obj.sleepsChart = {};
+      obj.downloader = {};
 
-      var bobj = JawboneService.makeBatch('patients');
-      $log.info('bobj: ' + JSON.stringify(bobj));
+      // to implement
+      obj.noteViewer = {};
 
-      buildCallbacks($log, obj, SleepObj, JawboneService, SleepsChartBuilderObj, user, PatientSummObj);
-      buildListViewer($q, $log, obj.patientViewer, PatientObj, bobj);
-
-      $log.info('patient comp builder ran: ' );
+      buildCallbacks(obj, SleepObj, SleepsChartBuilderObj, SleepsChartDownloaderBuilder, PatientSummObj, ModalService);
+      buildListViewer(obj, PatientObj);
 
     };
     return PatientsComponentBuilder;

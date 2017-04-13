@@ -1,2 +1,6 @@
-<div class="btn btn-primary" ng-click='ctrl.do.onClick()'>download</div>
-download object: {{ctrl.do | json}}
+<textarea class="download-textarea"
+    ng-model="ctrl.do.content"
+    name="textarea" rows="20">
+</textarea>
+
+<a href="" class="btn btn-primary btn-small" ng-click="ctrl.do.download()">Download</a>

@@ -15,6 +15,7 @@
     function init() {
       JawboneService.getMainUser()
       .then(function(mainUserSumm) {
+        $log.info('summary info : ' + JSON.stringify(mainUserSumm));
         return JawboneService.getUser(mainUserSumm._id);
       })
       .then(function(mainUserFull) {

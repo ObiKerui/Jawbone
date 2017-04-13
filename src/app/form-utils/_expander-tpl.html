@@ -1,0 +1,5 @@
+<span>{{text | limitTo: textLimit }}</span> 
+<span ng-if='text.length > limit'>
+	<a ng-if='expanded' ng-click='expanderClick()' style="font-size: 90%;"> ...(less)</a>
+	<a ng-if='!expanded' ng-click='expanderClick()' style="font-size: 90%;"> ...(more)</a>
+</span>

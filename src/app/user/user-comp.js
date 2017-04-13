@@ -127,6 +127,7 @@
       o.weight = o.obj.weight || 'blank weight';
       o.gender = o.obj.gender || 'no gender';
       o.height = o.obj.height || 'no height';
+      o.stats = o.obj.stats || {};
       o.image = JawboneService.extractData('userImage', objElement);
 
       o.selected = false;

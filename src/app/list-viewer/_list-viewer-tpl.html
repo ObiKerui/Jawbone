@@ -6,7 +6,7 @@
 		<input type="text" class="form-control" placeholder="search for..." ng-model='searchtext'></input>
 	</div>
 	<p></p>
-	<header-bar tpl='ctrl.lo.listobj.headerbar'></header-bar>
+	<header-bar tpl='ctrl.lo.listobj.headerbar' obj='ctrl.lo.listobj'></header-bar>
 	<div id="listviewerbox" class="list-viewer-elements" mouse-wheel-up='ctrl.didMouseWheelUp()' mouse-wheel-down='ctrl.didMouseWheelDown()'>
 		<ul>
 			<li ng-repeat="elem in ctrl.lo.listobj.elements track by $index">

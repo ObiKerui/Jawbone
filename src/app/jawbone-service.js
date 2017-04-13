@@ -26,7 +26,7 @@
 			obj.endpoint = endpoint || '';
 			obj.params = {};
 			var paramsArg = params || {};
-			obj.params.max = paramsArg.max || 4;
+			obj.params.max = paramsArg.max || 4 ;
 			obj.params.offset = paramsArg.offset || 0;
 			obj.params.sortBy = paramsArg.sortBy || 'id';
 
@@ -72,10 +72,14 @@
 	  		getMainUser : getMainUser,
 	  		getUser : getUser,
 	  		getUsers : getUsers,
+	  		makeEndpoint : makeEndpoint,
 	  		makeBatch : makeBatch,
 	  		setUserCallback : setUserCallback,
 	  		setUser : setUser,
-	  		extractData : extractData
+	  		extractData : extractData,
+	  		createNote : createNote,
+	  		updateNote : updateNote,
+	  		deleteNote : deleteNote
 	  	};
 	  	return service;    
 
@@ -115,12 +119,20 @@
 	  		});
 	  	}
 
-	  	function makeBatch(endpoint, id) {
+	  	function makeEndpoint(endpoint, id) {
 	  		var userid = id || 'me';
-	  		endpoint = '/' + endpoint + '/' + userid; 
-	  		$log.info('endpoint: ' + endpoint);
+	  		return ('/' + endpoint + '/' + userid);
+	  	}
 
-	  		return new BatchObj(endpoint);
+	  	function makeBatch(endpoint, params) {
+	  		// var userid = id || 'me';
+	  		// endpoint = '/' + endpoint + '/' + userid; 
+	  		// $log.info('endpoint: ' + endpoint);
+			var paramsArg = params || {};
+			paramsArg.max = paramsArg.max || 4 ;
+			paramsArg.offset = paramsArg.offset || 0;
+			paramsArg.sortBy = paramsArg.sortBy || 'id';
+	  		return new BatchObj(endpoint, paramsArg);
 	  	}
 
 	  	/*
@@ -144,6 +156,36 @@
 	  			deferred.reject(errResponse);
 	  		});
 	  		return deferred.promise;
+	  	}
+
+	  	function createNote(note) {
+	  		return $http.post('/notes', note)
+	  		.then(function(response) {
+	  			return response;
+	  		})
+	  		.catch(function(errResponse) {
+	  			$log.info('error creating note: ' + JSON.stringify(errResponse));
+	  		});
+	  	}
+
+	  	function updateNote(note) {
+	  		return $http.put('/notes/' + note._id, note)
+	  		.then(function(response) {
+	  			return response;
+	  		})
+	  		.catch(function(errResponse) {
+	  			$log.info('error updating note: ' + JSON.stringify(errResponse));
+	  		});
+	  	}
+
+	  	function deleteNote(note) {
+	  		return $http.delete('/notes/' + note._id)
+	  		.then(function(response) {
+	  			return response;
+	  		})
+	  		.catch(function(errResponse) {
+	  			$log.info('error deleting note: ' + JSON.stringify(errResponse));
+	  		});	  		
 	  	}
 
 	  	function extractData(dataname, data) {

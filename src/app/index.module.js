@@ -15,13 +15,15 @@
   	'run',
     'ngAnimate',
   	'ngSanitize',
+    'ngFileSaver',
     'ui.bootstrap',
     'ui.router',
     'googlechart',
     'jbtemplates'
   ])
   angular.module('jawboneGatewayApp', [
-    'jawboneApp'
+    'jawboneApp',
+    'PreloadedData'
   ])
   angular.module('jawboneUApp', [
     'jawboneApp',

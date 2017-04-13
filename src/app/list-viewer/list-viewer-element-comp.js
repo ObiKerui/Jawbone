@@ -16,8 +16,8 @@
       this.parent = parent || {};      
       this.element = data;
 
-      this.activated = data.activated || function() {
-        $log.info('default activated function');
+      this.clicked = data.clicked || function() {
+        $log.info('default clicked function');
       };
 
       this.deactivated = data.deactivated || function() {
@@ -25,7 +25,7 @@
       };
 
       this.onClick = function(index) {
-        this.activated();
+        this.clicked();
         notify(index);
       }
 
