@@ -9,9 +9,9 @@
     .directive('chart', chartFtn);
 
   function ChartManagerFtn($log, ModalService, UserSelectorObj, ChartObj, JawboneService) {
-    var ChartManager = function(chartdata) {
+    var ChartManager = function(chartdata, onStateChange) {
       var obj = this;
-      obj.chart = new ChartObj(chartdata);
+      obj.chart = new ChartObj(chartdata, onStateChange);
 
       obj.clickFtn = chartdata.clickFtn || function() {        
         // create modal
@@ -40,9 +40,12 @@
   }
 
   function ChartObjFtn($log, PlotGenerator) {
-    var ChartObj = function(data) {
+    var ChartObj = function(data, onStateChange) {
       var obj = this;
       obj.data = data || {};
+      obj.onStateChange = onStateChange || function(newState) {
+        $log.info('supply a state change function to ChartObj');
+      };
 
       obj.chart = {};
       obj.chart.type = "LineChart";
@@ -77,6 +80,7 @@
         return 0;
       };
 
+      obj.onStateChange('loading');
       data.getElementsObj.get()
       .then(function(result) {
         processElements(result.data, data.makePlotParams());
@@ -132,6 +136,7 @@
 
         //obj.chart.options.title = obj.selected;
         obj.chart.data = google.visualization.arrayToDataTable(obj.chartdata);
+        obj.onStateChange('ready');
       };
 
       obj.addCompareData = function(dataToAdd, userProfile) {
@@ -151,10 +156,13 @@
   /** @ngInject */
   function ChartCtrl($log, $scope, ChartManager, googleChartApiPromise) {
     var vm = this;
+    vm.state = 'loading';
 
     function onLoadedFtn() {
       $log.info('google chart loaded now');
-      vm.co = new ChartManager(vm.obj);
+      vm.co = new ChartManager(vm.obj, function(newState) {
+        vm.state = newState;
+      });
     };
 
     $scope.$watch(function(scope) {

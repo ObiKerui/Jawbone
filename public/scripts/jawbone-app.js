@@ -541,6 +541,7 @@
     obj.listobj.template = 'app/sleeps/_sleeps-element-tpl.html';
     obj.listobj.headerbar = 'app/sleeps/_sleeps-header-tpl.html';
     obj.listobj.heading = 'Sleeps';
+    obj.listobj.loaderMessage = 'Loading sleep data...';
 
     obj.listobj.getElementsObj = batchRetriever;
     obj.listobj.getElements = function() {
@@ -1125,6 +1126,7 @@
     obj.sleepsViewer.listobj.template = 'app/sleeps/_sleeps-element-tpl.html';
     obj.sleepsViewer.listobj.headerbar = 'app/sleeps/_sleeps-header-tpl.html';    
     obj.sleepsViewer.listobj.heading = 'Sleeps';
+    obj.sleepsViewer.listobj.loaderMessage = 'Loading sleep data...';
 
     obj.sleepsViewer.listobj.getElementsObj = jbservice.makeBatch(jbservice.makeEndpoint('sleeps', user._id));
 
@@ -1176,6 +1178,7 @@
     obj.patientViewer.listobj = {};
     obj.patientViewer.listobj.template = 'app/patient/_patient-element-tpl.html';
     obj.patientViewer.listobj.heading = 'Patients';
+    obj.patientViewer.listobj.loaderMessage = 'Loading Patients...';
 
     obj.patientViewer.listobj.getElementsObj = jbservice.makeBatch(jbservice.makeEndpoint('patients'));
 
@@ -1751,7 +1754,7 @@
 
 	  		var deferred = $q.defer();
         	var modalInstance = $uibModal.open({
-	          	animation: true,
+	          	animation: false,
     	      	ariaLabelledBy: 'modal-title',
         	  	ariaDescribedBy: 'modal-body',
           		templateUrl: 'app/_modal-frame-tpl.html',
@@ -1778,6 +1781,46 @@
 
 	}
 })();
+
+(function() {
+  'use strict';
+
+  angular
+    .module('jawboneApp')   
+    .controller('LoaderCtrl', LoaderCtrlFtn)
+    .directive('loader', LoaderDirFtn);
+
+  function LoaderCtrlFtn($scope) {
+    var vm = this; 
+    vm.message = 'Loading...';
+    vm.loader = 'app/loaders/_basic-spinner-tpl.html'; 
+    vm.width = 300;
+    vm.height = 300;
+
+    $scope.$watch(function(scope) {
+      return (vm.obj);
+    }, function(newval, oldval) {
+      if(newval) {
+        vm.message = newval;
+      }
+    }); 
+  }
+
+  function LoaderDirFtn() {
+    var directive = {
+      restrict: 'E',
+      scope: {},
+      controller: 'LoaderCtrl',
+      controllerAs: 'ctrl',
+      bindToController: {
+        obj : '='
+      },
+      templateUrl: 'app/loaders/_loader-frame-tpl.html'
+    };
+    return directive;   
+  }
+})();
+
 (function() {
   'use strict';
 
@@ -1857,7 +1900,7 @@
     .directive('listviewer', listviewerFtn);
 
   function ListViewerCtrlObjFtn($log, ListViewerObj) {
-    var ListViewerCtrlObj = function(obj) {
+    var ListViewerCtrlObj = function(obj, onStateChange) {
 
       var o = this;
 
@@ -1871,19 +1914,25 @@
         $log.info('on confirm selection');
       };
       
-      o.listobj = new ListViewerObj(obj);
+      o.listobj = new ListViewerObj(obj, onStateChange);
 
     };
     return ListViewerCtrlObj;
   }
 
   function ListViewerObjFtn($log, ListViewerElemObj) {
-    var ListViewerObj = function(obj) {
+    var ListViewerObj = function(obj, onStateChange) {
 
       //$log.info('obj to listviewer obj: ' + JSON.stringify(obj));
 
       var o = this;
+
+      obj.onStateChange = onStateChange || function(newState) {
+        $log.info('supply a state change function to ChartObj');
+      };
+
       o.listobj = obj.listobj || {};
+      o.loaderMessage = obj.listobj.loaderMessage || 'Loading...';
       o.heading = obj.listobj.heading || 'blank';
       o.headerbar = obj.listobj.headerbar || 'app/list-viewer/_default-headerbar-tpl.html';
       o.headerObj = obj.listobj.headerObj || {};
@@ -1901,8 +1950,6 @@
         return {};
       };
 
-      // set up callbacks
-      //o.callbacks = obj.callbacks || {};
       o.onSelect = obj.onSelect || function(elem) {
         $log.info('supply on select function');
       };
@@ -1941,13 +1988,15 @@
         }
       };
 
-      function populate(list, batchObj) {
+      function populate(list, batchObj, onComplete) {
         // o.getElements()
 
         //$log.info('list comprises: ' + JSON.stringify(list));
         //$log.info('call batch obj get: ' + JSON.stringify(batchObj));
+
         batchObj.get()
         .then(function(batch) {
+          $log.info('total no. of objects: ' + batchObj.params.total);
           angular.forEach(batch.data, function(value) { 
             //$log.info('value gotten: ' + JSON.stringify(value));           
             var e = o.makeElement(value); 
@@ -1955,7 +2004,9 @@
           }, list);
 
           $log.info('size of list: ' + JSON.stringify(list.length));
-
+          if(onComplete) {
+            onComplete();
+          }
         })
         .catch(function(err) {
           $log.info('error getting elements: ' + err);
@@ -1965,6 +2016,11 @@
       // TODO implement
       o.appendElements = function() {
         $log.info('call to append elements...');
+        
+        if(!o.getElementsObj.more()) {
+          return;          
+        }
+
         o.getElementsObj = o.getElementsObj.next();
         populate(o.elements, o.getElementsObj);
       };
@@ -1974,7 +2030,10 @@
       };
 
       //$log.info('calling populate on creation...');
-      populate(o.elements, o.getElementsObj);
+      obj.onStateChange('loading');
+      populate(o.elements, o.getElementsObj, function() {
+        obj.onStateChange('ready');
+      });
 
       //$log.info('got elems: ' + JSON.stringify(o.elems));
 
@@ -1992,18 +2051,20 @@
     vm.frameHeight = 0;
     vm.moveDistance = 0;
     vm.nbrForwards = 100;
+    vm.chunksize = 4;
     vm.index = 0;
     vm.initcb = null;
     vm.animating = false;
+    vm.state = 'init';
 
     vm.register = function(cb) {
       vm.initcb = cb;
     };
 
     vm.initialiseHeight = function(height) {
-      $log.info('init height called: ' + height);
-      var chunksize = vm.lo.chunksize || 4;
-      vm.frameHeight = chunksize * height;
+      //$log.info('init height called: ' + height);
+      vm.chunksize = vm.lo.chunksize || 4;
+      vm.frameHeight = vm.chunksize * height;
       vm.moveDistance = parseInt(vm.frameHeight / 2);
       //vm.index = 0;
     };
@@ -2014,8 +2075,10 @@
 
     function adjust(length) {
       vm.nbrElems = vm.lo.listobj.elements.length;
-      vm.nbrForwards = parseInt(vm.nbrElems / 2);
-      $log.info('no. forwards: ' + vm.nbrForwards);
+      //$log.info('what is chunsize anyways: ' + vm.lo.chunksize);
+      vm.chunksize = parseInt(vm.lo.chunksize) || 4;
+      vm.nbrForwards = parseInt(vm.nbrElems / vm.chunksize);
+      //$log.info('chunksize: ' + vm.chunksize + ' no. forwards: ' + vm.nbrForwards);
       if(vm.initcb) {
        vm.initcb();
       }
@@ -2034,11 +2097,17 @@
 
 
     function init(obj) {
-      vm.lo = new ListViewerCtrlObj(obj);
-      $log.info('calling init of listviewer : ' + JSON.stringify(vm.lo));
+      vm.lo = new ListViewerCtrlObj(obj, function(newState) {
+        vm.state = newState;
+      });
+
+
 
       vm.nbrElems = vm.lo.listobj.elements.length;
       vm.nbrForwards = parseInt(vm.nbrElems / 2);
+
+      $log.info('calling init of listviewer : ' + JSON.stringify(vm.lo));
+      $log.info('nbr elems : ' + vm.nbrElems);
 
       vm.back = function() {
         if(vm.atStart()) return;
@@ -2261,6 +2330,7 @@
 			obj.params.max = paramsArg.max || 4 ;
 			obj.params.offset = paramsArg.offset || 0;
 			obj.params.sortBy = paramsArg.sortBy || 'id';
+			obj.params.total = paramsArg.total || 0;
 
 			function makeBatch(batch, offset) {
 				var newBatch = new BatchObj(batch.endpoint, batch.params);
@@ -2271,9 +2341,14 @@
 				return newBatch;			
 			}
 
+			function updateBatch(batch, response) {
+				batch.params.total = response.data.total;
+			}
+
 			obj.get = function() {
 				return $http.get(obj.endpoint, {params: obj.params})
 				.then(function(response) {
+					updateBatch(obj, response);
 					return response.data;
 				})
 				.catch(function(errResponse) {
@@ -2287,7 +2362,11 @@
 
 			obj.prev = function() {
 				return makeBatch(obj, -(obj.params.max));
-			}
+			};
+
+			obj.more = function() {
+				return (obj.params.offset + obj.params.max < obj.params.total);
+			};
 		};
 		
 		return BatchObj;
@@ -3361,9 +3440,9 @@
     .directive('chart', chartFtn);
 
   function ChartManagerFtn($log, ModalService, UserSelectorObj, ChartObj, JawboneService) {
-    var ChartManager = function(chartdata) {
+    var ChartManager = function(chartdata, onStateChange) {
       var obj = this;
-      obj.chart = new ChartObj(chartdata);
+      obj.chart = new ChartObj(chartdata, onStateChange);
 
       obj.clickFtn = chartdata.clickFtn || function() {        
         // create modal
@@ -3392,9 +3471,12 @@
   }
 
   function ChartObjFtn($log, PlotGenerator) {
-    var ChartObj = function(data) {
+    var ChartObj = function(data, onStateChange) {
       var obj = this;
       obj.data = data || {};
+      obj.onStateChange = onStateChange || function(newState) {
+        $log.info('supply a state change function to ChartObj');
+      };
 
       obj.chart = {};
       obj.chart.type = "LineChart";
@@ -3429,6 +3511,7 @@
         return 0;
       };
 
+      obj.onStateChange('loading');
       data.getElementsObj.get()
       .then(function(result) {
         processElements(result.data, data.makePlotParams());
@@ -3484,6 +3567,7 @@
 
         //obj.chart.options.title = obj.selected;
         obj.chart.data = google.visualization.arrayToDataTable(obj.chartdata);
+        obj.onStateChange('ready');
       };
 
       obj.addCompareData = function(dataToAdd, userProfile) {
@@ -3503,10 +3587,13 @@
   /** @ngInject */
   function ChartCtrl($log, $scope, ChartManager, googleChartApiPromise) {
     var vm = this;
+    vm.state = 'loading';
 
     function onLoadedFtn() {
       $log.info('google chart loaded now');
-      vm.co = new ChartManager(vm.obj);
+      vm.co = new ChartManager(vm.obj, function(newState) {
+        vm.state = newState;
+      });
     };
 
     $scope.$watch(function(scope) {
@@ -3535,10 +3622,10 @@
 })();
 angular.module("jbtemplates").run(["$templateCache", function($templateCache) {$templateCache.put("app/_default-confirm-modal-tpl.html","<h3>{{ctrl.resolveArg.msg}}</h3>");
 $templateCache.put("app/_default-modal-tpl.html","default modal template");
-$templateCache.put("app/_modal-frame-tpl.html","<div class=\"modal-body\" id=\"modal-body\" style=\"padding: 4px;\"><div ng-include=\"ctrl.template\"></div></div><div class=\"modal-footer\" style=\"padding: 4px;\"><button class=\"btn btn-primary\" type=\"button\" ng-click=\"ctrl.ok()\">OK</button> <button class=\"btn btn-warning\" type=\"button\" ng-click=\"ctrl.cancel()\">Cancel</button></div>");
+$templateCache.put("app/_modal-frame-tpl.html","<div class=\"modal-body\" id=\"modal-body\" style=\"padding: 4px;\"><div ng-include=\"ctrl.template\"></div></div><div class=\"modal-footer\" style=\"padding: 4px; background: rgba(221, 221, 221, 0.3);\"><div class=\"btn-group\"><div class=\"btn btn-default\" ng-click=\"ctrl.cancel()\">Cancel</div><div class=\"btn btn-default\" ng-disabled=\"true\">&nbsp;</div><div class=\"btn btn-default\" ng-click=\"ctrl.ok()\">OK</div></div></div>");
 $templateCache.put("app/main.html","<div class=\"container\"><div ui-view=\"\"></div></div>");
 $templateCache.put("app/user.html","<div class=\"container\"><a href=\"/login/jawbone\">login jawbone</a><div ui-view=\"\"></div></div>");
-$templateCache.put("app/chart/_chart-tpl.html","<div class=\"chart-area\"><div class=\"chart-header\"><span uib-dropdown=\"\"><a class=\"btn btn-default\" uib-dropdown-toggle=\"\">{{ctrl.co.chart.selected || \'select a plot...\'}} <span class=\"caret\"></span></a><ul uib-dropdown-menu=\"\"><li ng-repeat=\"item in ctrl.co.chart.plots track by $index\"><span ng-click=\"ctrl.co.chart.selectPlot($index)\">{{item}}</span></li></ul></span> <span class=\"btn btn-default\" ng-click=\"ctrl.co.onClick()\">compare with</span></div><div class=\"chart-body\"><div class=\"chart-element\"><div google-chart=\"\" chart=\"ctrl.co.chart.chart\" style=\"height:300px; width:570px; border: 1px solid #fff;\"></div></div></div></div>");
+$templateCache.put("app/chart/_chart-tpl.html","<loader obj=\"ctrl.co.loaderMessage\" ng-show=\"ctrl.state !== \'ready\'\"></loader><div class=\"chart-area animated\" ng-show=\"ctrl.state === \'ready\'\"><div class=\"chart-header\"><span uib-dropdown=\"\"><a class=\"btn btn-default\" uib-dropdown-toggle=\"\">{{ctrl.co.chart.selected || \'select a plot...\'}} <span class=\"caret\"></span></a><ul uib-dropdown-menu=\"\"><li ng-repeat=\"item in ctrl.co.chart.plots track by $index\"><span ng-click=\"ctrl.co.chart.selectPlot($index)\">{{item}}</span></li></ul></span> <span class=\"btn btn-default\" ng-click=\"ctrl.co.onClick()\">compare with</span></div><div class=\"chart-body\"><div class=\"chart-element\"><div google-chart=\"\" chart=\"ctrl.co.chart.chart\" style=\"height:300px; width:570px; border: 1px solid #fff;\"></div></div></div></div>");
 $templateCache.put("app/dropdown/_default-dropdown-tpl.html","<span class=\"glyphicon glyphicon-menu-hamburger obi-default-dropdown-box\"></span>");
 $templateCache.put("app/dropdown/_dropdown-tpl.html","<div class=\"obi-dropdown-container\" ng-class=\"{ \'obi-show\': ctrl.visible }\" obi-click-elsewhere=\"ctrl.onDeselect()\"><div class=\"obi-dropdown-display\" ng-click=\"ctrl.show();\" ng-class=\"{ \'clicked\': ctrl.visible }\"><span ng-include=\"ctrl.ddobj.templateUrl\"></span></div><div class=\"obi-dropdown-list\"><ul><li ng-repeat=\"$item in ctrl.ddobj.filters track by $index\" ng-click=\"ctrl.setSelected($index)\"><h5 ng-if=\"ctrl.ddobj.selectedFilterIdx === $index\">{{$item}} <small><span class=\"glyphicon glyphicon-ok\"></span></small></h5><h5 ng-if=\"ctrl.ddobj.selectedFilterIdx !== $index\">{{$item}} &nbsp;</h5></li></ul></div></div>");
 $templateCache.put("app/fileHandler/_file-download-tpl.html","<textarea class=\"download-textarea\" ng-model=\"ctrl.do.content\" name=\"textarea\" rows=\"20\">\r\n</textarea> <a href=\"\" class=\"btn btn-primary btn-small\" ng-click=\"ctrl.do.download()\">Download</a>");
@@ -3553,17 +3640,20 @@ $templateCache.put("app/goals/_goals-tpl.html","<div><h3>Goals</h3><p>Sleep Tota
 $templateCache.put("app/groups/_group-element-tpl.html","<div class=\"user-list-element\" ng-class=\"{\'active\' : ctrl.obj.element.selected }\"><img ng-src=\"assets/group.png\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.element.name}}</div><div class=\"features\"><p>{{ctrl.obj.element.description}}</p><p>{{ctrl.obj.element.size}} members</p></div></div></div>");
 $templateCache.put("app/list-viewer/_default-headerbar-tpl.html","<div class=\"trends-header-bar\"><span>&nbsp;</span></div>");
 $templateCache.put("app/list-viewer/_default-lve-tpl.html","<div class=\"trends-element-style\"><span>default</span></div>");
-$templateCache.put("app/list-viewer/_list-viewer-tpl.html","<div class=\"list-view-box\"><div class=\"heading\">{{ctrl.lo.listobj.heading}}</div><div class=\"filter-container\" ng-show=\"ctrl.hasFilter\"><input type=\"text\" class=\"form-control\" placeholder=\"search for...\" ng-model=\"searchtext\"></div><p></p><header-bar tpl=\"ctrl.lo.listobj.headerbar\" obj=\"ctrl.lo.listobj\"></header-bar><div id=\"listviewerbox\" class=\"list-viewer-elements\" mouse-wheel-up=\"ctrl.didMouseWheelUp()\" mouse-wheel-down=\"ctrl.didMouseWheelDown()\"><ul><li ng-repeat=\"elem in ctrl.lo.listobj.elements track by $index\"><lvelem tpl=\"ctrl.lo.listobj.template\" obj=\"elem\" i=\"{{$index}}\"></lvelem></li></ul></div><div class=\"scroll-control\" ng-show=\"ctrl.hasScrollers\"><span class=\"btn btn-default scroll-button\" ng-click=\"ctrl.back()\" ng-disabled=\"ctrl.atStart()\"><span class=\"glyphicon glyphicon-chevron-up\"></span></span> <span class=\"btn btn-default scroll-button\" ng-click=\"ctrl.forward()\" ng-disabled=\"ctrl.atEnd()\"><span class=\"glyphicon glyphicon-chevron-down\"></span></span></div></div>");
+$templateCache.put("app/list-viewer/_list-viewer-tpl.html","<loader obj=\"ctrl.lo.listobj.loaderMessage\" ng-show=\"ctrl.state === \'loading\'\"></loader><div class=\"list-view-box animated\" ng-show=\"ctrl.state === \'ready\'\"><div class=\"heading\">{{ctrl.lo.listobj.heading}}</div><div class=\"filter-container\" ng-show=\"ctrl.hasFilter\"><input type=\"text\" class=\"form-control\" placeholder=\"search for...\" ng-model=\"searchtext\"></div><p></p><header-bar tpl=\"ctrl.lo.listobj.headerbar\" obj=\"ctrl.lo.listobj\"></header-bar><div id=\"listviewerbox\" class=\"list-viewer-elements\" mouse-wheel-up=\"ctrl.didMouseWheelUp()\" mouse-wheel-down=\"ctrl.didMouseWheelDown()\"><ul><li ng-repeat=\"elem in ctrl.lo.listobj.elements track by $index\"><lvelem tpl=\"ctrl.lo.listobj.template\" obj=\"elem\" i=\"{{$index}}\"></lvelem></li></ul></div><div class=\"scroll-control\" ng-show=\"ctrl.hasScrollers\"><span class=\"btn btn-default scroll-button\" ng-click=\"ctrl.back()\" ng-disabled=\"ctrl.atStart()\"><span class=\"glyphicon glyphicon-chevron-up\"></span></span> <span class=\"btn btn-default scroll-button\" ng-click=\"ctrl.forward()\" ng-disabled=\"ctrl.atEnd()\"><span class=\"glyphicon glyphicon-chevron-down\"></span></span></div></div>");
+$templateCache.put("app/loaders/_basic-spinner-tpl.html","<div class=\"loader\"></div>");
+$templateCache.put("app/loaders/_loader-frame-tpl.html","<div class=\"loader-area\"><div class=\"loader-header\">{{ctrl.message}}</div><div class=\"loader-body loader-outer\"><div class=\"loader-inner\"><div ng-include=\"ctrl.loader\"></div></div></div></div>");
+$templateCache.put("app/loaders/_rectangles-tpl.html","<div class=\"spinner\"><div class=\"rect1\"></div><div class=\"rect2\"></div><div class=\"rect3\"></div><div class=\"rect4\"></div><div class=\"rect5\"></div></div>");
 $templateCache.put("app/moods/_moods-tpl.html","<div><h3>Moods</h3><p>Data: {{ctrl.mo.data | json}}</p></div>");
 $templateCache.put("app/moves/_move-tpl.html","<p>date : {{ctrl.mo.date | jbDate}} title : {{ctrl.mo.title}}</p>");
 $templateCache.put("app/moves/_moves-tpl.html","<div><h3>Moves</h3><div ng-repeat=\"elem in ctrl.mo.elements\"><move obj=\"elem\"></move></div></div>");
-$templateCache.put("app/notes-viewer/_notes-element-tpl.html","<div class=\"notes-element-style\" ng-class=\"{\'active\' : ctrl.obj.element.selected }\"><span>{{ctrl.obj.element.creationDate | date}}</span> <span>{{ctrl.obj.element.owner.profile.first}} {{ctrl.obj.element.owner.profile.last}}</span><span><minifier text=\"ctrl.obj.element.text\" limit=\"60\"></minifier></span><div style=\"float: right;\" class=\"btn btn-primary-outline glyphicon glyphicon-remove\" ng-click=\"ctrl.obj.element.delete()\"></div></div>");
-$templateCache.put("app/notes-viewer/_notes-header-tpl.html","<div class=\"jbv-new-note-hdr\"><div class=\"jbv-new-note-area\" ng-if=\"ctrl.obj.listobj.createMode()\"><textarea class=\"notes-textarea\" ng-model=\"ctrl.obj.listobj.tempnote.text\" name=\"textarea\" rows=\"5\" placeholder=\"create note...\">\r\n		</textarea><div class=\"btn btn-default\" ng-click=\"ctrl.obj.listobj.cancelNote()\" ng-disabled=\"!ctrl.obj.listobj.tempnote.text\">clear</div><div class=\"btn btn-default\" ng-click=\"ctrl.obj.listobj.createNote()\" ng-disabled=\"!ctrl.obj.listobj.tempnote.text\">save</div></div><div class=\"jbv-new-note-area\" ng-if=\"ctrl.obj.listobj.editMode()\"><textarea class=\"notes-textarea\" ng-model=\"ctrl.obj.listobj.tempnote.text\" name=\"textarea\" rows=\"5\" placeholder=\"update note...\">\r\n		</textarea><div class=\"btn btn-default\" ng-click=\"ctrl.obj.listobj.baseFtns.deselectAll()\">cancel</div><div class=\"btn btn-default\" ng-click=\"ctrl.obj.listobj.updateNote()\" ng-disabled=\"!ctrl.obj.listobj.tempnote.text\">update</div></div></div>");
-$templateCache.put("app/notes-viewer/_notes-viewer-tpl.html","<h3>notes viewer template</h3><listviewer obj=\"ctrl.o.notes\"></listviewer>");
+$templateCache.put("app/notes-viewer/_notes-element-tpl.html","<div class=\"notes-element-style\" ng-class=\"{\'active\' : ctrl.obj.element.selected }\"><span>{{ctrl.obj.element.creationDate | date}}</span> <span>{{ctrl.obj.element.owner.profile.first}} {{ctrl.obj.element.owner.profile.last}}</span><div style=\"clear: both;\"></div><span><minifier text=\"ctrl.obj.element.text\" limit=\"60\"></minifier></span><div style=\"float: right;\" class=\"btn btn-primary-outline glyphicon glyphicon-remove\" ng-click=\"ctrl.obj.element.delete()\"></div></div>");
+$templateCache.put("app/notes-viewer/_notes-header-tpl.html","<div class=\"jbv-new-note-hdr\"><div class=\"jbv-new-note-area\" ng-if=\"ctrl.obj.listobj.createMode()\"><textarea class=\"notes-textarea\" ng-model=\"ctrl.obj.listobj.tempnote.text\" name=\"textarea\" rows=\"5\" placeholder=\"create note...\">\r\n		</textarea><div style=\"float: right; margin-right: 14px; padding: 3px;\"><div class=\"btn-group\"><div class=\"btn btn-default\" ng-click=\"ctrl.obj.listobj.cancelNote()\" ng-disabled=\"!ctrl.obj.listobj.tempnote.text\">clear</div><div class=\"btn btn-default\" ng-disabled=\"true\">&nbsp;</div><div class=\"btn btn-default\" ng-click=\"ctrl.obj.listobj.createNote()\" ng-disabled=\"!ctrl.obj.listobj.tempnote.text\">save</div></div></div><div style=\"clear: both;\"></div></div><div class=\"jbv-new-note-area\" ng-if=\"ctrl.obj.listobj.editMode()\"><textarea class=\"notes-textarea\" ng-model=\"ctrl.obj.listobj.tempnote.text\" name=\"textarea\" rows=\"5\" placeholder=\"update note...\">\r\n		</textarea><div style=\"float: right; margin-right: 14px; padding: 3px;\"><div class=\"btn-group\"><div class=\"btn btn-default\" ng-click=\"ctrl.obj.listobj.baseFtns.deselectAll()\">cancel</div><div class=\"btn btn-default\" ng-disabled=\"true\">&nbsp;</div><div class=\"btn btn-default\" ng-click=\"ctrl.obj.listobj.updateNote()\" ng-disabled=\"!ctrl.obj.listobj.tempnote.text\">update</div></div></div><div style=\"clear: both;\"></div></div></div>");
+$templateCache.put("app/notes-viewer/_notes-viewer-tpl.html","<listviewer obj=\"ctrl.o.notes\"></listviewer>");
 $templateCache.put("app/patient/_patient-element-tpl.html","<div class=\"user-list-element\" ng-class=\"{\'active\' : ctrl.obj.element.selected }\"><img ng-src=\"assets/users.png\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.element.first}} {{ctrl.obj.element.last}}</div><div class=\"features\"><p>Weight: {{ctrl.obj.element.weight | number: 2}}</p><p>Gender: {{ctrl.obj.element.gender}}</p><p>Height: {{ctrl.obj.element.height}}</p></div></div></div>");
-$templateCache.put("app/patient/_patient-mgr-tpl.html","<div class=\"patient-area\" ng-if=\'ctrl.obj.mode === \"view\"\'><listviewer obj=\"ctrl.obj.patientViewer\"></listviewer></div><div class=\"patient-area\" ng-if=\'ctrl.obj.mode === \"edit\"\'><patient-summary obj=\"ctrl.obj.patientSummary\"></patient-summary><div ng-if=\"ctrl.obj.showWindow === true\"><h3>show this</h3></div><chart obj=\"ctrl.obj.sleepsChart\"></chart><listviewer obj=\"ctrl.obj.sleepsViewer\"></listviewer></div>");
+$templateCache.put("app/patient/_patient-mgr-tpl.html","<div class=\"patient-area\" ng-if=\'ctrl.obj.mode === \"view\"\'><listviewer obj=\"ctrl.obj.patientViewer\"></listviewer></div><div class=\"patient-area\" ng-if=\'ctrl.obj.mode === \"edit\"\'><patient-summary obj=\"ctrl.obj.patientSummary\"></patient-summary><div ng-if=\"ctrl.obj.showWindow === true\"><h3>show this</h3></div><chart obj=\"ctrl.obj.sleepsChart\"></chart><listviewer obj=\"ctrl.obj.sleepsViewer\"></listviewer><notes-viewer obj=\"\" <=\"\" notes-viewer=\"\"></notes-viewer></div>");
 $templateCache.put("app/patient/_patient-notes-viewer-tpl.html","<notes-viewer obj=\"\" <=\"\" notes-viewer=\"\"></notes-viewer>");
-$templateCache.put("app/patient/_patient-summary-action-bar-tpl.html","<div class=\"btn btn-default\" ng-click=\"ctrl.pso.parent.switchView()\" style=\"float : left;\">back to patients view</div><div class=\"btn btn-default\" ng-click=\"ctrl.pso.parent.showPatientNotes()\">show patient notes</div><div class=\"btn btn-default\" style=\"float: right;\" ng-click=\"ctrl.pso.parent.downloadToCSV()\">download to csv file</div><div style=\"clear: both;\"></div>");
+$templateCache.put("app/patient/_patient-summary-action-bar-tpl.html","<div class=\"btn btn-default\" ng-click=\"ctrl.pso.parent.switchView()\" style=\"float : left;\"><span class=\"glyphicon glyphicon-th-list\" style=\"opacity: 0.3;\"></span> back to patients view</div><div class=\"btn-group\" style=\"float: right;\"><div class=\"btn btn-default\" ng-click=\"ctrl.pso.parent.showPatientNotes()\"><span class=\"glyphicon glyphicon-list-alt\"></span> show patient notes</div><div class=\"btn btn-default\" g-click=\"ctrl.pso.parent.downloadToCSV()\"><span class=\"glyphicon glyphicon-stats\"></span> download to csv file</div></div><div style=\"clear: both;\"></div>");
 $templateCache.put("app/patient/_patient-summary-tpl.html","<div class=\"patient-header\"><div class=\"patient-info\"><img ng-src=\"{{ctrl.pso.user.profile.image | defaultPatient }}\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.pso.user.profile.first}} {{ctrl.pso.user.profile.last}}</div><div class=\"features\"><p>Weight: {{ctrl.pso.user.profile.weight | number: 2}}</p><p>Gender: {{ctrl.pso.user.profile.gender}}</p><p>Height: {{ctrl.pso.user.profile.height}}</p></div></div></div><hr><div style=\"clear: both;\"></div><div ng-include=\"ctrl.pso.actionBar\"></div></div>");
 $templateCache.put("app/profile/_sleeps-element-tpl.html","<div class=\"trends-element-style\">date : {{ctrl.obj.date | jbDate}} title : {{ctrl.obj.title}} sounds : {{ctrl.obj.sounds}} awakenings : {{ctrl.obj.awakenings}} light : {{ctrl.obj.light}}</div>");
 $templateCache.put("app/profile/friends.html","friends");

@@ -28,9 +28,13 @@ var profile = function(user, cb) {
 		if(err) {
 			console.log('err retrieving profile: ' + err);
 		} else {
-			var jsonProfile = JSON.parse(profile);
-			console.log('profile: ' + JSON.stringify(jsonProfile));
-			cb(null, jsonProfile);
+			console.log('raw profile: ' + (profile));
+			try {
+   				var jsonProfile = JSON.parse(profile);
+   				cb(null, jsonProfile);
+  			} catch (e) {
+    			cb('error parsing jawbone data');
+  			}			
 		}
 	});
 };
@@ -51,17 +55,23 @@ var sleeps = function(user, params, cb) {
 			console.log('err retrieving sleeps: ' + err);
 			cb(err);
 		} else {
-			var jsonSleeps = JSON.parse(sleeps);
+			try {
+				var jsonSleeps = JSON.parse(sleeps);
+				console.log('result of sleeps request: ' + JSON.stringify(jsonSleeps, true, 3));
 
-  			result = {
-		      total: jsonSleeps.data.items.length,
-		      max: params.max,
-		      offset: params.offset,
-		      sortBy: params.sortBy,
-		      data: jsonSleeps.data.items
-		    }
+	  			result = {
+			      total: jsonSleeps.data.items.length,
+			      max: params.max,
+			      offset: params.offset,
+			      sortBy: params.sortBy,
+			      data: jsonSleeps.data.items
+			    };
 
-			cb(null, result);		
+			    cb(null, result);		
+			} catch(e) {
+				cb('error parsing jawbone results');
+			}
+
 		}
 	});
 }

@@ -78,7 +78,7 @@
 
 	  		var deferred = $q.defer();
         	var modalInstance = $uibModal.open({
-	          	animation: true,
+	          	animation: false,
     	      	ariaLabelledBy: 'modal-title',
         	  	ariaDescribedBy: 'modal-body',
           		templateUrl: 'app/_modal-frame-tpl.html',

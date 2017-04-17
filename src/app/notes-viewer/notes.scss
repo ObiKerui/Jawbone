@@ -5,8 +5,11 @@
     -moz-box-sizing: border-box;    /* Firefox, other Gecko */
     box-sizing: border-box;         /* Opera/IE 8+ */
     margin: 4px;
-    border-radius: 4px;
-    border: none;
+    border-radius: 2px;
+    border: 1px solid #fff;
+    display: block;
+    margin: auto;
+    padding: 3px;
 }
 
 .notes-element-style {
@@ -17,7 +20,11 @@
 	padding: 5px;
 	margin: 5px;	
 	overflow: hidden;
-	min-width: 500px;
+	min-width: 560px;
+
+	&:hover {
+		background: rgba(255, 255, 255, 0.3);
+	}
 
 	span {
 		float: left;

@@ -29,6 +29,7 @@
 			obj.params.max = paramsArg.max || 4 ;
 			obj.params.offset = paramsArg.offset || 0;
 			obj.params.sortBy = paramsArg.sortBy || 'id';
+			obj.params.total = paramsArg.total || 0;
 
 			function makeBatch(batch, offset) {
 				var newBatch = new BatchObj(batch.endpoint, batch.params);
@@ -39,9 +40,14 @@
 				return newBatch;			
 			}
 
+			function updateBatch(batch, response) {
+				batch.params.total = response.data.total;
+			}
+
 			obj.get = function() {
 				return $http.get(obj.endpoint, {params: obj.params})
 				.then(function(response) {
+					updateBatch(obj, response);
 					return response.data;
 				})
 				.catch(function(errResponse) {
@@ -55,7 +61,11 @@
 
 			obj.prev = function() {
 				return makeBatch(obj, -(obj.params.max));
-			}
+			};
+
+			obj.more = function() {
+				return (obj.params.offset + obj.params.max < obj.params.total);
+			};
 		};
 		
 		return BatchObj;

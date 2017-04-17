@@ -24,6 +24,7 @@
     obj.listobj.template = 'app/sleeps/_sleeps-element-tpl.html';
     obj.listobj.headerbar = 'app/sleeps/_sleeps-header-tpl.html';
     obj.listobj.heading = 'Sleeps';
+    obj.listobj.loaderMessage = 'Loading sleep data...';
 
     obj.listobj.getElementsObj = batchRetriever;
     obj.listobj.getElements = function() {

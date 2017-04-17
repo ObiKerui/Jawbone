@@ -41,6 +41,16 @@ html {
   }
 }
 
+.animated.ng-hide-add, .animated.ng-hide-remove {
+  animation: fadeIn 1.5s;
+}
+
+.animated.ng-hide {
+  line-height: 0;
+  opacity: 0;
+}
+
+
 /**
  *  Do not remove the comments below. It's the markers used by gulp-inject to inject
  *  all your sass files automatically

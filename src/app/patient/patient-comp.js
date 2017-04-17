@@ -31,6 +31,7 @@
     obj.sleepsViewer.listobj.template = 'app/sleeps/_sleeps-element-tpl.html';
     obj.sleepsViewer.listobj.headerbar = 'app/sleeps/_sleeps-header-tpl.html';    
     obj.sleepsViewer.listobj.heading = 'Sleeps';
+    obj.sleepsViewer.listobj.loaderMessage = 'Loading sleep data...';
 
     obj.sleepsViewer.listobj.getElementsObj = jbservice.makeBatch(jbservice.makeEndpoint('sleeps', user._id));
 
@@ -82,6 +83,7 @@
     obj.patientViewer.listobj = {};
     obj.patientViewer.listobj.template = 'app/patient/_patient-element-tpl.html';
     obj.patientViewer.listobj.heading = 'Patients';
+    obj.patientViewer.listobj.loaderMessage = 'Loading Patients...';
 
     obj.patientViewer.listobj.getElementsObj = jbservice.makeBatch(jbservice.makeEndpoint('patients'));
 

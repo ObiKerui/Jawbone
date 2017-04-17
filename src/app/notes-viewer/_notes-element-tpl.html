@@ -1,7 +1,7 @@
 <div class="notes-element-style" ng-class="{'active' : ctrl.obj.element.selected }">
 	<span>{{ctrl.obj.element.creationDate | date}}</span>
 	<span>{{ctrl.obj.element.owner.profile.first}} {{ctrl.obj.element.owner.profile.last}}</span>
-<!-- 	<span><expander text='ctrl.obj.element.text' limit='60'></expander></span> -->
+	<div style="clear: both;"></div>
 	<span><minifier text='ctrl.obj.element.text' limit='60'></minifier></span>
 	<div style="float: right;" class="btn btn-primary-outline glyphicon glyphicon-remove" ng-click="ctrl.obj.element.delete()"></div>
 </div>

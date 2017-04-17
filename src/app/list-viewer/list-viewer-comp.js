@@ -9,7 +9,7 @@
     .directive('listviewer', listviewerFtn);
 
   function ListViewerCtrlObjFtn($log, ListViewerObj) {
-    var ListViewerCtrlObj = function(obj) {
+    var ListViewerCtrlObj = function(obj, onStateChange) {
 
       var o = this;
 
@@ -23,19 +23,25 @@
         $log.info('on confirm selection');
       };
       
-      o.listobj = new ListViewerObj(obj);
+      o.listobj = new ListViewerObj(obj, onStateChange);
 
     };
     return ListViewerCtrlObj;
   }
 
   function ListViewerObjFtn($log, ListViewerElemObj) {
-    var ListViewerObj = function(obj) {
+    var ListViewerObj = function(obj, onStateChange) {
 
       //$log.info('obj to listviewer obj: ' + JSON.stringify(obj));
 
       var o = this;
+
+      obj.onStateChange = onStateChange || function(newState) {
+        $log.info('supply a state change function to ChartObj');
+      };
+
       o.listobj = obj.listobj || {};
+      o.loaderMessage = obj.listobj.loaderMessage || 'Loading...';
       o.heading = obj.listobj.heading || 'blank';
       o.headerbar = obj.listobj.headerbar || 'app/list-viewer/_default-headerbar-tpl.html';
       o.headerObj = obj.listobj.headerObj || {};
@@ -53,8 +59,6 @@
         return {};
       };
 
-      // set up callbacks
-      //o.callbacks = obj.callbacks || {};
       o.onSelect = obj.onSelect || function(elem) {
         $log.info('supply on select function');
       };
@@ -93,13 +97,15 @@
         }
       };
 
-      function populate(list, batchObj) {
+      function populate(list, batchObj, onComplete) {
         // o.getElements()
 
         //$log.info('list comprises: ' + JSON.stringify(list));
         //$log.info('call batch obj get: ' + JSON.stringify(batchObj));
+
         batchObj.get()
         .then(function(batch) {
+          $log.info('total no. of objects: ' + batchObj.params.total);
           angular.forEach(batch.data, function(value) { 
             //$log.info('value gotten: ' + JSON.stringify(value));           
             var e = o.makeElement(value); 
@@ -107,7 +113,9 @@
           }, list);
 
           $log.info('size of list: ' + JSON.stringify(list.length));
-
+          if(onComplete) {
+            onComplete();
+          }
         })
         .catch(function(err) {
           $log.info('error getting elements: ' + err);
@@ -117,6 +125,11 @@
       // TODO implement
       o.appendElements = function() {
         $log.info('call to append elements...');
+        
+        if(!o.getElementsObj.more()) {
+          return;          
+        }
+
         o.getElementsObj = o.getElementsObj.next();
         populate(o.elements, o.getElementsObj);
       };
@@ -126,7 +139,10 @@
       };
 
       //$log.info('calling populate on creation...');
-      populate(o.elements, o.getElementsObj);
+      obj.onStateChange('loading');
+      populate(o.elements, o.getElementsObj, function() {
+        obj.onStateChange('ready');
+      });
 
       //$log.info('got elems: ' + JSON.stringify(o.elems));
 
@@ -144,18 +160,20 @@
     vm.frameHeight = 0;
     vm.moveDistance = 0;
     vm.nbrForwards = 100;
+    vm.chunksize = 4;
     vm.index = 0;
     vm.initcb = null;
     vm.animating = false;
+    vm.state = 'init';
 
     vm.register = function(cb) {
       vm.initcb = cb;
     };
 
     vm.initialiseHeight = function(height) {
-      $log.info('init height called: ' + height);
-      var chunksize = vm.lo.chunksize || 4;
-      vm.frameHeight = chunksize * height;
+      //$log.info('init height called: ' + height);
+      vm.chunksize = vm.lo.chunksize || 4;
+      vm.frameHeight = vm.chunksize * height;
       vm.moveDistance = parseInt(vm.frameHeight / 2);
       //vm.index = 0;
     };
@@ -166,8 +184,10 @@
 
     function adjust(length) {
       vm.nbrElems = vm.lo.listobj.elements.length;
-      vm.nbrForwards = parseInt(vm.nbrElems / 2);
-      $log.info('no. forwards: ' + vm.nbrForwards);
+      //$log.info('what is chunsize anyways: ' + vm.lo.chunksize);
+      vm.chunksize = parseInt(vm.lo.chunksize) || 4;
+      vm.nbrForwards = parseInt(vm.nbrElems / vm.chunksize);
+      //$log.info('chunksize: ' + vm.chunksize + ' no. forwards: ' + vm.nbrForwards);
       if(vm.initcb) {
        vm.initcb();
       }
@@ -186,11 +206,17 @@
 
 
     function init(obj) {
-      vm.lo = new ListViewerCtrlObj(obj);
-      $log.info('calling init of listviewer : ' + JSON.stringify(vm.lo));
+      vm.lo = new ListViewerCtrlObj(obj, function(newState) {
+        vm.state = newState;
+      });
+
+
 
       vm.nbrElems = vm.lo.listobj.elements.length;
       vm.nbrForwards = parseInt(vm.nbrElems / 2);
+
+      $log.info('calling init of listviewer : ' + JSON.stringify(vm.lo));
+      $log.info('nbr elems : ' + vm.nbrElems);
 
       vm.back = function() {
         if(vm.atStart()) return;

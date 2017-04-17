@@ -1,4 +1,5 @@
-<div class="list-view-box">
+<loader obj="ctrl.lo.listobj.loaderMessage" ng-show="ctrl.state === 'loading'"></loader>
+<div class="list-view-box animated" ng-show="ctrl.state === 'ready'">
 	<div class="heading">
 		{{ctrl.lo.listobj.heading}}
 	</div>

@@ -4,16 +4,30 @@
 		    ng-model="ctrl.obj.listobj.tempnote.text"
 		    name="textarea" rows="5" placeholder="create note...">
 		</textarea>
-		<div class="btn btn-default" ng-click="ctrl.obj.listobj.cancelNote()" ng-disabled="!ctrl.obj.listobj.tempnote.text">clear</div>
-		<div class="btn btn-default" ng-click="ctrl.obj.listobj.createNote()" ng-disabled="!ctrl.obj.listobj.tempnote.text">save</div>
+		<div style="float: right; margin-right: 14px; padding: 3px;">
+			<div class="btn-group">
+				<div class="btn btn-default" ng-click="ctrl.obj.listobj.cancelNote()" ng-disabled="!ctrl.obj.listobj.tempnote.text">clear</div>
+				<div class="btn btn-default" ng-disabled="true">&nbsp;</div>
+				<div class="btn btn-default" ng-click="ctrl.obj.listobj.createNote()" ng-disabled="!ctrl.obj.listobj.tempnote.text">save</div>
+			</div>
+		</div>
+		<div style="clear: both;"></div>
 	</div>
 	<div class="jbv-new-note-area" ng-if="ctrl.obj.listobj.editMode()">
 		<textarea class="notes-textarea"
 		    ng-model="ctrl.obj.listobj.tempnote.text"
 		    name="textarea" rows="5" placeholder="update note...">
 		</textarea>
-		<div class="btn btn-default" ng-click="ctrl.obj.listobj.baseFtns.deselectAll()">cancel</div>
+<!-- 		<div class="btn btn-default" ng-click="ctrl.obj.listobj.baseFtns.deselectAll()">cancel</div>
 		<div class="btn btn-default" ng-click="ctrl.obj.listobj.updateNote()" ng-disabled="!ctrl.obj.listobj.tempnote.text">update</div>
+ -->		<div style="float: right; margin-right: 14px; padding: 3px;">
+			<div class="btn-group">
+				<div class="btn btn-default" ng-click="ctrl.obj.listobj.baseFtns.deselectAll()">cancel</div>
+				<div class="btn btn-default" ng-disabled="true">&nbsp;</div>
+				<div class="btn btn-default" ng-click="ctrl.obj.listobj.updateNote()" ng-disabled="!ctrl.obj.listobj.tempnote.text">update</div>
+			</div>
+		</div>
+		<div style="clear: both;"></div>
 	</div>
 </div>
 

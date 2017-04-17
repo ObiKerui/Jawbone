@@ -1,5 +1,5 @@
-<div class="chart-area">
-
+<loader obj="ctrl.co.loaderMessage" ng-show="ctrl.state !== 'ready'"></loader>
+<div class="chart-area animated" ng-show="ctrl.state === 'ready'">
 	<div class="chart-header">
 		<span uib-dropdown>
 		    <a class="btn btn-default" uib-dropdown-toggle>{{ctrl.co.chart.selected || 'select a plot...'}} <span class="caret"></span> </a>
