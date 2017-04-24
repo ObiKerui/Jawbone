@@ -116,7 +116,7 @@
 
   function UserObjFtn($log, JawboneService) {
     var UserObj = function(objElement) {
-      $log.info('obj supplied to UserObj: ' + JSON.stringify(objElement));
+      //$log.info('obj supplied to UserObj: ' + JSON.stringify(objElement));
       //$log.info('profile userobject user: ' + JSON.stringify(objElement.profile));
       var o = this;
       o.data = objElement || {};

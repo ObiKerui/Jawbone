@@ -22,6 +22,7 @@
         log.info('implement show patient notes');
       },
       downloadToCSV: function() {
+        log.info('implement show patient notes');
       }
     };
   }
@@ -47,6 +48,7 @@
   function buildPatientDownloader(obj, SleepsChartDownloaderBuilder, ModalService) {
         
     obj.patientSummary.parent.downloadToCSV = function() {
+      //log.info('call to show download modal');
       ModalService.onClick(new SleepsChartDownloaderBuilder(obj, function() {
         return obj.sleepsChart.getGraphDataCB();
       }))
@@ -56,6 +58,7 @@
 
   function buildPatientNotes(obj, ModalService) {
     obj.patientSummary.parent.showPatientNotes = function() {
+      //log.info('call show patient notes modal...');
       ModalService.onClick({
         tpl : 'app/patient/_patient-notes-viewer-tpl.html'
       })
@@ -79,18 +82,18 @@
     };
   }
 
-  function buildListViewer(obj, PatientObj) {
+  function buildListViewer(obj, group, PatientObj) {
     obj.patientViewer.listobj = {};
     obj.patientViewer.listobj.template = 'app/patient/_patient-element-tpl.html';
     obj.patientViewer.listobj.heading = 'Patients';
     obj.patientViewer.listobj.loaderMessage = 'Loading Patients...';
 
-    obj.patientViewer.listobj.getElementsObj = jbservice.makeBatch(jbservice.makeEndpoint('patients'));
+    var groupId = group._id || null;
+    obj.patientViewer.listobj.getElementsObj = jbservice.makeBatch(jbservice.makeFieldGetter('groups', group._id, 'members'));
 
     obj.patientViewer.listobj.makeElement = function(objElement) {
       return new PatientObj(objElement)
     };    
-
   }
 
   function defaultPatientFtn($log) {
@@ -103,14 +106,17 @@
   }
 
   function PatientsComponentBuilderFtn($q, $log, PatientObj, SleepObj, JawboneService, SleepsChartBuilderObj, SleepsChartDownloaderBuilder, PatientSummObj, ModalService) {
-    var PatientsComponentBuilder = function(user) {
+    var PatientsComponentBuilder = function(user, userGroup) {
 
       // assign some scoped variables rather than pass these as args
       log = $log;
       jbservice = JawboneService;
 
+      log.info('user group: ' + JSON.stringify(userGroup));
+
       var obj = this;
 
+      userGroup = userGroup || {};
       obj.profile = JawboneService.extractData('profile', user);
       obj.name = obj.profile.first + ' ' + obj.profile.last;
       obj.patients = JawboneService.extractData('patients', user);
@@ -126,16 +132,16 @@
       obj.noteViewer = {};
 
       buildCallbacks(obj, SleepObj, SleepsChartBuilderObj, SleepsChartDownloaderBuilder, PatientSummObj, ModalService);
-      buildListViewer(obj, PatientObj);
+      buildListViewer(obj, userGroup, PatientObj);
 
     };
     return PatientsComponentBuilder;
   }
 
-  function PatientObjFtn($log) {
+  function PatientObjFtn($log, ListElementAPIObj) {
     var PatientObj = function(objElement) {
 
-      $log.info('obj element: ' + JSON.stringify(objElement));
+      //$log.info('obj element: ' + JSON.stringify(objElement));
 
       var o = this;
       o.data = objElement || {};
@@ -148,15 +154,7 @@
       o.height = o.obj.height || 'no height';
       o.joinDate = objElement.joinDate || null;
 
-      o.selected = false;
-
-      o.activated = function() {
-        o.selected = true;
-      };
-
-      o.deactivated = function() {
-        o.selected = false;
-      }
+      this.api = new ListElementAPIObj(this);
     };
     return PatientObj;
   }

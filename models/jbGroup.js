@@ -161,6 +161,27 @@ var remove = function(id, user, cb) {
     });
 };
 
+var members = function(groupId, params, cb) {
+
+  var max = parseInt(params.offset + params.max);
+  var count = Group.findOne({_id : groupId });
+  var q = Group.findOne({_id : groupId}, { members: { $slice:[params.offset, max]}}).populate('members.user', '-jawboneData').lean();
+
+  count.exec(function(err, group) {
+    q.exec(function(err, result) {
+
+      console.log('result of group find: ' + JSON.stringify(result, true, 3));
+      cb(null, {
+        total: group.members.length,
+        max: params.max,
+        offset: params.offset,
+        sortBy: params.sortBy,
+        data: result.members
+      });    
+    });    
+  });
+};
+
 module.exports.Group = Group;
 module.exports.create = create;
 module.exports.get = get;
@@ -170,3 +191,4 @@ module.exports.remove = remove;
 module.exports.update = update;
 module.exports.addUserToGroup = addUserToGroup;
 module.exports.allByUser = allByUser;
+module.exports.members = members;

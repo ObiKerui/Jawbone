@@ -1,0 +1,19 @@
+<div class="patient-area" ng-if='ctrl.obj.mode === "view"'>
+
+	<listviewer
+		obj='ctrl.obj.groupViewer'>
+	</listviewer>
+
+</div>
+
+<div class="patient-area" ng-if='ctrl.obj.mode === "edit"'>
+	
+	<group-summary
+ 		obj='ctrl.obj.groupSummary'>
+ 	</group-summary>
+
+	<patient-mgr
+		obj='ctrl.obj.patients'>
+	</patient-mgr>
+
+</div>

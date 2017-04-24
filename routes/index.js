@@ -21,17 +21,17 @@ module.exports = function(app, passport) {
 	app.get('/users/:id', isLoggedIn, userCtrl.getOne);
 	app.get('/groups/me', isLoggedIn, groupCtrl.getAll);
 	app.get('/groups/:id', isLoggedIn, groupCtrl.getOne);
+	app.get('/groups/:id/members', isLoggedIn, groupCtrl.getMembers);
 	app.get('/sleeps/me', isLoggedIn, JBDataCtrl.getSleeps);
 	app.get('/sleeps/:id', isLoggedIn, JBDataCtrl.getSleeps);
 	app.get('/trends/me', isLoggedIn, JBDataCtrl.getTrends);
 	app.get('/trends/:id', isLoggedIn, JBDataCtrl.getTrends);
-	app.get('/patients/me', isLoggedIn, JBDataCtrl.getPatients);
 
-	app.get('/notes/me', notesCtrl.getAllByCurrentUser);
-	app.get('/notes/:id', notesCtrl.getOne);
-	app.post('/notes', notesCtrl.create);
-	app.put('/notes/:id', notesCtrl.update);
-	app.delete('/notes/:id', notesCtrl.remove);
+	app.get('/notes/me', isLoggedIn, notesCtrl.getAllByCurrentUser);
+	app.get('/notes/:id', isLoggedIn, notesCtrl.getOne);
+	app.post('/notes', isLoggedIn, notesCtrl.create);
+	app.put('/notes/:id', isLoggedIn, notesCtrl.update);
+	app.delete('/notes/:id', isLoggedIn, notesCtrl.remove);
 
 	//------------------------------------------------------------------------
 	// register a new user - need to have a jawbone account

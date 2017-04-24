@@ -36,6 +36,7 @@
 				var os = newBatch.params.offset || 0;
 				var newOS = parseInt(os + offset);
 				newOS = (newOS < 0 ? 0 : newOS);
+				newOS = (newOS < batch.params.total ? newOS : batch.params.total);
 				newBatch.params.offset = newOS;
 				return newBatch;			
 			}
@@ -64,7 +65,7 @@
 			};
 
 			obj.more = function() {
-				return (obj.params.offset + obj.params.max < obj.params.total);
+				return (obj.params.offset < obj.params.total);
 			};
 		};
 		
@@ -83,6 +84,7 @@
 	  		getUser : getUser,
 	  		getUsers : getUsers,
 	  		makeEndpoint : makeEndpoint,
+	  		makeFieldGetter: makeFieldGetter,
 	  		makeBatch : makeBatch,
 	  		setUserCallback : setUserCallback,
 	  		setUser : setUser,
@@ -132,6 +134,10 @@
 	  	function makeEndpoint(endpoint, id) {
 	  		var userid = id || 'me';
 	  		return ('/' + endpoint + '/' + userid);
+	  	}
+
+	  	function makeFieldGetter(root, id, field) {
+	  		return ('/' + root + '/' + id + '/' + field);
 	  	}
 
 	  	function makeBatch(endpoint, params) {

@@ -1,0 +1,20 @@
+<div class="patient-header">
+	<div class="patient-info">
+		<img ng-src="{{ctrl.pso.user.profile.image | defaultGroup }}" height='100px' width='100px'></img>
+		<div class="user-details">
+			<div class="name">
+				{{ctrl.pso.group.name}}
+			</div>
+			<div class="features">
+				<p>{{ctrl.pso.group.description}}</p>
+				<p>{{ctrl.pso.group.members.length}} members</p>
+			</div> 
+		</div>
+	</div>
+	<hr/>
+	<div style="clear: both;"></div>
+	<div ng-include='ctrl.pso.actionBar'></div>
+</div>
+
+<!-- <p>This will be the group summary {{ctrl.pso | json}}</p>
+{{ctrl.pso.group.name | json}} -->

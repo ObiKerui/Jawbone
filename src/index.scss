@@ -41,6 +41,15 @@ html {
   }
 }
 
+.slider-anim.ng-hide-add, .slider-anim.ng-hide-remove {
+  animation: slideInRight 0.3s;
+}
+
+.slider-anim.ng-hide {
+  line-height: 0;
+  opacity: 0;
+}
+
 .animated.ng-hide-add, .animated.ng-hide-remove {
   animation: fadeIn 1.5s;
 }

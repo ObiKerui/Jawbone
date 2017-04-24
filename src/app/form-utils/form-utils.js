@@ -10,7 +10,10 @@
     .directive('compareTo', compareToFtn)
     .directive('backgroundImg', backgroundImgFtn)
     .directive('minifier', minifierFtn)
-    .directive('expander', expanderFtn);
+    .directive('expander', expanderFtn)
+    .directive('clickElsewhere', clickElsewhereFtn)
+    .directive('visibleClickElsewhere', visibleClickElsewhereFtn)
+    .directive('testDir', testDirFtn);
 
   function FormInputObjFtn($log) {
     var FormInputObj = function(obj) {
@@ -140,6 +143,80 @@
       }
     };
     return directive;     
+  }
+
+  function clickElsewhereFtn($log, $parse, $document) {
+    var directive = {
+      restrict: 'A',
+      link: function(scope, elem, attr) {
+        $log.info('RUN CLICK ELSEWHERE');
+        
+        var ftn = $parse(attr['clickElsewhere']);
+        var docClickHdlr = function(event) {
+
+          $log.info('has delete confirm widget class?: ' + elem.hasClass('delete-confirm-widget'));
+          $log.info('has ng-hide class?: ' + elem.hasClass('ng-hide'));
+
+          var outside = (elem[0] !== event.target) && (0 === elem.find(event.target).length);
+          if(outside) {
+            scope.$apply(function() {
+              ftn(scope, {});
+            });
+          }
+        };
+
+        $document.on("click", docClickHdlr);
+        scope.$on("$destroy", function() {
+          $document.off("click", docClickHdlr);
+        });
+      }
+    };
+    return directive;
+  }
+
+  function visibleClickElsewhereFtn($log, $parse, $document) {
+    var directive = {
+      restrict: 'A',
+      link: function(scope, elem, attr) {
+        //$log.info('RUN VISIBLE CLICK ELSEWHERE');
+        
+        var ftn = $parse(attr['visibleClickElsewhere']);
+        var docClickHdlr = function(event) {
+
+          // $log.info('has delete confirm widget class?: ' + elem.hasClass('delete-confirm-widget'));
+          // $log.info('has ng-hide class?: ' + elem.hasClass('ng-hide'));
+
+          if(elem.hasClass('ng-hide')) {
+            return;
+          }
+
+          var outside = (elem[0] !== event.target) && (0 === elem.find(event.target).length);
+          if(outside) {
+            scope.$apply(function() {
+              ftn(scope, {$event: event});
+            });
+          }
+        };
+
+        $document.on("click", docClickHdlr);
+        scope.$on("$destroy", function() {
+          $document.off("click", docClickHdlr);
+        });
+      }
+    };
+    return directive;
+  }
+
+  function testDirFtn($log) {
+    var directive = {      
+      restrict: 'A',
+      scope: {},
+      // template: '<div>hello</div>',
+      link: function(scope, elem, attr) {
+        $log.info('MY SIMPLE TEST DIR');
+      }
+    };
+    return directive;
   }
 
 })();

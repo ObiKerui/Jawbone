@@ -355,12 +355,17 @@ var JBData = {
   },
 
   patients : function(group, params, cb) {
-    cb(null, {
-      total: group.members.length,
-      max: params.max,
-      offset: params.offset,
-      sortBy: params.sortBy,
-      data: group.members
+    var q = Group.find({_id : group._id}, {members: { $slice:[0, 3]}});
+    q.exec(function(err, result) {
+
+      console.log('result of group find: ' + JSON.stringify(result, true, 3));
+      cb(null, {
+        total: group.members.length,
+        max: params.max,
+        offset: params.offset,
+        sortBy: params.sortBy,
+        data: group.members
+      });    
     });    
   }
 };

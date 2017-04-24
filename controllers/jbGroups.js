@@ -122,6 +122,24 @@ var groups = {
       } 
       res.status(200).json(removed); 
     });
+  },
+
+  getMembers: function(req, res) {
+    var id = req.params.id;
+    var usr = res.locals.user;
+
+    var params = {
+      max : req.query.max,
+      offset : req.query.offset,
+      sortBy : req.query.sortBy
+    };
+
+    Groups.members(id, params, function(err, members) {
+      if(err) {
+        return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});
+      }
+      res.status(200).json(members);
+    });
   }
 };
   

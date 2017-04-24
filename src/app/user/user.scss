@@ -5,8 +5,9 @@
 	min-width: 300px;
 	min-height: 100px;
 	border: 1px solid #ddd;
-	border-radius: 2px;
+	border-radius: 4px;
 	background-color: rgba(221, 221, 221, 0.5);
+	overflow: hidden;
 
 	img {
 		float: left;
@@ -41,6 +42,10 @@
 	background-color: white;
 }
 
+.deleteMode {
+	background-color: rgba(225, 0, 0, 0.2);
+}
+
 .user-outer-box {
 	border: 1px solid #ddd;
 	display: inline-block;
@@ -69,5 +74,32 @@
 		:hover {
 			cursor: pointer;
 		}			
+	}
+}
+
+.delete-widget {
+	position: absolute;
+	right: 3px;
+	top: 3px;
+	color: rgba(255, 0, 0, 0.8);
+
+	p {
+		font-size: 130%;
+		margin: 0px;
+		padding: 8px;
+	}
+}
+
+.delete-confirm-widget {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	//border: 1px solid #ddd;
+	span {
+		min-width: 146px;
+		min-height: 100px;
+		margin: 0px;
+		opacity: 0.8;
+		font-size: 120%;
 	}
 }

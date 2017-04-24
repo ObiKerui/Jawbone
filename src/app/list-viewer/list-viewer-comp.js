@@ -29,7 +29,7 @@
     return ListViewerCtrlObj;
   }
 
-  function ListViewerObjFtn($log, ListViewerElemObj) {
+  function ListViewerObjFtn($q, $log, ListViewerElemObj) {
     var ListViewerObj = function(obj, onStateChange) {
 
       //$log.info('obj to listviewer obj: ' + JSON.stringify(obj));
@@ -67,13 +67,22 @@
         $log.info('supply on deselect function');
       };
 
+      o.onEvent = obj.onEvent || function(event, elem) {
+        var deferred = $q.defer();
+        deferred.resolve(true);
+        $log.info('supply on event function');
+        return deferred.promise;
+      };
+
       o.elements = [];
       o.selected = -1;
 
       // notify list object that an element was clicked
-      o.notifyClicked = function(index) {        
+      o.handleClick = function(index) {   
+        // sets selected and notifies the list implementation type selected/deselected     
         if(o.selected !== -1 && o.selected < o.elements.length) {
-          o.elements[o.selected].onDeselected();
+          //o.elements[o.selected].onDeselected();
+          o.elements[o.selected].handleParentEvent('deselect');
           o.onDeselect(o.elements[o.selected].element);
         }
 
@@ -83,38 +92,65 @@
         } else {
           o.selected = -1;
         }
-
       };
 
-      // ensure all elements deselected
+      o.handleChildEvent = function(event, data, index) {
+        switch(event) {
+          case 'clicked':
+            o.handleClick(index);
+            break;
+          case 'delete':
+            o.onEvent(event, o.elements[index].element)
+            .then(function(response) {
+              $log.info('event handled with response : ' + response);
+              o.deleteElement(index);
+            });   
+            break; 
+          default:
+            break;
+        }
+      };
+
       o.listobj.baseFtns = {
+        // ensure all elements deselected
         deselectAll : function() {
           o.selected = -1;
           angular.forEach(o.elements, function(value) {
-            value.onDeselected();
+            //value.onDeselected();
+            value.handleParentEvent('deselect');
             o.onDeselect(value.element);
           }, o.elements);          
+        },
+
+        // send an event to every member of the list
+        propagateEvent: function(event, data) {
+          angular.forEach(o.elements, function(value) {
+            $log.info('event action for elem: ' + event);
+            value.handleParentEvent(event, data);
+          }, o.elements);
         }
       };
 
       function populate(list, batchObj, onComplete) {
-        // o.getElements()
-
-        //$log.info('list comprises: ' + JSON.stringify(list));
-        //$log.info('call batch obj get: ' + JSON.stringify(batchObj));
 
         batchObj.get()
         .then(function(batch) {
           $log.info('total no. of objects: ' + batchObj.params.total);
+          var i = 0;
           angular.forEach(batch.data, function(value) { 
             //$log.info('value gotten: ' + JSON.stringify(value));           
             var e = o.makeElement(value); 
-            this.push(new ListViewerElemObj(o.notifyClicked, e));
+            // $log.info('index to pass: ' + i);
+            this.push(new ListViewerElemObj(o.handleChildEvent, e, parseInt(i)));
+            i++;
           }, list);
 
           $log.info('size of list: ' + JSON.stringify(list.length));
           if(onComplete) {
-            onComplete();
+            onComplete({
+              nbrElems: list.length,
+              totalElems: batchObj.params.total
+            });
           }
         })
         .catch(function(err) {
@@ -122,15 +158,23 @@
         });        
       }
 
+      o.deleteElement = function(index) {
+        o.elements = [];
+        populate(o.elements, o.getElementsObj);
+      };
+
       // TODO implement
-      o.appendElements = function() {
-        $log.info('call to append elements...');
-        
-        if(!o.getElementsObj.more()) {
-          return;          
-        }
+      o.appendElements = function() {        
 
         o.getElementsObj = o.getElementsObj.next();
+        $log.info('next batch..params: ' + JSON.stringify(o.getElementsObj.params));
+
+        if(!o.getElementsObj.more()) {
+          $log.info('no more to get w/ params: ' + JSON.stringify(o.getElementsObj.params));
+          $log.info('no more to get w/ elems :  ' + o.elements.length);
+          return;          
+        }
+        
         populate(o.elements, o.getElementsObj);
       };
 
@@ -140,8 +184,8 @@
 
       //$log.info('calling populate on creation...');
       obj.onStateChange('loading');
-      populate(o.elements, o.getElementsObj, function() {
-        obj.onStateChange('ready');
+      populate(o.elements, o.getElementsObj, function(updateData) {
+        obj.onStateChange('ready', updateData);
       });
 
       //$log.info('got elems: ' + JSON.stringify(o.elems));
@@ -163,24 +207,31 @@
     vm.chunksize = 4;
     vm.index = 0;
     vm.initcb = null;
+    vm.setHeightCB = null;
     vm.animating = false;
     vm.state = 'init';
 
-    vm.register = function(cb) {
+    vm.register = function(cb, shcb) {
       vm.initcb = cb;
+      vm.setHeightCB = shcb;
     };
 
-    vm.initialiseHeight = function(height) {
+    vm.callinit = function() {
+      vm.initcb();
+    };
+
+    vm.initialiseHeight = function(height, cb) {
       //$log.info('init height called: ' + height);
       vm.chunksize = vm.lo.chunksize || 4;
       vm.frameHeight = vm.chunksize * height;
       vm.moveDistance = parseInt(vm.frameHeight / 2);
+      cb(vm.frameHeight);
       //vm.index = 0;
     };
 
-    vm.getFrameHeight = function() {
-      return vm.frameHeight;
-    };
+    // vm.getFrameHeight = function() {
+    //   return vm.frameHeight;
+    // };
 
     function adjust(length) {
       vm.nbrElems = vm.lo.listobj.elements.length;
@@ -193,29 +244,27 @@
       }
     }
 
+    vm.didMouseWheelUp = function(value) {
+      //$log.info('mouse wheel up event!');
+      vm.back();
+    };
 
-      vm.didMouseWheelUp = function(value) {
-        //$log.info('mouse wheel up event!');
-        vm.back();
-      };
-
-      vm.didMouseWheelDown = function(value) {
-        //$log.info('mouse wheel down event!');
-        vm.forward();
-      };
+    vm.didMouseWheelDown = function(value) {
+      //$log.info('mouse wheel down event!');
+      vm.forward();
+    };
 
 
     function init(obj) {
-      vm.lo = new ListViewerCtrlObj(obj, function(newState) {
+      vm.lo = new ListViewerCtrlObj(obj, function(newState, updateData) {
         vm.state = newState;
+        vm.setHeightCB();
       });
-
-
 
       vm.nbrElems = vm.lo.listobj.elements.length;
       vm.nbrForwards = parseInt(vm.nbrElems / 2);
 
-      $log.info('calling init of listviewer : ' + JSON.stringify(vm.lo));
+      //$log.info('calling init of listviewer : ' + JSON.stringify(vm.lo));
       $log.info('nbr elems : ' + vm.nbrElems);
 
       vm.back = function() {
@@ -223,7 +272,6 @@
         if(vm.animating) return;
         vm.animating = true;
         vm.index = (vm.index === 0 ? 0 : vm.index - 1);
-        $log.info('clicked back: ' + vm.index);
         //$scope.$broadcast('clickback', vm.moveDistance);
         $scope.$broadcast('clickback', {
           dist: vm.moveDistance,
@@ -234,6 +282,7 @@
       };
 
       vm.forward = function() {
+        vm.setHeightCB();
         if(vm.atEnd()) return;
         if(vm.animating) return;
         vm.animating = true;
@@ -245,7 +294,7 @@
           dist: vm.moveDistance, 
           callback: function() { 
             vm.animating = false;
-            $log.info('set animating to false: ' + vm.animating); 
+            //$log.info('set animating to false: ' + vm.animating); 
           }
         });
         vm.lo.listobj.appendElements();
@@ -309,51 +358,49 @@
         li = ul.find('li');
         var height = li.first().height();
 
-        //height = 100;
+        //$log.info('THE HEIGHT OF FIRST ELEM: ' + height);
 
-        ctrl.initialiseHeight(height);
-        var frameHeight = ctrl.getFrameHeight();
-        $log.info('new init height of list element : ' + height + ' frame height: ' + frameHeight);
-        frame.css({
-          'height': frameHeight + 'px'
+        ctrl.initialiseHeight(height, function(scrollFrameHeight) {
+          //$log.info('new init height of list element : ' + height + ' frame height: ' + scrollFrameHeight);
+          frame.css({
+            'height': scrollFrameHeight + 'px'
+          });          
         });
       }
 
-      //function init() {
-        //$log.info('run the init futn');
+      scope.$on('clickback', function(event, data) {
+        ul.velocity({
+          'top': '+='+ data.dist
+        }, 400, function() {
+          // Animation complete.
+          //$log.info('animating complete invoke cb...')
+          data.callback();
+        });          
+      });
 
-        scope.$on('clickback', function(event, data) {
-          ul.velocity({
-            'top': '+='+ data.dist
-          }, 400, function() {
-            // Animation complete.
-            $log.info('animating complete invoke cb...')
-            data.callback();
-          });          
+      scope.$on('clickforward', function(event, data) {
+        //$log.info('click forwards event...');
+        ul.velocity({
+          'top': '-='+ data.dist
+        }, 400, function() {
+          // Animation complete.
+          //$log.info('animating complete invoke cb...');
+          data.callback();
+        });                  
+      });    
+
+      scope.$on('adjustOffsetFromLeft', function(event, data) {
+        ul.css({
+          'left': '+=' + data
         });
-
-        scope.$on('clickforward', function(event, data) {
-          $log.info('click forwards event...');
-          ul.velocity({
-            'top': '-='+ data.dist
-          }, 400, function() {
-            // Animation complete.
-            $log.info('animating complete invoke cb...');
-            data.callback();
-          });                  
-        });    
-
-        scope.$on('adjustOffsetFromLeft', function(event, data) {
-          ul.css({
-            'left': '+=' + data
-          });
-        });        
-      //}
+      });        
 
       ctrl.register(function() {
         $timeout(function() {
           newInit();
         })
+      }, function() {
+        newInit();
       });
     }  
   }
