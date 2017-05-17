@@ -34,14 +34,21 @@ var Group = db.model('jbGroup', jbGroupSchema);
 //
 // Create new comment in your database and return its id
 //
-var create = function(newObj, user, cb) {
+var create = function(newObj, userCreatedBy, cb) {
   var neObj = new Group(newObj);
+  var groupMember = {
+    user : userCreatedBy,
+    joinDate : Date.now()
+  };
+
+  neObj.admins.push(groupMember);
+
   neObj.save(function (err, result) {
     if (err) {
   	 return cb(err);
     }
 
-    User.addGroup(user, result, function(err, savedUser) {
+    User.addGroup(userCreatedBy, result, function(err, savedUser) {
       return cb(null, result);
     });
   });
@@ -50,20 +57,41 @@ var create = function(newObj, user, cb) {
 //
 //
 //
-var addUserToGroup = function(user, group, memberFieldName, cb) {
+var addMember = function(groupId, memberId, addedBy, cb) {
   var newGroupMember = {
-    user : user
+    user : user,
+    addedBy : addedBy
   };
 
   Group.findByIdAndUpdate(
-        group._id,
-        {$push: { memberFieldName: newGroupMember }},
-        {safe: true, upsert: true, new : true},
-        function(err, model) {
-            console.log(err);
-        }
-    );
+    group._id,
+    { $push: { members: newGroupMember }},
+    { safe: true, upsert: true, new : true},
+    function(err, result) {
+      if(err) {
+        console.log('error adding member to group: ' + err);
+        return cb(err);            
+      }
+      return cb(null, result);
+    }
+  );
 }
+
+var removeMember = function(groupId, memberId, cb) {
+
+  Group.findByIdAndUpdate(
+    groupId, 
+    { $pull: { members: { user : memberId }}}, 
+    { safe: true, upsert: true, new: true}, 
+    function(err, result) {
+      if(err) {
+        console.log('error removing member from group: ' + err);
+        return cb(err);
+      }
+      return cb(null, result);
+    }
+  );
+};
 
 var update = function(UpdateObj, id, cb) {
 	var upQuery = {_id : id };	
@@ -163,20 +191,54 @@ var remove = function(id, user, cb) {
 
 var members = function(groupId, params, cb) {
 
-  var max = parseInt(params.offset + params.max);
-  var count = Group.findOne({_id : groupId });
-  var q = Group.findOne({_id : groupId}, { members: { $slice:[params.offset, max]}}).populate('members.user', '-jawboneData').lean();
+  var offset = parseInt(params.offset);
+  var max = parseInt(parseInt(params.offset) + parseInt(params.max));
+  var getGroup = Group.findOne({_id : groupId });
 
-  count.exec(function(err, group) {
+  // console.log('offset: ' + params.offset);
+  // console.log('max: ' + max);
+  
+  var q = Group.findOne({_id : groupId}, { members: { $slice:[offset, max]}}).populate('members.user', '-jawboneData').lean();
+
+  getGroup.exec(function(err, group) {
     q.exec(function(err, result) {
 
-      console.log('result of group find: ' + JSON.stringify(result, true, 3));
+      // console.log('result of group find in members req: ' + JSON.stringify(result, true, 3));
       cb(null, {
         total: group.members.length,
         max: params.max,
         offset: params.offset,
         sortBy: params.sortBy,
         data: result.members
+      });    
+    });    
+  });
+};
+
+var admins = function(groupId, params, cb) {
+  var offset = parseInt(params.offset);
+  var max = parseInt(parseInt(params.offset) + parseInt(params.max));
+  var getGroup = Group.findOne({_id : groupId });
+
+  // console.log('offset: ' + params.offset);
+  // console.log('max: ' + max);
+  
+  var q = Group.findOne({_id : groupId}, { admins: { $slice:[offset, max]}}).populate('admins.user', '-jawboneData').lean();
+
+  getGroup.exec(function(err, group) {
+    q.exec(function(err, result) {
+
+      if(err) {
+        return cb(err);
+      }
+
+      // console.log('result of group find in members req: ' + JSON.stringify(result, true, 3));
+      cb(null, {
+        total: group.admins.length,
+        max: params.max,
+        offset: params.offset,
+        sortBy: params.sortBy,
+        data: result.admins
       });    
     });    
   });
@@ -189,6 +251,8 @@ module.exports.all = all;
 module.exports.allByUser = allByUser;
 module.exports.remove = remove;
 module.exports.update = update;
-module.exports.addUserToGroup = addUserToGroup;
+module.exports.addMember = addMember;
+module.exports.removeMember = removeMember;
 module.exports.allByUser = allByUser;
 module.exports.members = members;
+module.exports.admins = admins;

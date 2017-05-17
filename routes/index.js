@@ -19,11 +19,17 @@ module.exports = function(app, passport) {
 	
 	app.get('/users/me', isLoggedIn, userCtrl.getAll);
 	app.get('/users/:id', isLoggedIn, userCtrl.getOne);
+
 	app.get('/groups/me', isLoggedIn, groupCtrl.getAll);
 	app.get('/groups/:id', isLoggedIn, groupCtrl.getOne);
 	app.get('/groups/:id/members', isLoggedIn, groupCtrl.getMembers);
+	app.delete('/groups/:groupId/members/:memberId', isLoggedIn, groupCtrl.removeMemberFromGroup);
+	app.put('/groups/:groupId/members/:memberId', isLoggedIn, groupCtrl.addMemberToGroup);
+	app.get('/groups/:id/admins', isLoggedIn, groupCtrl.getAdmins);
+
 	app.get('/sleeps/me', isLoggedIn, JBDataCtrl.getSleeps);
 	app.get('/sleeps/:id', isLoggedIn, JBDataCtrl.getSleeps);
+	
 	app.get('/trends/me', isLoggedIn, JBDataCtrl.getTrends);
 	app.get('/trends/:id', isLoggedIn, JBDataCtrl.getTrends);
 

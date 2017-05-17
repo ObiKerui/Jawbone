@@ -1,0 +1,21 @@
+<loader obj="ctrl.co.loaderMessage" ng-show="ctrl.state !== 'ready'"></loader>
+<div class="chart-area animated" ng-show="ctrl.state === 'ready'">
+	<div class="chart-header">
+		<span uib-dropdown>
+		    <a class="btn btn-default" uib-dropdown-toggle>{{ctrl.obj.selected || 'select a plot...'}} <span class="caret"></span> </a>
+		    <ul uib-dropdown-menu>
+		        <li ng-repeat="item in ctrl.obj.plots track by $index"><span ng-click='ctrl.obj.api.switchToPlot($index)'>{{item}}</span></li>
+		    </ul>
+		</span>
+		<span class="btn btn-default" ng-click='ctrl.obj.api.appendPlot()'>compare with</span>
+	</div>
+
+	<div class="chart-body">
+		<div class="chart-element">
+			<div google-chart chart="ctrl.obj.chart" style="height:300px; width:570px; border: 1px solid #fff;"></div>
+		</div>
+	</div>
+
+</div>
+
+<!-- <p>the new chart: {{ctrl.obj.chart.data | json}}</p> -->

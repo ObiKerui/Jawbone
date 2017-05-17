@@ -76,11 +76,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(session({
   secret: 'anappsessionsecretkeepssecretyes',
-  resave: false,
+  resave: true,
   saveUninitialized: true,
   cookie: {
     secure: true,
-    maxAge: new Date(Date.now() + 3600000)
+    maxAge: 3600000
+    //maxAge: new Date(Date.now() + 3600000)
   }
 }));
 

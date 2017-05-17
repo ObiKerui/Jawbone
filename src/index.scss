@@ -41,6 +41,19 @@ html {
   }
 }
 
+// .pulser-anim.ng-hide-add, .pulser-anim.ng-hide-remove {
+//   animation: bounceIn 0.5s;
+// }
+
+.pulser-anim.ng-hide-remove {
+  animation: rotateIn 0.5s;
+}
+
+.pulser-anim.ng-hide {
+  line-height: 0;
+  opacity: 0;
+}
+
 .slider-anim.ng-hide-add, .slider-anim.ng-hide-remove {
   animation: slideInRight 0.3s;
 }

@@ -1,0 +1,18 @@
+<div class="patient-header">
+	<div class="patient-info">
+		<img ng-src="{{ctrl.obj.patient.user.profile.image | defaultPatient }}" height='100px' width='100px'></img>
+		<div class="user-details">
+			<div class="name">
+				{{ctrl.obj.patient.user.profile.first}} {{ctrl.obj.patient.user.profile.last}}
+			</div>
+			<div class="features">
+				<p>Weight: {{ctrl.obj.patient.user.profile.weight | number: 2}}</p>
+				<p>Gender: {{ctrl.obj.patient.user.profile.gender}}</p>
+				<p>Height: {{ctrl.obj.patient.user.profile.height}}</p>
+			</div> 
+		</div>
+	</div>
+	<hr/>
+	<div style="clear: both;"></div>
+	<div ng-include='ctrl.obj.actionBarObj.template'></div>
+</div>

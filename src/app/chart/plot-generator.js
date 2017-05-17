@@ -97,7 +97,7 @@
 
         //PlotGenerator.preparePlot = function(start, end, data, plotnames) {                    
         PlotGenerator.preparePlot = function(data, plotParams) {    
-            $log.info('plot names: ' + JSON.stringify(plotParams));       
+            //$log.info('plot names: ' + JSON.stringify(plotParams));       
             var pname = plotParams.plotName || [ 'blank' ];
             pname = (Array.isArray(pname) ? pname : [pname]);
             var plotnames = pname;
@@ -115,16 +115,17 @@
                 this.push(PlotGenerator.createEmpty(value));
             }, arr); 
 
+            //$log.info('data for prepare plot: ' + JSON.stringify(data));
+
             //$log.info('dae arr: ' + JSON.stringify(dateArr));
-            //data = data.reverse();
 
             // populate for every data entry within the date range
             angular.forEach(data, function(value) {            
                 //find the index into the date array to add this 'value'
                 idx = findIndexOf(dateArr, function(elem) {
                     var jsdate = JawboneChartUtils.jawboneToJSDate(value.date);
-                    // $log.info('elem: ' + elem);
-                    // $log.info('date is ' + elem.toDateString() + ' jsdate: ' + jsdate.toDateString());
+                    //$log.info('elem: ' + elem);
+                    //$log.info('date is ' + elem.toDateString() + ' jsdate: ' + jsdate.toDateString());
                     return (elem.toDateString() === jsdate.toDateString());  
                 }, idx);     
 
@@ -138,6 +139,8 @@
                     PlotGenerator.addToArray(this, idx, 0, value);
                 }
             }, arr);
+
+            //$log.info('data arry: ' + JSON.stringify(arr));
 
             return { names: plotnames, data: arr };
         };        

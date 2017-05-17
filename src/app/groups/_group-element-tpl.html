@@ -1,11 +1,3 @@
-<!-- <div class="trends-element-style" ng-class="{'active' : ctrl.obj.element.selected }">
-
-	<span>{{ctrl.obj.element.name}}</span>
-	<span>{{ctrl.obj.element.description}}</span>
-	<span>{{ctrl.obj.element.size}}</span>
-
-</div>
- -->
 <div class="user-list-element" ng-class="{'active' : ctrl.obj.element.api.selected, 'deleteMode' : ctrl.obj.element.api.deleteMode }"
 	ng-click="ctrl.obj.element.api.clickedView()">
 	<img ng-src='assets/group.png' height='100px' width='100px'></img>
@@ -18,7 +10,7 @@
 			<p>{{ctrl.obj.element.size}} members</p>
 		</div> 
 	</div>
-	<div ng-show='ctrl.obj.element.api.deleteMode' class="delete-widget">
+	<div ng-show='ctrl.obj.element.api.deleteMode' class="delete-widget pulser-anim">
 		<p><span class="glyphicon glyphicon-remove faded-glyph"></span></p>
 	</div> 
 	<div ng-show='ctrl.obj.element.api.confirmDeleteMode' class="delete-confirm-widget slider-anim" visible-click-elsewhere='ctrl.obj.element.api.cancel($event)'>

@@ -10,6 +10,22 @@
   var modalservice = null;
   var promiseService = null;
 
+  function buildCallbacks(obj, userGroup) {
+    obj.patientViewer.onEvent = function(event, selectedPatient) {
+      var deferred = promiseService.defer();
+      switch(event) {
+        case 'delete':
+          log.info('remove patient from the group: ' + selectedPatient);
+          jbservice.groupService().removeMemberFromGroup(userGroup, selectedPatient);
+          deferred.resolve(true);
+          break;
+        default:
+          break;
+      }
+      return deferred.promise;
+    };
+  }
+
   function buildPatientsActionBar(obj) {
 
     //log.info('the object for the patients is: ' + JSON.stringify(obj, true, 3));
@@ -25,6 +41,10 @@
       },
       removePatientFromGroup: function() {
         log.info('implement remove patient from group ftn');
+        obj.patientViewer.listobj.baseFtns.deselectAll();
+        obj.patientViewer.listobj.state.deleteMode = !(obj.patientViewer.listobj.state.deleteMode);
+        obj.patientViewer.listobj.baseFtns.propagateEvent('deleteMode', null);
+
       }
     }    
   }
@@ -50,6 +70,7 @@
       log.info('now build the patients group action bar...');
 
       buildPatientsActionBar(obj);  
+      buildCallbacks(obj, userGroup);
       
       return obj;
     };

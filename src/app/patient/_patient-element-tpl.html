@@ -1,4 +1,5 @@
-<div class="user-list-element" ng-class="{'active' : ctrl.obj.element.selected }" ng-click="ctrl.obj.element.api.clickedView()">
+<div class="user-list-element" ng-class="{'active' : ctrl.obj.element.api.selected, 'deleteMode' : ctrl.obj.element.api.deleteMode }" 
+	ng-click="ctrl.obj.element.api.clickedView()">
 	<img ng-src='assets/users.png' height='100px' width='100px'></img>
 	<div class="user-details">
 		<div class="name">
@@ -10,4 +11,11 @@
 			<p>Height: {{ctrl.obj.element.height}}</p>
 		</div> 
 	</div>
+	<div ng-show='ctrl.obj.element.api.deleteMode' class="delete-widget pulser-anim">
+		<p><span class="glyphicon glyphicon-remove faded-glyph"></span></p>
+	</div> 
+	<div ng-show='ctrl.obj.element.api.confirmDeleteMode' class="delete-confirm-widget slider-anim" visible-click-elsewhere='ctrl.obj.element.api.cancel($event)'>
+		<span class="btn btn-default" ng-click='ctrl.obj.element.api.delete($event)'>confirm</span>
+		<span class="btn btn-default" ng-click='ctrl.obj.element.api.cancel($event)'>cancel</span>
+	</div>	
 </div>

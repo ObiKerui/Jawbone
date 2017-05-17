@@ -1,7 +1,15 @@
-<div class="notes-element-style" ng-class="{'active' : ctrl.obj.element.selected }">
+<div class="notes-element-style" ng-class="{'active' : ctrl.obj.element.api.selected, 'deleteMode' : ctrl.obj.element.api.deleteMode }"
+	ng-click="ctrl.obj.element.api.clickedView()">
 	<span>{{ctrl.obj.element.creationDate | date}}</span>
 	<span>{{ctrl.obj.element.owner.profile.first}} {{ctrl.obj.element.owner.profile.last}}</span>
 	<div style="clear: both;"></div>
 	<span><minifier text='ctrl.obj.element.text' limit='60'></minifier></span>
-	<div style="float: right;" class="btn btn-primary-outline glyphicon glyphicon-remove faded-glyph" ng-click="ctrl.obj.element.delete()"></div>
+<!-- 	<div style="float: right;" class="btn btn-primary-outline glyphicon glyphicon-remove faded-glyph" ng-click="ctrl.obj.element.delete()"></div> -->
+	<div ng-show='ctrl.obj.element.api.deleteMode' class="delete-widget pulser-anim">
+		<p><span class="glyphicon glyphicon-remove faded-glyph"></span></p>
+	</div> 
+	<div ng-show='ctrl.obj.element.api.confirmDeleteMode' class="notes-delete-confirm-widget slider-anim" visible-click-elsewhere='ctrl.obj.element.api.cancel($event)'>
+		<span class="btn btn-default" ng-click='ctrl.obj.element.api.delete($event)'>confirm</span>
+		<span class="btn btn-default" ng-click='ctrl.obj.element.api.cancel($event)'>cancel</span>
+	</div>	
 </div>

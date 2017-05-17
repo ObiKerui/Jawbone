@@ -1,0 +1,27 @@
+ <div class="patient-area" ng-if='ctrl.obj.mode === "view"'>
+
+	<listviewer-v2
+		iface='ctrl.obj.listIface'>
+	</listviewer-v2>
+
+</div>
+
+<div class="patient-area" ng-if='ctrl.obj.mode === "edit"'>
+
+ 	<patient-summary
+ 		iface='ctrl.obj.patientSummaryInterface'>
+ 	</patient-summary>
+ 	
+	<chart-v2 
+		iface='ctrl.obj.sleepChartInterface'>
+	</chart-v2>
+
+	<listviewer-v2
+		iface='ctrl.obj.sleepsListIface'>
+	</listviewer-v2>
+
+<!--  	<notes-viewer 
+		obj=''
+	</notes-viewer>
+ -->
+</div>

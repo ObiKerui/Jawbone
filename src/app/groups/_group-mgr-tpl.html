@@ -6,14 +6,35 @@
 
 </div>
 
+<div class="patient-area" ng-if='ctrl.obj.mode === "create"'>
+
+	<div class="btn btn-default" ng-click='ctrl.obj.mode = "view"'>back</div>
+
+	<group-creator
+		iface='ctrl.obj.groupCreatorInterface'>
+	</group-creator>
+
+</div>
+
 <div class="patient-area" ng-if='ctrl.obj.mode === "edit"'>
 	
 	<group-summary
  		obj='ctrl.obj.groupSummary'>
  	</group-summary>
 
-	<patient-mgr
-		obj='ctrl.obj.patients'>
+	<div>
+		<ul class="header-titles">
+			<li ng-class="{'selected' : tabpage.index === 0}"><a ng-click='ctrl.obj.api.setPatientView()'>Patients</a></li>
+			<li ng-class="{'selected' : tabpage.index === 1}"><a ng-click='ctrl.obj.api.setAdminView()'>Admins</a></li>
+		</ul>
+	</div>
+
+	<patient-mgr ng-show='ctrl.obj.api.isPatientView()'
+		iface='ctrl.obj.patientMgrInterface'>
 	</patient-mgr>
+
+	<admin-mgr ng-show='ctrl.obj.api.isAdminView()'
+		iface='ctrl.obj.adminMgrInterface'>
+	</admin-mgr>
 
 </div>

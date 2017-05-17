@@ -68,7 +68,7 @@
     }
   }
 
-  function SleepObjFtn($log) {
+  function SleepObjFtn($log, ListElementAPIObj) {
     var SleepObj = function(data) {
       this.data = data || {};
       $log.info('sleep data: ' + JSON.stringify(data));
@@ -85,16 +85,18 @@
       this.duration = this.details.duration || 0;
       this.image = 'https://jawbone.com' + this.data.snapshot_image;
 
-      var o = this;
-      o.selected = false;
+      this.api = new ListElementAPIObj(this);
 
-      o.activated = function() {
-        o.selected = true;
-      };
+      // var o = this;
+      // o.selected = false;
 
-      o.deactivated = function() {
-        o.selected = false;
-      }
+      // o.activated = function() {
+      //   o.selected = true;
+      // };
+
+      // o.deactivated = function() {
+      //   o.selected = false;
+      // }
 
     };
     return SleepObj;

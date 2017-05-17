@@ -14,10 +14,9 @@
 
     function link(scope, elem, attrs) {
       elem.bind("DOMMouseScroll mousewheel onmousewheel", function(event) {
-
         // cross-browser wheel delta
         var ev = window.event || event; // old IE support
-        ev = ev.originalEvent;
+        ev = ev.originalEvent || event.originalEvent;
         var delta = (ev.wheelDelta || -ev.detail);
 
         if(delta < 0) {          
@@ -29,7 +28,7 @@
           event.returnValue = false;
           // for Chrome and Firefox
           if(event.preventDefault) {
-              event.preventDefault();                        
+            event.preventDefault();                        
           }
         }
       });
@@ -45,9 +44,8 @@
     function link(scope, elem, attrs) {      
       elem.bind("DOMMouseScroll mousewheel onmousewheel", function(event) {
         // cross-browser wheel delta
-
         var ev = window.event || event; // old IE support
-        ev = ev.originalEvent;
+        ev = ev.originalEvent || event.originalEvent;
         //var delta = Math.max(-1, Math.min(1, (ev.wheelDelta || -ev.detail)));
         var delta = (ev.wheelDelta || -ev.detail);
 

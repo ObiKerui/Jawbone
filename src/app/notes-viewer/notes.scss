@@ -1,6 +1,7 @@
 .notes-textarea {
 	resize: none;
     width: 95%;
+
     -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
     -moz-box-sizing: border-box;    /* Firefox, other Gecko */
     box-sizing: border-box;         /* Opera/IE 8+ */
@@ -21,6 +22,7 @@
 	margin: 5px;	
 	overflow: hidden;
 	min-width: 560px;
+	min-height: 50px;
 
 	&:hover {
 		background: rgba(255, 255, 255, 0.3);
@@ -34,4 +36,18 @@
 
 .active {
 	background-color: white;
+}
+
+.notes-delete-confirm-widget {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	//border: 1px solid #ddd;
+	span {
+		min-width: 275px;
+		min-height: 50px;
+		margin: 0px;
+		opacity: 0.8;
+		font-size: 120%;
+	}
 }

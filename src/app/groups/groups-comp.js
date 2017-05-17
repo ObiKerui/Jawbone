@@ -46,7 +46,7 @@
     };
   }
 
-  function buildCallbacks(obj, user, GroupsPatientsBuilder, GroupSummObj, PatientsComponentBuilder) {
+  function buildCallbacks(obj, user, GroupsPatientsBuilder, GroupSummObj, PatientsComponentBuilder, AdminMgrInterface, PatientMgrInterface) {
 
     obj.mode = 'view';
 
@@ -57,11 +57,20 @@
       }
       //log.info('on select event fired: delete mode? ' + obj.groupViewer.listobj.state.deleteMode);
       
-      obj.patients = new GroupsPatientsBuilder(user, selectedGroup.data);
+      //obj.patients = new GroupsPatientsBuilder(user, selectedGroup.data);      
+      
+      obj.patientMgrInterface = new PatientMgrInterface({
+        groupId : selectedGroup.data._id
+      });
+
+      obj.adminMgrInterface = new AdminMgrInterface({
+        groupId : selectedGroup.data._id
+      });
+      
       buildGroupSummary(obj, selectedGroup.data, GroupSummObj);
       obj.mode = 'edit';
     };
-
+    
     obj.groupViewer.onEvent = function(event, selectedGroup) {
       var deferred = promiseService.defer();
       switch(event) {
@@ -89,10 +98,11 @@
     obj.groupViewer.listobj.headerFtns = {
       createGroup: function() {
         log.info('implement create group ftn');
-        modalservice.onClick({
-          tpl : 'app/patient/_patient-notes-viewer-tpl.html'
-        })
-        .then(function(result) {});
+        obj.mode = 'create';
+        // modalservice.onClick({
+        //   tpl : 'app/patient/_patient-notes-viewer-tpl.html'
+        // })
+        // .then(function(result) {});
       },
       deleteGroups: function() {
         log.info('implement delete groups ftn');
@@ -117,11 +127,17 @@
     obj.groupViewer.listobj.getElementsObj = jbservice.makeBatch(jbservice.makeEndpoint('groups'));
 
     obj.groupViewer.listobj.makeElement = function(objElement) {
-      return new GroupObj(objElement)
+      return new GroupObj(objElement);
     };    
   }
 
-  function GroupsComponentBuilderFtn($q, $log, GroupObj, JawboneService, GroupsPatientsBuilder, PatientsComponentBuilder, GroupSummObj, ModalService) {
+  function buildGroupCreator(obj, user, GroupCreatorInterface) {
+    obj.groupCreatorInterface = new GroupCreatorInterface({
+      user : user
+    });
+  }
+
+  function GroupsComponentBuilderFtn($q, $log, GroupObj, JawboneService, GroupsPatientsBuilder, PatientsComponentBuilder, GroupSummObj, ModalService, GroupCreatorInterface, AdminMgrInterface, PatientMgrInterface) {
     var GroupsComponentBuilder = function(user) {
       var obj = this;
 
@@ -134,18 +150,46 @@
       log = $log;
       jbservice = JawboneService;
       modalservice = ModalService;
-      promiseService = $q;
+      promiseService = $q;      
 
       obj.groupSummary = {};
       obj.groupViewer = {};
       obj.patientViewer = {};      
+      obj.adminMgr = {};
+      
       // obj.downloader = {};
 
       $log.info('build the groups component..........');
 
-      buildCallbacks(obj, user, GroupsPatientsBuilder, GroupSummObj, PatientsComponentBuilder);
+      buildCallbacks(obj, user, GroupsPatientsBuilder, GroupSummObj, PatientsComponentBuilder, AdminMgrInterface, PatientMgrInterface);
       buildListViewer(obj, GroupObj);
-      buildListViewerHeader(obj);      
+      buildListViewerHeader(obj);    
+      buildGroupCreator(obj, user, GroupCreatorInterface);  
+
+            // handle the views
+      obj.adminPatientView = 'patient';
+
+      obj.api = {
+        setPatientView : function() {
+          $log.info('set the patient view');
+          obj.adminPatientView = 'patient';
+          obj.patientMgrInterface.notify('reveal');
+        },
+
+        setAdminView : function() {
+          $log.info('set admin view');
+          obj.adminPatientView = 'admin';
+          obj.adminMgrInterface.notify('reveal');
+        },
+
+        isPatientView : function() {
+          return obj.adminPatientView === 'patient';
+        },
+      
+        isAdminView : function() {
+          return obj.adminPatientView === 'admin';
+        }
+      }
     };
     return GroupsComponentBuilder;
   }
@@ -160,34 +204,6 @@
 
       this.api = new ListElementAPIObj(this);
       
-      // var o = this;
-      // o.selected = false;
-      // o.deleteMode = false;
-
-      // o.activated = function() {
-      //   o.selected = true;
-      // };
-
-      // o.deactivated = function() {
-      //   o.selected = false;
-      // };
-
-      // o.handleEventFtn = function(event, data) {
-      //   $log.info('group handle event ftn for event: ' + event);
-      //   o.deleteMode = !o.deleteMode;
-      // };
-
-      // o.clickedDelete = function() {
-      //   $log.info('clicked delete');
-      //   o.notifyParent('delete');
-      // };
-
-      // o.clickedView = function() {
-      //   $log.info('clicked view');
-      //   o.selected = !o.selected;
-      //   o.notifyParent('view', o.selected);
-      // };
-
     };
     return GroupObj;
   }

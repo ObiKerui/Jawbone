@@ -39,6 +39,8 @@ hashPassword = function(plainPass) {
 // };
 
 userData = [
+	{ 'email' : 'craig.sharp@gmail.com', 'password' : hashPassword('pass'), 'roles' : ['ROLE_USER', 'ROLE_ADMIN'], 
+		'stats' : { 'nbrPatients' : 0, 'nbrGroups' : 0}, 'groups' : [], 'jawboneData' : { 'jawboneId' : 'dummy1' }, 'profile' : { 'img' : null, 'first': 'Craig', 'last': 'Sharp', 'weight': '34', 'height': '1.88', 'gender': 'male' }},
 	{ 'email' : 'craig.jones@gmail.com', 'password' : hashPassword('pass'), 'roles' : ['ROLE_USER', 'ROLE_ADMIN'], 
 		'stats' : { 'nbrPatients' : 0, 'nbrGroups' : 0}, 'groups' : [], 'jawboneData' : { 'jawboneId' : 'dummy1' }, 'profile' : { 'img' : null, 'first': 'Craig', 'last': 'Jones', 'weight': '34', 'height': '1.88', 'gender': 'male' }},
 	{ 'email' : 'sarah.parker@gmail.com', 'password' : hashPassword('pass'), 'roles' : ['ROLE_USER'], 
@@ -67,32 +69,54 @@ adminsArr = [];
 membersArr = [];
 
 groupData = [
-	{ name : 'groupName', 'description' : 'some desc', 'creationDate' : Date.now(), 'admins' : adminsArr, 'members' : membersArr, 'photo' : null }
+	{ name : 'defaultGroup', 'description' : 'joined by default', 'creationDate' : Date.now(), 'admins' : [], 'members' : [], 'photo' : null },
+	{ name : 'Therapists', 'description' : 'therapy group', 'creationDate' : Date.now(), 'admins' : [], 'members' : [], 'photo' : null }
 ]
 
-addGroupMembers = function(newGroup, users, cb) {
-	newGroup.admins.push(users[0]);
-	for(var i = 1; i < users.length; i++) {
-		newGroup.members.push({ user: users[i] });
-	}
-	Groups.update(newGroup, newGroup._id, function(err, result) {
-		if(err) {
-			console.log('error updating group member: ' + err);
-			cb(err);
-		} else {
-			cb(null, result);
-		}
+addGroupMembers = function(newGroups, users, cb) {
+
+	async.each(newGroups, function(group, callback) {
+		users.forEach(function(user) {
+			group.members.push({
+				user: user
+			});
+		});
+		Groups.update(group, group._id, function(err, result) {
+			if(err) {
+				cb(err);
+			}
+		});
+	}, function(err) {
+		console.log('error adding users to group: ' + err);
 	});
+
+	// for(var i = 1; i < users.length; i++) {
+	// 	newGroup.members.push({ user: users[i] });
+	// }
+	// Groups.update(newGroup, newGroup._id, function(err, result) {
+	// 	if(err) {
+	// 		console.log('error updating group member: ' + err);
+	// 		cb(err);
+	// 	} else {
+	// 		cb(null, result);
+	// 	}
+	// });
 }
 
 makeGroups = function(users, cb) {
-	Groups.create(groupData[0], users[0], function(err, newGroup) {
-		if(err) {
-			console.log('err: ' + err);
-			cb(err);
-		} else {
-			cb(null, newGroup);
-		}
+
+	console.log('create group with user: ' + JSON.stringify(users[0]));
+
+	async.concat(groupData, function(elem, callback) {
+		Groups.create(elem, users[0], function(err, newGroup) {
+			if(err) {
+				callback(err);
+			} else {
+				callback(null, newGroup);
+			}
+		});
+	}, function(err, results) {
+		cb(null, results);
 	});
 };
 
@@ -117,9 +141,9 @@ var createGroups = function(users, done) {
 			//console.log('nbr removed: ' + nbrRem);
 			makeGroups(users, callback);
 		},
-		function(newGroup, callback) {
+		function(newGroups, callback) {
 			//console.log('new group: ' + JSON.stringify(newGroup));
-			addGroupMembers(newGroup, users, callback);			
+			addGroupMembers(newGroups, users, callback);			
 		}
 	], function(err, results) {
 		done(err, results);

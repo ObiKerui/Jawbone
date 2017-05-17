@@ -140,7 +140,60 @@ var groups = {
       }
       res.status(200).json(members);
     });
+  },
+
+  addMemberToGroup : function(req, res) {
+    var groupId = req.params.groupId;
+    var memberId = req.params.memberId;
+    var usr = res.locals.user;
+
+    console.log('add member to group...');
+    console.log('group id: ' + groupId);
+    console.log('member id: ' + memberId);
+
+    Groups.addMember(groupId, memberId, function(err, result) {
+      if(err) {
+        return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});
+      }
+      res.status(201).json(result);
+    });
+  },
+
+  removeMemberFromGroup : function(req, res) {
+    var groupId = req.params.groupId;
+    var memberId = req.params.memberId;
+    var usr = res.locals.user;
+
+    console.log('remove member from group...');
+    console.log('group id: ' + groupId);
+    console.log('member id: ' + memberId);
+
+    Groups.removeMember(groupId, memberId, function(err, result) {
+      if(err) {
+        return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});
+      }
+      res.status(201).json(result);
+    });
+  },
+
+  getAdmins: function(req, res) {
+    var id = req.params.id;
+    var usr = res.locals.user;
+
+    var params = {
+      max : req.query.max,
+      offset : req.query.offset,
+      sortBy : req.query.sortBy
+    };
+
+    Groups.admins(id, params, function(err, admins) {
+      if(err) {
+        return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});
+      }
+      res.status(200).json(admins);
+    });
   }
+
 };
   
 module.exports = groups;

@@ -24,7 +24,7 @@
       return (vm.obj);
     }, function(newval, oldval) {
       if(newval) {
-        $log.info('assign patient summ obj : ' + JSON.stringify(newval));
+        //$log.info('assign patient summ obj : ' + JSON.stringify(newval));
         vm.pso = vm.obj;        
       }
     }); 

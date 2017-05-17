@@ -5,7 +5,7 @@
     .module('jawboneApp')
     .factory('PatientSummObj', PatientSummObjFtn)
     .controller('PatientSummCtrl', PatientSummCtrlFtn)
-    .directive('patientSummary', patientSummaryFtn);
+    .directive('patientSummaryOld', patientSummaryFtn);
 
   function PatientSummObjFtn($log) {
     var PatientSummObj = function(user) {
@@ -28,7 +28,7 @@
       return (vm.obj);
     }, function(newval, oldval) {
       if(newval) {
-        $log.info('assign patient summ obj : ' + JSON.stringify(newval));
+        //$log.info('assign patient summ obj : ' + JSON.stringify(newval));
         vm.pso = vm.obj;
       }
     });

@@ -3,17 +3,55 @@
 
   angular
     .module('jawboneApp')
+    .factory('ListInterfaceObj', ListInterfaceObjFtn)
     .factory('ListViewerCtrlObj', ListViewerCtrlObjFtn)
     .factory('ListViewerObj', ListViewerObjFtn)
     .controller('ListViewerCtrl', ListViewerCtrl)
     .directive('listviewer', listviewerFtn);
 
+  /**
+  * IMPLEMENT THIS OBJECT TO CREATE A LIST OBJECT
+  */
+  function ListInterfaceObjFtn($log) {
+    var ListInterfaceObj = function(config) {
+      var name = 'list-viewer//ListInterfaceObj : ';
+      var obj = this;
+      obj.config = {
+          header : {
+            heading: config.header.heading || null,
+            headerTemplate: config.header.headerTemplate || null,
+            headerObj: config.header.headerObj || null
+          },
+          events: {
+            onSelect : config.events.onSelect || function() {
+              $log.info(name + ' supply on Select function');
+            },
+            onConfirm : config.events.onConfirm || function() {
+              $log.info(name + ' supply on Confirm function');
+            },
+            onStateChange : config.events.onStateChange || function() {
+              $log.info(name + ' supply on State Change function');
+            },
+            onEvent : config.events.onEvent || function() {
+              $log.info(name + ' supply on Event function');
+            }
+          },
+          loaderMessage: config.loaderMessage || null,          
+          getElementsObj : config.getElementsObj || null,
+          makeElement : config.makeElement || null,
+          elementTemplate: config.elementTemplate || 'app/list-viewer/_default-lve-tpl.html'         
+      };
+
+      obj.getInterface = function() {
+        return obj.config;        
+      };
+    };
+  }
+
   function ListViewerCtrlObjFtn($log, ListViewerObj) {
     var ListViewerCtrlObj = function(obj, onStateChange) {
 
       var o = this;
-
-      //$log.info('run dat list viewer ctrl obj');
       
       o.onSelect = obj.onSelect || function(selected) {
         $log.info('selected: ' + JSON.stringify(selected));
@@ -47,9 +85,6 @@
       o.headerObj = obj.listobj.headerObj || {};
       o.template = obj.listobj.template || 'app/list-viewer/_default-lve-tpl.html';
       o.chunksize = obj.listobj.chunksize || 4;
-      o.getElements = o.listobj.getElements || function() {
-        return [];
-      };
 
       // get an object to retrieve batches now
       o.getElementsObj = o.listobj.getElementsObj || {};
@@ -102,7 +137,7 @@
           case 'delete':
             o.onEvent(event, o.elements[index].element)
             .then(function(response) {
-              $log.info('event handled with response : ' + response);
+              //$log.info('event handled with response : ' + response);
               o.deleteElement(index);
             });   
             break; 
@@ -125,7 +160,7 @@
         // send an event to every member of the list
         propagateEvent: function(event, data) {
           angular.forEach(o.elements, function(value) {
-            $log.info('event action for elem: ' + event);
+            //$log.info('event action for elem: ' + event);
             value.handleParentEvent(event, data);
           }, o.elements);
         }
@@ -135,8 +170,8 @@
 
         batchObj.get()
         .then(function(batch) {
-          $log.info('total no. of objects: ' + batchObj.params.total);
-          var i = 0;
+          //$log.info('total no. of objects: ' + batchObj.params.total);
+          var i = list.length;
           angular.forEach(batch.data, function(value) { 
             //$log.info('value gotten: ' + JSON.stringify(value));           
             var e = o.makeElement(value); 
@@ -145,7 +180,7 @@
             i++;
           }, list);
 
-          $log.info('size of list: ' + JSON.stringify(list.length));
+          //$log.info('size of list: ' + JSON.stringify(list.length));
           if(onComplete) {
             onComplete({
               nbrElems: list.length,
@@ -164,7 +199,7 @@
       };
 
       // TODO implement
-      o.appendElements = function() {        
+      o.appendElements = function(cb) {        
 
         o.getElementsObj = o.getElementsObj.next();
         $log.info('next batch..params: ' + JSON.stringify(o.getElementsObj.params));
@@ -172,10 +207,10 @@
         if(!o.getElementsObj.more()) {
           $log.info('no more to get w/ params: ' + JSON.stringify(o.getElementsObj.params));
           $log.info('no more to get w/ elems :  ' + o.elements.length);
-          return;          
+          return cb();          
         }
         
-        populate(o.elements, o.getElementsObj);
+        populate(o.elements, o.getElementsObj, cb);
       };
 
       o.listobj.onPopulate = function() {
@@ -202,6 +237,7 @@
     vm.atStart = null;
     vm.atEnd = null;
     vm.frameHeight = 0;
+    vm.totalElements = 0;
     vm.moveDistance = 0;
     vm.nbrForwards = 100;
     vm.chunksize = 4;
@@ -210,7 +246,7 @@
     vm.setHeightCB = null;
     vm.animating = false;
     vm.state = 'init';
-
+        
     vm.register = function(cb, shcb) {
       vm.initcb = cb;
       vm.setHeightCB = shcb;
@@ -229,20 +265,31 @@
       //vm.index = 0;
     };
 
-    // vm.getFrameHeight = function() {
-    //   return vm.frameHeight;
-    // };
-
-    function adjust(length) {
-      vm.nbrElems = vm.lo.listobj.elements.length;
-      //$log.info('what is chunsize anyways: ' + vm.lo.chunksize);
-      vm.chunksize = parseInt(vm.lo.chunksize) || 4;
-      vm.nbrForwards = parseInt(vm.nbrElems / vm.chunksize);
-      //$log.info('chunksize: ' + vm.chunksize + ' no. forwards: ' + vm.nbrForwards);
-      if(vm.initcb) {
-       vm.initcb();
-      }
+    function calculateNoForwards(total, chunksize) {
+      var totalPages = Math.ceil(total / chunksize);
+      var nbrOnLastPage = parseInt(total % chunksize);
+      var lessThanHalfOnLastPage = (nbrOnLastPage !== 0 && (nbrOnLastPage <= chunksize / 2))
+      var nbrForwards = (lessThanHalfOnLastPage ? totalPages - 1 : totalPages);
+      // $log.info('total elements: ' + total);
+      // $log.info('number of pages: ' + totalPages + ' number of forwards: ' + nbrForwards);
+      return nbrForwards;
     }
+
+    // function adjust(length) {
+    //   vm.nbrElems = vm.lo.listobj.elements.length;
+    //   //$log.info('what is chunsize anyways: ' + vm.lo.chunksize);
+    //   vm.chunksize = parseInt(vm.lo.chunksize) || 4;
+    //   var nbrWindows = Math.ceil(vm.nbrElems / vm.chunksize);
+    //   //$log.info('no. of windows: ' + nbrWindows + ' nbrelems: ' + vm.nbrElems + ' chunksize: ' + vm.chunksize);
+
+    //   //vm.nbrForwards = parseInt(vm.nbrElems / (vm.chunksize / 2));
+    //   vm.nbrForwards = nbrWindows > 1 ? parseInt(nbrWindows * 2) : 0;
+    //   //$log.info('nb elems: ' + vm.nbrElems + ' chunksize: ' + vm.chunksize + ' no. forwards: ' + vm.nbrForwards);
+    //   //$log.info('calculate: ' + (vm.nbrElems / (vm.chunksize / 2)));
+    //   if(vm.initcb) {
+    //    vm.initcb();
+    //   }
+    // }
 
     vm.didMouseWheelUp = function(value) {
       //$log.info('mouse wheel up event!');
@@ -254,73 +301,162 @@
       vm.forward();
     };
 
-
     function init(obj) {
       vm.lo = new ListViewerCtrlObj(obj, function(newState, updateData) {
+        //$log.info('update data: ' + JSON.stringify(updateData));
+        completeInit(newState, updateData);
+      });    
+
+      // watch the size of the array of elements
+      // consider removing this in favour of a callback from listviewerctrlobj
+      // $scope.$watch(function(scope) {
+      //   return (vm.lo.listobj.elements.length);
+      // }, function(newVal, oldVal) {
+      //   if(newVal) {
+      //     $log.info('elements changed: ' + vm.lo.listobj.elements.length); 
+      //     adjust(newVal);         
+      //   }
+      // });
+    }
+
+    function completeInit(newState, updateData) {
+        //$log.info('update data: ' + JSON.stringify(updateData));
+        var update = updateData || {};
+        vm.nbrElems = update.nbrElems || 0;
+        vm.totalElements = update.totalElems || 0;
+        vm.nbrForwards = calculateNoForwards(vm.totalElements, vm.chunksize);
+        //$log.info('nbr forwards: ' + vm.nbrForwards);
         vm.state = newState;
         vm.setHeightCB();
-      });
 
-      vm.nbrElems = vm.lo.listobj.elements.length;
-      vm.nbrForwards = parseInt(vm.nbrElems / 2);
+        vm.back = function() {
+          if(vm.atStart()) return;
+          if(vm.animating) return;
+          vm.animating = true;
+          vm.index = (vm.index === 0 ? 0 : vm.index - 1);
+          //$scope.$broadcast('clickback', vm.moveDistance);
+          $scope.$broadcast('clickback', {
+            dist: vm.moveDistance,
+            callback: function() {
+              vm.animating = false;
+            }
+          });
+        };
 
-      //$log.info('calling init of listviewer : ' + JSON.stringify(vm.lo));
-      $log.info('nbr elems : ' + vm.nbrElems);
+        vm.forward = function() {
+          vm.setHeightCB();
+          //$log.info('forward invoked...');
+          if(vm.atEnd()) return;
+          if(vm.animating) return;
+          vm.animating = true;
+          //$log.info('clicked forward');
+          //$log.info('number of elements: ' + vm.nbrElems + ' move distance: ' + vm.moveDistance + ' forwards: ' + vm.nbrForwards);
+          vm.index = (vm.index === vm.nbrForwards ? vm.nbrForwards : vm.index + 1);
+          //$scope.$broadcast('clickforward', vm.moveDistance);
+          $scope.$broadcast('clickforward', { 
+            dist: vm.moveDistance, 
+            callback: function() { 
+              vm.animating = false;
+              //$log.info('set animating to false: ' + vm.animating); 
+            }
+          });
+          
+          // tell the list obj to append elements in response to forwards request
+          vm.lo.listobj.appendElements(function(updateData) {
+            if(updateData) {
+              //$log.info('more elements where added...');
+            }
+          });
+        };
 
-      vm.back = function() {
-        if(vm.atStart()) return;
-        if(vm.animating) return;
-        vm.animating = true;
-        vm.index = (vm.index === 0 ? 0 : vm.index - 1);
-        //$scope.$broadcast('clickback', vm.moveDistance);
-        $scope.$broadcast('clickback', {
-          dist: vm.moveDistance,
-          callback: function() {
-            vm.animating = false;
-          }
-        });
-      };
+        vm.atStart = function() {
+          return (vm.index === 0);
+        };
 
-      vm.forward = function() {
-        vm.setHeightCB();
-        if(vm.atEnd()) return;
-        if(vm.animating) return;
-        vm.animating = true;
-        //$log.info('clicked forward');
-        //$log.info('number of elements: ' + vm.nbrElems + ' move distance: ' + vm.moveDistance + ' forwards: ' + vm.nbrForwards);
-        vm.index = (vm.index === vm.nbrForwards ? vm.nbrForwards : vm.index + 1);
-        //$scope.$broadcast('clickforward', vm.moveDistance);
-        $scope.$broadcast('clickforward', { 
-          dist: vm.moveDistance, 
-          callback: function() { 
-            vm.animating = false;
-            //$log.info('set animating to false: ' + vm.animating); 
-          }
-        });
-        vm.lo.listobj.appendElements();
-      };
+        // why is this getting called so many times?
+        vm.atEnd = function() {
+          //$log.info('atEnd invoked... index : ' + vm.index + ' nbr forwards: ' + vm.nbrForwards);
+          return (vm.index === vm.nbrForwards);
+        };
 
-      vm.atStart = function() {
-        return (vm.index === 0);
-      };
-
-      vm.atEnd = function() {
-        return (vm.index === vm.nbrForwards);
-      };
-
-      if(vm.initcb) {
-        vm.initcb();
-      }
-
-      $scope.$watch(function(scope) {
-        return (vm.lo.listobj.elements.length);
-      }, function(newVal, oldVal) {
-        if(newVal) {
-          $log.info('elements changed: ' + vm.lo.listobj.elements.length); 
-          adjust(newVal);         
+        if(vm.initcb) {
+          vm.initcb();
         }
-      });
-    }
+      }
+    //}
+
+    // function init(obj) {
+    //   //$log.info('calling init...');
+    //   vm.lo = new ListViewerCtrlObj(obj, function(newState, updateData) {
+    //     $log.info('update data: ' + JSON.stringify(updateData));
+    //     var update = updateData || {};
+    //     vm.totalElements = update.totalElems || 0;
+    //     vm.state = newState;
+    //     vm.setHeightCB();
+    //   });
+
+    //   vm.nbrElems = vm.lo.listobj.elements.length;
+    //   //vm.nbrForwards = parseInt(vm.nbrElems / 2);
+    //   vm.nbrForwards = calculateNoForwards(vm.totalElements, vm.chunksize);
+
+    //   //$log.info('calling init of listviewer : ' + JSON.stringify(vm.lo));
+    //   //$log.info('nbr elems : ' + vm.nbrElems);
+
+    //   vm.back = function() {
+    //     if(vm.atStart()) return;
+    //     if(vm.animating) return;
+    //     vm.animating = true;
+    //     vm.index = (vm.index === 0 ? 0 : vm.index - 1);
+    //     //$scope.$broadcast('clickback', vm.moveDistance);
+    //     $scope.$broadcast('clickback', {
+    //       dist: vm.moveDistance,
+    //       callback: function() {
+    //         vm.animating = false;
+    //       }
+    //     });
+    //   };
+
+    //   vm.forward = function() {
+    //     vm.setHeightCB();
+    //     if(vm.atEnd()) return;
+    //     if(vm.animating) return;
+    //     vm.animating = true;
+    //     //$log.info('clicked forward');
+    //     //$log.info('number of elements: ' + vm.nbrElems + ' move distance: ' + vm.moveDistance + ' forwards: ' + vm.nbrForwards);
+    //     vm.index = (vm.index === vm.nbrForwards ? vm.nbrForwards : vm.index + 1);
+    //     //$scope.$broadcast('clickforward', vm.moveDistance);
+    //     $scope.$broadcast('clickforward', { 
+    //       dist: vm.moveDistance, 
+    //       callback: function() { 
+    //         vm.animating = false;
+    //         //$log.info('set animating to false: ' + vm.animating); 
+    //       }
+    //     });
+    //     vm.lo.listobj.appendElements();
+    //   };
+
+    //   vm.atStart = function() {
+    //     return (vm.index === 0);
+    //   };
+
+    //   vm.atEnd = function() {
+    //     //$log.info('index : ' + vm.index + ' nbr forwards: ' + vm.nbrForwards);
+    //     return (vm.index === vm.nbrForwards);
+    //   };
+
+    //   if(vm.initcb) {
+    //     vm.initcb();
+    //   }
+
+    //   $scope.$watch(function(scope) {
+    //     return (vm.lo.listobj.elements.length);
+    //   }, function(newVal, oldVal) {
+    //     if(newVal) {
+    //       $log.info('elements changed: ' + vm.lo.listobj.elements.length); 
+    //       adjust(newVal);         
+    //     }
+    //   });
+    // }
 
     $scope.$watch(function(scope) {
       return (vm.obj);

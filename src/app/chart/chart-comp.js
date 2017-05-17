@@ -124,6 +124,8 @@
         // preapare plot data
         //$log.info('plot params: ' + JSON.stringify(plotParams));
         obj.graphData = PlotGenerator.preparePlot(obj.elements, plotParams);  
+        
+        //$log.info('prepared plot: ' + JSON.stringify(obj.graphData, true, 1));
         obj.selectPlot(0, obj.graphData);
       }
 
@@ -135,7 +137,9 @@
         removeNullPoints(obj.chartdata);
 
         //obj.chart.options.title = obj.selected;
+        //$log.info('chart data: ' + JSON.stringify(obj.chartdata, true, 3));
         obj.chart.data = google.visualization.arrayToDataTable(obj.chartdata);
+        //$log.info('chart data: ' + JSON.stringify(obj.chart.data, true, 3));
         obj.onStateChange('ready');
       };
 

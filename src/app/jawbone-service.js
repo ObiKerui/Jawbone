@@ -5,6 +5,7 @@
     .module('jawboneApp')
     .factory('JawboneDataObj', JawboneDataObjFtn)
     .factory('BatchObj', BatchObjFtn)
+    .factory('GroupService', GroupServiceFtn)
     .factory('JawboneService', JawboneService);
 
 	//------------------------------------------------------
@@ -52,7 +53,8 @@
 					return response.data;
 				})
 				.catch(function(errResponse) {
-					return errResponse;
+					$log.info('error retrieving data: ' + JSON.stringify(errResponse));
+					return [];
 				});
 			};
 
@@ -75,9 +77,10 @@
 	//------------------------------------------------------
 	//  JAWBONE DATA SERVICE 
 	//------------------------------------------------------  
-	function JawboneService($log, $q, $http, JawboneDataObj, BatchObj) {
+	function JawboneService($log, $q, $http, JawboneDataObj, BatchObj, GroupService) {
 		var jboneData = null;
 		var setUserCB = [];
+		var groupService = new GroupService();
 	    var service = {
 	  		init : init,
 	  		getMainUser : getMainUser,
@@ -91,9 +94,14 @@
 	  		extractData : extractData,
 	  		createNote : createNote,
 	  		updateNote : updateNote,
-	  		deleteNote : deleteNote
+	  		deleteNote : deleteNote,
+	  		groupService : getGroupService
 	  	};
 	  	return service;    
+
+	  	function getGroupService() {
+	  		return groupService;
+	  	}
 
 	  	/*
 	  	*	INITIALISE JAWBONE SERVICE
@@ -259,4 +267,59 @@
 	  		}
 	  	}
 	}
+
+	function GroupServiceFtn($log, $q, $http) {
+		var GroupService = function() {
+			var obj = this;
+			obj.createGroup = createGroup;
+			obj.getGroup = getGroup;
+			obj.updateGroup = updateGroup;
+			obj.deleteGroup = deleteGroup;
+			obj.addMemberToGroup = addMemberToGroup;
+			obj.removeMemberFromGroup = removeMemberFromGroup;
+		};
+		return GroupService;
+
+		function createGroup() {
+
+		}
+
+		function getGroup() {
+
+		}
+
+		function updateGroup() {
+
+		}
+
+		function deleteGroup() {
+
+		}
+
+		function addMemberToGroup(group, member) {
+			$log.info('add a member to group');
+			return $http.put('/groups/' + group._id + '/members/' + member._id)
+			.then(function(response) {
+				return true;
+			})
+			.catch(function(err) {
+				return false;
+			});
+		}
+
+		function removeMemberFromGroup(group, member) {
+			$log.info('remove a member from group : ' + group._id);
+			$log.info('remove a member from group : ' + member._id);	
+			return $http.delete('/groups/' + group._id + '/members/' + member._id)
+			.then(function(response) {
+				$log.info('response: ' + JSON.stringify(response));
+				return true;
+			})			
+			.catch(function(err) {
+				$log.info('err removing member from group: ' + JSON.stringify(err));
+				return false;
+			});
+		}
+	} 
+
 })();

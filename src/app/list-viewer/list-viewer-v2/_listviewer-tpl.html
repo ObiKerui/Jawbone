@@ -1,0 +1,32 @@
+<loader obj="ctrl.obj.loaderMessage" ng-show="ctrl.state === 'loading'"></loader>
+<div class="list-view-box animated" ng-show="ctrl.state === 'ready'">
+	<div class="heading">
+		{{ctrl.obj.header.heading}}
+	</div>
+	<div class="filter-container" ng-show='ctrl.hasFilter'>
+		<input type="text" class="form-control" placeholder="search for..." ng-model='searchtext'></input>
+	</div>
+	<p></p>
+	<header-bar-v2 
+		iface='ctrl.obj'>
+	</header-bar-v2>
+	<div id="listviewerbox" class="list-viewer-elements" mouse-wheel-up='ctrl.didMouseWheelUp()' mouse-wheel-down='ctrl.didMouseWheelDown()'>
+		<ul>
+			<li ng-repeat="elem in ctrl.obj.elements track by $index">
+				<lvelem
+					tpl='ctrl.obj.elementTemplate'
+					obj='elem'
+					i='{{$index}}'>
+				</lvelem>
+			</li>
+		</ul>	
+	</div>
+	<div class="scroll-control" ng-show='ctrl.hasScrollers'>
+		<span class="btn btn-default scroll-button" ng-click='ctrl.back()' ng-disabled='ctrl.atStart()'>
+			<span class="glyphicon glyphicon-chevron-up"></span> 
+		</span>
+		<span class="btn btn-default scroll-button" ng-click='ctrl.forward()' ng-disabled='ctrl.atEnd()'>
+			<span class="glyphicon glyphicon-chevron-down"></span> 
+		</span>
+	</div>
+</div>

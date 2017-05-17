@@ -15,6 +15,8 @@
       obj.type = obj.arg.type || 'text/plain;charset=utf-8';
       obj.content = obj.arg.content || 'blank content';
 
+      $log.info('content to file downloader: ' + JSON.stringify(obj.content));
+
       obj.download = function() {
         var data = new Blob([obj.content], { type: obj.type });
         FileSaver.saveAs(data, obj.name);

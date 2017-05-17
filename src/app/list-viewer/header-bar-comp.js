@@ -42,6 +42,7 @@
         tpl : '=',
         obj : '='
       },
+      //template: '<div ng-include=\'ctrl.obj.headerbar\'></div>'
       template: '<div ng-include=\'ctrl.obj.headerbar\'></div>'
       //template: '<div ng-include=\'ctrl.tpl\'></div>{{ctrl.tpl}} {{ctrl.obj.headerbar}}'
     };

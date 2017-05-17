@@ -1,0 +1,18 @@
+<div class="patient-header">
+	<div class="patient-info">
+		<img ng-src="{{ctrl.pso.user.profile.image | defaultGroup }}" ng-click="ctrl.obj.api.editImage()" height='100px' width='100px'></img>
+		<div class="user-details">
+			<div class="name">
+				<input type="text" class="form-control" id="name" placeholder="enter group name">
+			</div>
+			<div class="features">
+				<textarea class="form-control notes-textarea" rows="4" id="comment" placeholder="enter group description"></textarea>
+			</div> 
+		</div>
+	</div>
+	<hr/>
+	<div style="clear: both;"></div>
+	<div ng-include='ctrl.pso.actionBar'></div>
+</div>
+
+<p>obj {{ctrl.obj | json}}</p>

@@ -1,4 +1,5 @@
-<div class="trends-element-style" ng-class="{'active' : ctrl.obj.element.selected }">
+<div class="trends-element-style" ng-class="{'active' : ctrl.obj.element.api.selected }"
+	ng-click="ctrl.obj.element.api.clickedView()">
 	<span>{{ctrl.obj.element.date | jbDate}}</span>
 	<span>{{ctrl.obj.element.title | minutesConverter:'hrs-mins'}}</span>
 	<span>{{ctrl.obj.element.sounds}}</span>

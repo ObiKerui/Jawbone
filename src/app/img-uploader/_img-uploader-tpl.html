@@ -1,0 +1,14 @@
+<p>image length: {{ctrl.image.length}}
+<p>new image length: {{ctrl.newImage}}</p>
+<p>new cropped length: {{ctrl.newCroppedImage.length}}</p>
+
+<button class="btn btn-primary" ngf-select ng-model='ctrl.newImage' accept="image/*">Select Image</button>
+  <hr>
+  <div ngf-drop ng-model='ctrl.newImage' ngf-pattern="image/*" class="cropArea">
+      <img-crop 
+        image="ctrl.newImage | ngfDataUrl" 
+        area-type="square"                
+        result-image="ctrl.newCroppedImage"> 
+      </img-crop>
+  </div>
+</button>

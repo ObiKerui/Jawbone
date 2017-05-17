@@ -19,7 +19,9 @@
     'ui.bootstrap',
     'ui.router',
     'googlechart',
-    'jbtemplates'
+    'jbtemplates',
+    'ngFileUpload',
+    'ngImgCrop'
   ])
   angular.module('jawboneGatewayApp', [
     'jawboneApp',

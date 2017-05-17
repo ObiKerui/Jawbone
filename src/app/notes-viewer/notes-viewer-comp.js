@@ -20,7 +20,7 @@
     }     
   }
 
-  function NoteObjFtn($log) {
+  function NoteObjFtn($log, ListElementAPIObj) {
     var NoteObj = function(notedata, callbacks) {
       $log.info('the note data: ' + JSON.stringify(notedata));
       var obj = this;
@@ -29,25 +29,27 @@
       obj.owner = notedata.owner || null;
       obj.creationDate = notedata.creationDate || null;
       obj.textLimit = 50;
-      obj.selected = false;
+      // obj.selected = false;
 
-      obj.cbs = callbacks || {};      
-      obj.delete = function() {
-        $log.info('delete me: ' + JSON.stringify(obj));
-        obj.cbs.onDelete(obj);
-      };
+      // obj.cbs = callbacks || {};      
+      // obj.delete = function() {
+      //   $log.info('delete me: ' + JSON.stringify(obj));
+      //   obj.cbs.onDelete(obj);
+      // };
 
-      obj.clicked = function() {
-        //$log.info('note obj was clicked...not necessarily selected!');
-      };
+      // obj.clicked = function() {
+      //   //$log.info('note obj was clicked...not necessarily selected!');
+      // };
 
-      obj.onSelected = function() {
-        obj.selected = true;
-      };
+      // obj.onSelected = function() {
+      //   obj.selected = true;
+      // };
 
-      obj.onDeselected = function() {
-        obj.selected = false;
-      };
+      // obj.onDeselected = function() {
+      //   obj.selected = false;
+      // };
+
+      this.api = new ListElementAPIObj(this);
 
     };
     return NoteObj;
@@ -134,32 +136,44 @@
             createlist();
           });
         };
+
+        listobj.headerFtns = {
+          deleteNotes : function() {
+            $log.info('call to delete notes');
+            listobj.baseFtns.deselectAll();
+            listobj.state.deleteMode = !(listobj.state.deleteMode);
+            listobj.baseFtns.propagateEvent('deleteMode', null);
+          }
+        };
       }
 
       function createlist() {
         var args = arg || {};
         obj.notes = {};
         obj.notes.listobj = {};
+        obj.notes.listobj.state = {
+          deleteMode : false
+        };
         obj.notes.listobj.template = 'app/notes-viewer/_notes-element-tpl.html'; 
         obj.notes.listobj.getElementsObj = JawboneService.makeBatch(JawboneService.makeEndpoint('notes'));   
         obj.notes.listobj.headerbar = 'app/notes-viewer/_notes-header-tpl.html';    
         obj.notes.listobj.heading = 'Notes';
         obj.notes.listobj.mode = args.mode || 'view';
-        createFunctions(obj.notes.listobj);
+        createFunctions(obj.notes.listobj);        
 
         obj.notes.listobj.makeElement = function(objElement) {
           return new NoteObj(objElement, obj.callbacks);
         };
 
         obj.notes.onSelect = function(elem) {
-          $log.info('supplied on select function: ' + JSON.stringify(elem));
-          elem.onSelected();
+          $log.info('supplied on select function: ');
+          //elem.onSelected();
           obj.callbacks.onSelect(elem);
         };
 
         obj.notes.onDeselect = function(elem) {
-          $log.info('supplied on deselect function: ' + JSON.stringify(elem));
-          elem.onDeselected();
+          $log.info('supplied on deselect function: ');
+          //elem.onDeselected();
           obj.callbacks.onDeselect(elem);
         };
 

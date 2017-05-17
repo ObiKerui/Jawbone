@@ -4,10 +4,11 @@
   angular
     .module('jawboneApp')
     .factory('PatientsComponentBuilder', PatientsComponentBuilderFtn)
+    .factory('GroupMemberObj', GroupMemberObjFtn)
     .factory('PatientObj', PatientObjFtn)
     .filter('defaultPatient', defaultPatientFtn)
     .controller('PatientCtrl', PatientCtrlFtn)
-    .directive('patientMgr', patientMgrFtn);
+    .directive('patientMgrOld', patientMgrFtn);
 
   var log = null;
   var jbservice = null;
@@ -29,6 +30,9 @@
 
   function buildPatientSleeps(obj, user, SleepObj) {
     obj.sleepsViewer.listobj = {};
+    obj.sleepsViewer.listobj.state = {
+      deleteMode : false
+    };
     obj.sleepsViewer.listobj.template = 'app/sleeps/_sleeps-element-tpl.html';
     obj.sleepsViewer.listobj.headerbar = 'app/sleeps/_sleeps-header-tpl.html';    
     obj.sleepsViewer.listobj.heading = 'Sleeps';
@@ -82,9 +86,12 @@
     };
   }
 
-  function buildListViewer(obj, group, PatientObj) {
+  function buildListViewer(obj, group, GroupMemberObj) {
     obj.patientViewer.listobj = {};
-    obj.patientViewer.listobj.template = 'app/patient/_patient-element-tpl.html';
+    obj.patientViewer.listobj.state = {
+      deleteMode : false
+    };    
+    obj.patientViewer.listobj.template = 'app/patient/_group-member-element-tpl.html';
     obj.patientViewer.listobj.heading = 'Patients';
     obj.patientViewer.listobj.loaderMessage = 'Loading Patients...';
 
@@ -92,7 +99,7 @@
     obj.patientViewer.listobj.getElementsObj = jbservice.makeBatch(jbservice.makeFieldGetter('groups', group._id, 'members'));
 
     obj.patientViewer.listobj.makeElement = function(objElement) {
-      return new PatientObj(objElement)
+      return new GroupMemberObj(objElement)
     };    
   }
 
@@ -105,14 +112,14 @@
     }     
   }
 
-  function PatientsComponentBuilderFtn($q, $log, PatientObj, SleepObj, JawboneService, SleepsChartBuilderObj, SleepsChartDownloaderBuilder, PatientSummObj, ModalService) {
+  function PatientsComponentBuilderFtn($q, $log, GroupMemberObj, PatientObj, SleepObj, JawboneService, SleepsChartBuilderObj, SleepsChartDownloaderBuilder, PatientSummObj, ModalService) {
     var PatientsComponentBuilder = function(user, userGroup) {
 
       // assign some scoped variables rather than pass these as args
       log = $log;
       jbservice = JawboneService;
 
-      log.info('user group: ' + JSON.stringify(userGroup));
+      //log.info('user group: ' + JSON.stringify(userGroup));
 
       var obj = this;
 
@@ -132,29 +139,56 @@
       obj.noteViewer = {};
 
       buildCallbacks(obj, SleepObj, SleepsChartBuilderObj, SleepsChartDownloaderBuilder, PatientSummObj, ModalService);
-      buildListViewer(obj, userGroup, PatientObj);
+      buildListViewer(obj, userGroup, GroupMemberObj);
 
     };
     return PatientsComponentBuilder;
   }
 
-  function PatientObjFtn($log, ListElementAPIObj) {
-    var PatientObj = function(objElement) {
+  function GroupMemberObjFtn($log, PatientObj, ListElementAPIObj) {
+    var GroupMemberObj = function(objElement) {
 
-      //$log.info('obj element: ' + JSON.stringify(objElement));
+      //$log.info('group member obj element: ' + JSON.stringify(objElement));
 
       var o = this;
       o.data = objElement || {};
+      o.joinDate = o.data.user.joinDate || Date.now();
+      o.user = new PatientObj(o.data.user);
+      o.api = new ListElementAPIObj(this);
+    };
+    return GroupMemberObj;
+  }
+
+  function PatientObjFtn($log, ListElementAPIObj) {
+    var PatientObj = function(objElement) {
+
+      //$log.info('patient obj element: ' + JSON.stringify(objElement));
+
+      var o = this;
+      o.data = objElement || {};
+      o._id = objElement._id || null;
       o.jawboneId = objElement.jawboneId || 'blank';
-      o.obj = objElement.user.profile || {};
+      o.obj = objElement.profile || {};
       o.first = o.obj.first || 'blank';
       o.last = o.obj.last || 'blank';
       o.weight = o.obj.weight || 'blank weight';
       o.gender = o.obj.gender || 'no gender';
       o.height = o.obj.height || 'no height';
-      o.joinDate = objElement.joinDate || null;
 
       this.api = new ListElementAPIObj(this);
+
+      // var o = this;
+      // o.data = objElement || {};
+      // o._id = objElement.user._id || null;
+      // o.jawboneId = objElement.jawboneId || 'blank';
+      // o.obj = objElement.user.profile || {};
+      // o.first = o.obj.first || 'blank';
+      // o.last = o.obj.last || 'blank';
+      // o.weight = o.obj.weight || 'blank weight';
+      // o.gender = o.obj.gender || 'no gender';
+      // o.height = o.obj.height || 'no height';
+      // o.joinDate = objElement.joinDate || null;
+
     };
     return PatientObj;
   }

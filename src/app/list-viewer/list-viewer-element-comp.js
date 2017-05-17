@@ -28,16 +28,8 @@
         };
       };
 
-      // o.activated = function() {
-      //   o.selected = true;
-      // };
-
-      // o.deactivated = function() {
-      //   o.selected = false;
-      // };
-
       o.handleParentEvent = function(event, data) {
-        $log.info('handle parent event: ' + event);
+        //$log.info('handle parent event: ' + event);
         switch(event) {
           case 'select':
             o.selected = true;
@@ -83,17 +75,12 @@
         event.stopPropagation();
       };
 
-      o.clickelse = function(event) {
-        $log.info('clicked elsewhere');
-        //event.stopPropagation();
-      };
-
     };
     return ListElementAPIObj;
   }
 
   function ListViewerElemObjFtn($log) {
-    var ListViewerElemObj = function(notify, data, indexArg) {      
+    var ListViewerElemObj = function(listAPI, data, indexArg) {      
 
       //$log.info('create a list elem object from data: ' + JSON.stringify(data));
       //this.template = data.template || 'app/list-viewer/_default-lve-tpl.html';
@@ -109,41 +96,22 @@
       };
 
       o.handleChildEvent = function(event, data) {
-        $log.info('notify parent of event: ' + event);
-        $log.info('my index is  ' + o.index);
-        notify(event, data, o.index);
-      }
+        //$log.info('notify parent of event: ' + event);
+        //$log.info('my index is  ' + o.index);
+
+        // to replace with just the truth statement
+        if(listAPI.handleChildEvent) {
+          listAPI.handleChildEvent(event, data, o.index);          
+        } else {
+          listAPI(event, data, o.index);
+        }
+      };
 
       o.handleParentEvent = function(event, data) {
         o.element.api.handleParentEvent(event, data);
       };
 
       o.element.api.setContainer(o);
-
-      // o.handleEventFtn = o.element.api.handleEventFtn || function(event, data) {
-      //   $log.info('default handleEventFtn');
-      // };
-
-      // this.clicked = data.clicked || function() {
-      //   $log.info('default clicked function');
-      // };
-
-      // this.deactivated = data.deactivated || function() {
-      //   $log.info('default deactivated function');
-      // };
-
-
-      // this.onClick = function(index) {
-      //   this.clicked();
-      //   notify(index);
-      // }
-
-
-      // this.handleEvent = function(event, data) {
-      //   this.handleEventFtn(event, data);
-      // };
-
-      //$log.info('data: ' + JSON.stringify(data));
     };
     return ListViewerElemObj;
   }

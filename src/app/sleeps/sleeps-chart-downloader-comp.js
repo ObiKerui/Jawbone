@@ -7,8 +7,8 @@
     .factory('SleepsChartDownloaderObj', SleepsChartDownloaderObjFtn);
 
   function SleepsChartDownloaderBuilderFtn($log) {
-  	var SleepsChartDownloaderBuilder = function(arg, getSleepData) {
-  		$log.info('ran sleeps chart downloader with arg: ' + JSON.stringify(arg));
+  	var SleepsChartDownloaderBuilder = function(getSleepData) {
+  		//$log.info('ran sleeps chart downloader with arg: ' + JSON.stringify(arg));
       var obj = this;
       obj.tpl = 'app/sleeps/_sleeps-chart-download-tpl.html';
       obj.downloader = {};
