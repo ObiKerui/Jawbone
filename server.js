@@ -39,6 +39,7 @@ app.use('/fonts', express.static(__dirname + '/public/fonts'));
 app.use('/assets', express.static(__dirname + '/public/assets'));
 app.use('/styles', express.static(__dirname + '/public/styles'));
 app.use('/scripts', express.static(__dirname + '/public/scripts'));
+app.set('trust proxy', true);
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
 
