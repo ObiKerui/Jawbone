@@ -128,17 +128,15 @@ module.exports = function(app, passport) {
 	// route middleware to make sure a user is logged in
 	function isLoggedIn(req, res, next) {
 		
-		next();
-
-	    // if user is authenticated in the session, carry on 
-	  //   if (req.isAuthenticated()) {
-	  //       next();
-	  //   } else {	    	
-		 //    // if they aren't redirect them to the home page
-		 //    //return res.redirect('/');
-			// console.log('User not authenticated. Redirect to home');
-		 //    return res.status(401).redirect('/');
-	  //   }
+	    if user is authenticated in the session, carry on 
+	    if (req.isAuthenticated()) {
+	        next();
+	    } else {	    	
+		    // if they aren't redirect them to the home page
+		    //return res.redirect('/');
+			console.log('User not authenticated. Redirect to home');
+		    return res.status(401).redirect('/');
+	    }
 	}	
 
 	function isAuthorized(req, res, next) {
