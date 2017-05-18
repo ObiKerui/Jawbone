@@ -129,6 +129,7 @@ module.exports = function(app, passport) {
 	    } else {
 		    // if they aren't redirect them to the home page
 		    //return res.redirect('/');
+			console.log('User not authenticated. Redirect to home');
 		    return res.status(401).redirect('/');
 	    }
 	}	
@@ -144,7 +145,7 @@ module.exports = function(app, passport) {
 		};
 
 		// user is not authorized to login as superuser
-		//res.redirect(301, '/');
+		console.log('User not authorized. Redirect to home');
 
 		res.redirect('/');
 	}
@@ -158,6 +159,7 @@ module.exports = function(app, passport) {
 			return next();
 		}
 
+		console.log('no access token. Redirect to jawbone login');
 		res.redirect('/login/jawbone');
 	}
 

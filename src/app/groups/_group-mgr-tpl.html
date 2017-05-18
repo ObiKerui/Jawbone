@@ -24,8 +24,8 @@
 
 	<div>
 		<ul class="header-titles">
-			<li ng-class="{'selected' : tabpage.index === 0}"><a ng-click='ctrl.obj.api.setPatientView()'>Patients</a></li>
-			<li ng-class="{'selected' : tabpage.index === 1}"><a ng-click='ctrl.obj.api.setAdminView()'>Admins</a></li>
+			<li ng-class="{'selected' : ctrl.obj.api.isPatientView()}"><a ng-click='ctrl.obj.api.setPatientView()'>Patients</a></li>
+			<li ng-class="{'selected' : ctrl.obj.api.isAdminView()}"><a ng-click='ctrl.obj.api.setAdminView()'>Admins</a></li>
 		</ul>
 	</div>
 

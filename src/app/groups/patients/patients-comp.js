@@ -80,7 +80,7 @@
 
         obj.listIface = new ListV2Interface({
           header : {
-            heading: 'Patients',
+            //heading: 'Patients',
             headerTemplate: 'app/groups/patients/_patient-action-bar-tpl.html',
             headerObj: makeHeaderObj(iface, api)
           },

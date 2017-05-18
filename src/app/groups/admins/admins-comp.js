@@ -67,7 +67,7 @@
       function initialiseFtn(iface) {
         obj.listIface = new ListV2Interface({
           header : {
-            heading: 'Admins',
+            //heading: 'Admins',
             headerTemplate: 'app/groups/admins/_admin-action-bar-tpl.html',
             headerObj: makeHeaderObj()
           },
