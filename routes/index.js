@@ -55,6 +55,7 @@ module.exports = function(app, passport) {
 		passport.authenticate('login', { failureRedirect: '/', failureFlash: true }),
 		isJBUser
 	], function(req, res) {
+		console.log('go to the userdata page...');
 		res.redirect('/userdata');
 	});
 
@@ -64,6 +65,7 @@ module.exports = function(app, passport) {
 	app.post('/login/superuser',
 	  passport.authenticate('login', { failureRedirect: '/', failureFlash: true }),
 	  function(req, res) {
+	  	console.log('go to the superuser page...');
 	  	res.redirect('/superuser');
 	});
 
@@ -85,6 +87,7 @@ module.exports = function(app, passport) {
 			passport.authenticate('jawbone', { scope: jbbuilder.scopes, failureRedirect: '/'})
 		], 
 		function(req, res) {
+			console.log('go to the sleepdata page...');
 	    	res.redirect('/userdata');
 	  	}
 	);
@@ -94,6 +97,7 @@ module.exports = function(app, passport) {
 	// create fake data to be removed eventually
 	//------------------------------------------------------------------------	
 	app.get('/userdata', [ isLoggedIn, isJBUser, createFakeData ], function(req, res) {
+			console.log('render the userdata...');
 			res.render('pages/userdata', { user: req.user});
 		}
 	);
@@ -102,6 +106,7 @@ module.exports = function(app, passport) {
 	// render the super user data page - must be logged in and authorized
 	//------------------------------------------------------------------------	
 	app.get('/superuser', [isLoggedIn, isAuthorized], function(req, res) {
+		console.log('render the superuser...');
 		res.render('pages/superuser', { user: req.user });
 	});
 
