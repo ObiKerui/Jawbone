@@ -1,0 +1,8 @@
+<div class="trends-element-style" ng-class="{'active' : ctrl.obj.api.getAPI().selected }"
+	ng-click="ctrl.obj.api.getAPI().onClick()">
+	<span>{{ctrl.obj.api.getData().date | jbDate}}</span>
+	<span>{{ctrl.obj.api.getData().title | minutesConverter:'hrs-mins'}}</span>
+	<span>{{ctrl.obj.api.getData().sounds}}</span>
+	<span>{{ctrl.obj.api.getData().awakenings}}</span>
+	<span>{{ctrl.obj.api.getData().light}}</span>
+</div>

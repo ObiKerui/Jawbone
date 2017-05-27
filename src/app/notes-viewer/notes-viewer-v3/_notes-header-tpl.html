@@ -1,0 +1,42 @@
+
+<div class="list-view-box animated">
+	<div class="jbv-new-note-hdr">
+		<div class="jbv-new-note-area" ng-if="ctrl.obj.api.inCreateMode()">
+			<textarea class="notes-textarea" ng-focus="ctrl.obj.api.prepareNewNote()"
+			    ng-model="ctrl.obj.api.getTempNote().text"
+			    name="textarea" rows="5" placeholder="create note...">
+			</textarea>
+			<div style="float: right; margin-right: 14px; padding: 3px;">
+				<div class="btn-group">
+					<div class="btn btn-default" ng-click="ctrl.obj.api.cancelNote()" ng-disabled="!ctrl.obj.api.getTempNote().text">clear</div>
+					<div class="btn btn-default" ng-disabled="true">&nbsp;</div>
+					<div class="btn btn-default" ng-click="ctrl.obj.api.createNote()" ng-disabled="!ctrl.obj.api.getTempNote().text">save</div>
+				</div>
+			</div>
+			<div style="clear: both;"></div>
+		</div>
+		<div class="jbv-new-note-area" ng-if="ctrl.obj.api.inEditMode()">
+			<textarea class="notes-textarea"
+			    ng-model="ctrl.obj.api.getTempNote().text"
+			    name="textarea" rows="5" placeholder="update note...">
+			</textarea>
+				<div style="float: right; margin-right: 14px; padding: 3px;">
+				<div class="btn-group">
+					<div class="btn btn-default" ng-click="ctrl.obj.api.getList().api.deselectAll()">cancel</div>
+					<div class="btn btn-default" ng-disabled="true">&nbsp;</div>
+					<div class="btn btn-default" ng-click="ctrl.obj.api.editNote()" ng-disabled="!ctrl.obj.api.getTempNote().text">update</div>
+				</div>
+			</div>
+			<div style="clear: both;"></div>
+		</div>
+<!-- 		<hr>
+		<div style="padding: 3px; border-top: 1px solid #ddd;">
+			<div class="btn-group" style="float: right;">
+	 			<div class="btn btn-default" ng-click='ctrl.obj.api.setDeleteMode()'>
+					<span class="glyphicon glyphicon-remove faded-glyph"></span> remove notes
+				</div>
+			</div>
+			<div style="clear: both;"></div>
+		</div>
+ -->	</div>
+</div>

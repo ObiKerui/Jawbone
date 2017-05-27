@@ -7,7 +7,7 @@
   
   /** @ngInject */
   //function ProfileCtrl($log, $scope, JawboneService, GoalsComponentBuilder, TrendsComponentBuilder, TrendsChartBuilderObj, SleepsComponentBuilder, UserModalObj, ListViewerCtrlObj, UsersComponentBuilder) {
-  function ProfileCtrl($log, $scope, JawboneService, ProfileComponentBuilder) {
+  function ProfileCtrl($log, $scope, JawboneService, ProfileComponentBuilder, SleepsListInterface, NotesViewerV3Interface) {
     var vm = this;
     vm.users = null;
     vm.sleeps = null;
@@ -31,6 +31,8 @@
         return JawboneService.getUser(mainUserSumm._id);
       })
       .then(function(mainUserFull) {
+        vm.sleepsListIface = new SleepsListInterface(mainUserFull);
+        vm.notesViewerIface = new NotesViewerV3Interface(mainUserFull);
         return ProfileComponentBuilder.build(mainUserFull, JawboneService.getUsers);
       })
       .then(function(profile) {

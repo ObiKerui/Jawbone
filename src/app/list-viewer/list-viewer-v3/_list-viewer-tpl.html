@@ -1,0 +1,39 @@
+<div class="list-view-box animated">
+	<div class="heading">
+		{{ctrl.obj.header.heading}}
+	</div>
+	<div class="filter-container" ng-show='ctrl.hasFilter'>
+		<input type="text" class="form-control" placeholder="search for..." ng-model='searchtext'></input>
+	</div>
+	<p></p>
+	<header-bar-v3 
+		iface='ctrl.obj.header'>
+	</header-bar-v3>
+	
+ 	<div id="listviewerbox" class="list-viewer-elements" mouse-wheel-up='ctrl.didMouseWheelUp()' mouse-wheel-down='ctrl.didMouseWheelDown()'>
+		<ul>
+			<li ng-repeat="elem in ctrl.obj.elements">
+				<list-viewer-elem
+					iface='elem'>
+				</list-viewer-elem>			
+ 			</li>
+		</ul>	
+	</div>
+	<div class="scroll-control" ng-show='ctrl.hasScrollers'>
+		<span class="btn btn-default scroll-button" ng-click='ctrl.back()' ng-disabled='ctrl.atStart()'>
+			<span class="glyphicon glyphicon-chevron-up"></span> 
+		</span>
+		<span class="btn btn-default scroll-button" ng-click='ctrl.forward()' ng-disabled='ctrl.atEnd()'>
+			<span class="glyphicon glyphicon-chevron-down"></span> 
+		</span>
+	</div>
+</div>
+
+<!-- <h3>new list implementation</h3>
+<div>
+	<ul>
+		<li ng-repeat="elem in ctrl.obj.elements">
+			<list-viewer-elem iface='elem'></list-viewer-elem>
+		</li>
+	</ul>
+</div> -->

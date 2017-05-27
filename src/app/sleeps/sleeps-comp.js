@@ -85,7 +85,7 @@
       this.duration = this.details.duration || 0;
       this.image = 'https://jawbone.com' + this.data.snapshot_image;
 
-      this.api = new ListElementAPIObj(this);
+      //this.api = new ListElementAPIObj(this);
 
       // var o = this;
       // o.selected = false;
