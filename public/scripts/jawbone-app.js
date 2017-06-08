@@ -57,8 +57,30 @@ var utils = (function(angular) {
 
   angular
     .module('jawboneApp')
+    .factory('BaseCtrl', BaseCtrlFtn)
     .factory('BaseComp', BaseCompFtn)  
     .factory('BaseInterface', BaseInterfaceFtn);
+
+  //trying to pull common ctrl logic into base function
+  //----------------------------------------------------
+  //  INTERFACE FUNCTION
+  //----------------------------------------------------  
+  function BaseCtrlFtn($log, $rootScope, BaseInterface) {
+    var ctrl = function(iface, createObjFtn, onRenderFtn) {
+
+      $rootScope.$watch(function(scope) {
+        return (iface);
+      }, function(iface, oldval) {
+        iface = (iface ? iface : new BaseInterface());
+        var obj = createObjFtn(iface);
+        iface.setAPI(obj.getAPI);
+        obj.api.render(function(state) {
+          onRenderFtn(obj);
+        });        
+      }); 
+    };
+    return ctrl;
+  }
 
   //----------------------------------------------------
   //  BASE COMP FUNCTION
@@ -78,6 +100,7 @@ var utils = (function(angular) {
         }
       };
 
+      // get rid of this once all switched to v3
       objInst.connect = function(iface, api, init) {
         $log.info('iface to connect: ' + JSON.stringify(iface));
         iface.connectInterface(iface, function() {
@@ -113,8 +136,14 @@ var utils = (function(angular) {
       //   cb(iface);
       // };
 
+      ifaceInst.config = {};
+
       ifaceInst.setAPI = function(getAPI) {
         ifaceInst.getObjectAPI = getAPI;
+      };
+
+      ifaceInst.getAPI = function() {
+        return ifaceInst.getObjectAPI();
       };
 
       ifaceInst.notify = function(event, arg) {
@@ -128,6 +157,239 @@ var utils = (function(angular) {
     return iface;
   }
 
+})();
+
+
+(function() {
+  'use strict';
+
+  angular
+    .module('jawboneApp')
+    .filter('userViewerV3filter', FilterFtn)    
+    .factory('UserViewerV3Interface', InterfaceFtn)
+    .factory('UserViewerV3Service', ServiceFtn)  
+    .factory('UserViewerV3Obj', ObjectFtn)
+    .controller('UserViewerV3Ctrl', CtrlFtn)
+    .directive('userViewerV3', DirFtn);
+
+  //----------------------------------------------------
+  //  FILTER FUNCTION
+  //----------------------------------------------------  
+  function FilterFtn() {
+    return function(arg) {  
+      if(arg) {
+      	// do something with arg
+        return arg;
+      }
+      return arg;
+    }     
+  }
+
+  //----------------------------------------------------
+  //  INTERFACE FUNCTION
+  //----------------------------------------------------  
+  function InterfaceFtn($log, BaseInterface) {
+    var iface = function(config) {
+      var ifaceInst = new BaseInterface();
+      var config = config || {};
+      ifaceInst.selected = null;
+
+      ifaceInst.config = {          
+        setSelected : config.setSelected || function(selection) {
+          this.selected = selection;
+          $log.info('default set selected function for UserViewerV3Interface: ' + JSON.stringify(this.selected));
+        },
+        unsetSelected : config.unsetSelected || function() {
+          this.selected = null;
+          $log.info('default unset selected function for UserViewerV3Interface');          
+        }
+      };
+
+      return ifaceInst;            
+    };
+    return iface;
+  }
+
+  //----------------------------------------------------
+  //  SERVICE FUNCTION
+  //----------------------------------------------------  
+  function ServiceFtn($log) {
+  	var service = {
+  		getUser : getUserFtn
+  	};
+  	return service;
+
+  	function getUserFtn() {
+
+  	}
+  }
+
+  //----------------------------------------------------
+  //  OBJECT FUNCTION
+  //----------------------------------------------------  
+  function ObjectFtn($log, UserViewerV3Interface, BaseComp, UserListV3Interface) {
+    var object = function(iface) {
+
+      var objInst = new BaseComp();
+      objInst.listIface = null;
+      objInst.selectedUser = null;
+
+      $log.info('iface passed to useer viewer: >>>>> ' + JSON.stringify(iface)); 
+
+      objInst.api = {
+      	render: function(cb) {
+      		objInst.listIface = new UserListV3Interface({
+            onSelect : function(element, index) {
+
+              $log.info('user viewer on select function: element: ' + JSON.stringify(element.config.data));
+              objInst.selectedUser = element.config.data;
+              iface.config.setSelected(objInst.selectedUser);
+            },
+            onDeselect : function(element, index) {
+              $log.info('user viewer on deselect function');
+              objInst.selectedUser = null;
+              iface.config.unsetSelected();
+            }
+      		});
+      	}
+      };
+
+      return objInst;
+    };
+    return object;
+  }
+
+  //----------------------------------------------------
+  //  CTRL FUNCTION
+  //----------------------------------------------------  
+  function CtrlFtn($log, $scope, BaseInterface, UserViewerV3Obj) {
+    var vm = this;  
+    vm.obj = null;
+
+    // this is how a basectrl might work
+    // var vm = new BaseCtrl($scope, function(iface) {
+    //   return new UserViewerV3Obj(iface)
+    // }, function(renderInfo) {
+    //   $log.info('element is rendered');
+    // });
+
+    $scope.$watch(function(scope) {
+      return (vm.iface);
+    }, function(iface, oldval) {
+      if(!iface) {
+        $log.info('no iface was passed to the user viewer : ' + JSON.stringify(iface));
+
+        var createdIface = new BaseInterface();
+        vm.obj = new UserViewerV3Obj(createdIface);
+        createdIface.setAPI(vm.obj.getAPI);
+        
+        vm.obj.api.render(function() {
+          $log.info('called render function of user viewer');
+        });         
+               
+      } else {
+        $log.info('iface was passed to the user viewer : ' + JSON.stringify(iface));
+        vm.obj = new UserViewerV3Obj(iface);
+        iface.setAPI(vm.obj.getAPI);
+        
+        vm.obj.api.render(function() {
+          $log.info('called render function of user viewer');
+        });        
+      }
+      // }
+    }); 
+  }
+
+  //----------------------------------------------------
+  //  DIRECTIVE
+  //----------------------------------------------------  
+  function DirFtn() {
+    var directive = {
+      restrict: 'E',
+      scope: {},
+      controller: 'UserViewerV3Ctrl',
+      controllerAs: 'ctrl',
+      bindToController: {
+        iface : '='
+      },
+      templateUrl: 'app/user/user-viewer/_user-viewer-tpl.html'
+    };
+    return directive;   
+  }
+})();
+
+
+(function() {
+  'use strict';
+
+  angular
+    .module('jawboneApp')
+    .filter('userListV3filter', FilterFtn)    
+    .factory('UserListV3Interface', InterfaceFtn)  
+    .factory('UserV3Obj', ObjectFtn);
+
+  //----------------------------------------------------
+  //  FILTER FUNCTION
+  //----------------------------------------------------  
+  function FilterFtn() {
+    return function(arg) {  
+      if(arg) {
+      	// do something with arg
+        return arg;
+      }
+      return arg;
+    }     
+  }
+
+  //----------------------------------------------------
+  //  INTERFACE FUNCTION
+  //----------------------------------------------------  
+  function InterfaceFtn($log, JawboneService, ListViewerV3Interface, ListViewerElemInterface, ListElemAPI, UserV3Obj) {
+    var iface = function(config) {
+  		var ifaceInst = new ListViewerV3Interface();
+  		var config = config || {};
+
+		  ifaceInst.config.getElementsObj = JawboneService.makeBatch(JawboneService.makeEndpoint('users'));
+      ifaceInst.config.makeListElementFtn = function(listData) {
+        return new ListViewerElemInterface({
+          api : new ListElemAPI(listData),
+          data : new UserV3Obj(listData.element)
+        });
+      };
+      ifaceInst.config.onSelect = config.onSelect || function(element, index) {
+        $log.info('supply on select function to UserListV3Interface');
+      };
+      ifaceInst.config.onDeselect = config.onDeselect || function(element, index) {
+        $log.info('supply on deselect function to UserListV3Interface');
+      };
+		  return ifaceInst;            
+    };
+    return iface;
+  }
+
+  //----------------------------------------------------
+  //  OBJECT FUNCTION
+  //----------------------------------------------------  
+  function ObjectFtn($log) {
+    var object = function(data) {
+    	var objInst = this;
+
+    	$log.info('data to user v3 object: ' + JSON.stringify(data));
+    	var profile = data.profile || {};
+    	objInst._id = data._id || null;
+    	objInst.memberSince = data.createdAt || null;
+    	objInst.email = data.email || null;
+    	objInst.first = profile.first || null;
+    	objInst.last = profile.last || null;
+    	objInst.weight = profile.weight || null;
+    	objInst.height = profile.height || null;
+    	objInst.gender = profile.gender || null;
+      	objInst.template = 'app/user/user-v3/_user-list-elem-tpl.html';
+
+		return objInst;
+    };
+    return object;
+  }
 })();
 
 (function() {
@@ -488,7 +750,7 @@ var utils = (function(angular) {
     .controller('ProfileCtrl', ProfileCtrl);
   
   /** @ngInject */
-  function ProfileCtrl($log, $scope, JawboneService, ProfileComponentBuilder) {
+  function ProfileCtrl($log, $scope, JawboneService, ProfileComponentBuilder, GroupManagerV3Interface) {
     var vm = this;
 
     init();
@@ -501,6 +763,11 @@ var utils = (function(angular) {
         return JawboneService.getUser(mainUserSumm._id);
       })
       .then(function(mainUserFull) {
+
+        vm.groupMgrIface = new GroupManagerV3Interface({
+          
+        });
+
         return ProfileComponentBuilder.build(mainUserFull, JawboneService.getUsers);
       })
       .then(function(profile) {
@@ -614,6 +881,7 @@ var utils = (function(angular) {
     .module('jawboneApp')
     .filter('sleepsListfilter', FilterFtn)    
     .factory('SleepsListInterface', InterfaceFtn)
+    .factory('SleepV3Service', ServiceFtn)
     .factory('SleepsV3Obj', ObjFtn);
 
   //----------------------------------------------------
@@ -634,19 +902,18 @@ var utils = (function(angular) {
   //----------------------------------------------------  
   function InterfaceFtn($log, ListViewerV3Interface, JawboneService, ListViewerElemInterface, SleepsV3Obj, ListElemAPI) {
     var iface = function(config) {
-      //var ifaceInst = this;
       var ifaceInst = new ListViewerV3Interface();
       var config = config || {};
 
-      ifaceInst.config = {      
-      	getElementsObj : JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps')),
-      	makeListElementFtn : function(listData) {
-          return new ListViewerElemInterface({
-            api : new ListElemAPI(listData),
-            data : new SleepsV3Obj(listData.element)
-          });
-      	}   
+      var userId = config.userId || null;
+      ifaceInst.config.getElementsObj = JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps', userId));
+      ifaceInst.config.makeListElementFtn = function(listData) {
+        return new ListViewerElemInterface({
+          api : new ListElemAPI(listData),
+          data : new SleepsV3Obj(listData.element)
+        });
       };
+      ifaceInst.config.headerTpl = 'app/sleeps/sleeps-v3/_sleeps-header-tpl.html';
 
       return ifaceInst;
     };
@@ -666,31 +933,180 @@ var utils = (function(angular) {
     }
   }  
 
-  function ObjFtn($log) {
+  function convertToHoursMins(durationInSeconds, $log) {
+    var sec_num = parseInt(durationInSeconds, 10);    
+    var hours   = Math.floor(sec_num / 3600) % 24;
+    var minutes = Math.floor(sec_num / 60) % 60;
+    $log.info('hours: ' + hours + ' mins rem: ' + minutes);
+  }
+
+  function ServiceFtn($log) {
+    var service = {
+
+    };
+    return service;
+  }
+
+  function ObjFtn($log, JawboneService) {
     var obj = function(data) {
     	var objInst = this;
 
-      $log.info('sleep data: ' + JSON.stringify(data));
+      $log.info('sleep data: ' + JSON.stringify(data, true, 3));
 
+      // retrieve specific sleep details
+      var sleepService = JawboneService.sleepService();
+      sleepService.getSleepTicks(data.xid)
+      .then(function(ticksResponse) {
+        sleepService.getSleepDetails(data.xid)
+        .then(function(detailsResponse) {
+          // $log.info('sleep ticks: ' + JSON.stringify(ticksResponse));
+          // $log.info('sleep details: ' + JSON.stringify(detailsResponse));
+        });
+
+        // var size = response.data.data.size;
+        // var timeToSleepOnset = (size > 0 ? response.data.data.items[0].time : 0);
+        // var timeCreated = (size > 0 ? objInst.timeCreated : 0);
+        // objInst.timeToSleep = (timeToSleepOnset - objInst.timeCreated);
+
+        // $log.info('time of first tick: ' + JSON.stringify(timeToSleepOnset));
+        // $log.info('time created: ' + JSON.stringify(timeCreated));
+        // $log.info('time asleep : ' + JSON.stringify(objInst.asleepTime));
+        // $log.info('time to sleep: ' + (objInst.asleepTime - timeCreated));
+        // $log.info('time to sleep: ' + (objInst.timeToSleep));
+      });
+
+      // sleeps breakpoint
       objInst.date = data.date || new Date();
       objInst.title = convertToMinutes(data.title, $log);
       var details = data.details || {};
-      objInst.sounds = details.sound || 'blank';
+      objInst.timeCreated = data.time_created || 0;
+      objInst.timeCompleted = data.time_completed || 0;
+      var deep_seconds = details.sound || 0;
+      objInst.deep = deep_seconds / 60.0;
       objInst.awakenings = details.awakenings || 0;
-      objInst.light = details.light || 0;
+      var rem_seconds = details.rem || 0;
+      objInst.rem = rem_seconds / 60.0;
+      var light_seconds = details.light || 0;
+      objInst.light = light_seconds / 60.0;
       objInst.sleep_time = details.sleep_time || 0;
-      objInst.awake_time = details.awake_time || 0;
-      objInst.awake = details.awake || 0;
-      objInst.rem = details.rem || 0;
+      objInst.awakeTime = details.awake_time || 0;
+      var awake_seconds = details.awake || 0;
+      objInst.awake = awake_seconds / 60.0;
       objInst.duration = details.duration || 0;
+      objInst.asleepTime = details.asleep_time || 0;
+      objInst.timeToSleep = (objInst.asleepTime - objInst.timeCreated);
+      var durationHoursMins = convertToHoursMins(objInst.duration, $log); 
       objInst.image = 'https://jawbone.com' + data.snapshot_image;
       objInst.template = 'app/sleeps/sleeps-v3/_sleeps-list-elem-tpl.html';
+
+      $log.info('time created: ' + objInst.timeCreated);
+      $log.info('time completed: ' + objInst.timeCompleted);
+      $log.info('asleep time: ' + objInst.asleepTime);
+      $log.info('awake time: ' + objInst.awakeTime);
+      var totalTime = (objInst.timeCompleted - objInst.timeCreated);
+      var sleepTime = (objInst.awakeTime - objInst.asleepTime);
+      $log.info('total time: ' + totalTime);
+      $log.info('asleep time: ' + sleepTime);
+      $log.info('diff: ' + (totalTime - sleepTime));
+
+      //objInst.deep = (need to get deep from sleep details);
+      // objInst.timeToSleep = (calculated);
+      // objInst.totalSleepTime = (calculated);
+      // objInst.totalSleepPeriod = (objInst.timeCompleted - objInst.timeCreated);
+      // objInst.sleepEfficiency = (caculated);
 
       return objInst;
     };
     return obj;
   }
 
+})();
+	
+
+(function() {
+  'use strict';
+
+  angular
+    .module('jawboneApp')
+    .factory('UserViewerV3Adaptor', AdaptorFtn)
+    .factory('SleepsChartInterface', InterfaceFtn);
+
+  //----------------------------------------------------
+  //  ADAPTOR FUNCTION
+  //----------------------------------------------------  
+    function AdaptorFtn($log, UserViewerV3Interface) {
+      var adaptor = function(config) {
+        var adaptorInst = new UserViewerV3Interface();
+        config = config || {};
+
+        adaptorInst.config.onConfirm = config.onConfirm || function(element) {
+          $log.info('supply an onConfirm function to UserViewerV3Adaptor');
+        };  
+        adaptorInst.config.canAddPlots = config.canAddPlots || false;      
+
+        return adaptorInst;
+      };
+      return adaptor;
+    }
+
+  //----------------------------------------------------
+  //  INTERFACE FUNCTION
+  //----------------------------------------------------  
+  function InterfaceFtn($log, ChartV3Interface, JawboneService, SleepsV3Obj, CommonModals, BaseSelector, UserViewerV3Adaptor) {
+    var iface = function(config) {
+
+      var makePlotParams = makePlotParamsFtn;
+
+      var ifaceInst = new ChartV3Interface();
+      var config = config || {};
+
+      ifaceInst.config = {      
+        patient : config.patient || null,
+        plots: [ 'title', 'sounds', 'awakenings', 'light', 'duration' ],
+        plotParams: makePlotParams(config.patient),
+        getElementsObj: JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps')),
+        //getElementsObj: JawboneService.makeBatch(JawboneService.makeEndpoint('cardiac')),
+        makeElement : function(element) {
+          return new SleepsV3Obj(element);
+        },
+        preprocessElements: function(arr) {
+          return arr.reverse();
+        },
+        getAdditionalPlotData: function(cb) {
+          // we will eventually pass this function in from the parent iface
+          //$log.info('get additional plot data in SleepChartV3 Interface');
+          CommonModals.selector(new BaseSelector({
+            tpl : 'app/profile/_user-modal-tpl.html',
+            iface : new UserViewerV3Adaptor({
+              onConfirm : function(patient) {
+                //$log.info('patient confirmed: ' + JSON.stringify(patient.config.selected));
+                var patientId = patient.config.selected._id;
+                var getElements = JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps', patientId));
+                cb(getElements);
+              }
+            })
+          }));
+        },
+        canAddPlots : config.canAddPlots || false    
+      };
+
+      //------------------------------------
+      // make plot params function
+      //------------------------------------
+      function makePlotParamsFtn(patient) {
+        //$log.info('make plot params: ' + JSON.stringify(patient));
+        return {
+          range : [new Date(2016, 11, 1), new Date(2017, 4, 30)],
+          //plotName : patient.profile.first          
+          plotName : patient.first          
+        }       
+      }
+
+      return ifaceInst;
+    };
+
+    return iface;
+  }
 })();
 	
 (function() {
@@ -1261,7 +1677,7 @@ var utils = (function(angular) {
   
   /** @ngInject */
   //function ProfileCtrl($log, $scope, JawboneService, GoalsComponentBuilder, TrendsComponentBuilder, TrendsChartBuilderObj, SleepsComponentBuilder, UserModalObj, ListViewerCtrlObj, UsersComponentBuilder) {
-  function ProfileCtrl($log, $scope, JawboneService, ProfileComponentBuilder, SleepsListInterface, NotesViewerV3Interface) {
+  function ProfileCtrl($log, $scope, JawboneService, ProfileComponentBuilder, SleepsListInterface, SleepsChartInterface, NotesViewerV3Interface) {
     var vm = this;
     vm.users = null;
     vm.sleeps = null;
@@ -1287,6 +1703,12 @@ var utils = (function(angular) {
       .then(function(mainUserFull) {
         vm.sleepsListIface = new SleepsListInterface(mainUserFull);
         vm.notesViewerIface = new NotesViewerV3Interface(mainUserFull);
+
+        vm.sleepsChartIface = new SleepsChartInterface({
+          patient:  mainUserFull,
+          canAddPlots: false
+        });
+
         return ProfileComponentBuilder.build(mainUserFull, JawboneService.getUsers);
       })
       .then(function(profile) {
@@ -1426,6 +1848,196 @@ var utils = (function(angular) {
 
 
 })();
+
+(function() {
+  'use strict';
+
+  angular
+    .module('jawboneApp')
+    .factory('PatientV3Obj', ObjectFtn);
+
+  //----------------------------------------------------
+  //  OBJECT FUNCTION
+  //----------------------------------------------------  
+  function ObjectFtn($log) {
+    var object = function(data) {
+    	var objInst = this;
+
+    	$log.info('data passed to patientv3 obj: ' + JSON.stringify(data));
+
+      var data = data || {};
+      var user = data.user || {};
+      var profile = user.profile || {};
+
+      objInst._id = data._id || null;
+      objInst.email = data.user.email || null;
+      objInst.first = profile.first || null;
+      objInst.last = profile.last || null;    
+      objInst.weight = profile.weight || null; 
+      objInst.gender =  profile.gender || null;
+      objInst.height = profile.height || null;
+      objInst.joinDate = data.joinDate || null;
+      objInst.template = 'app/patient/patient-manager-v3/_patient-tpl.html';
+
+		return objInst;
+    };
+    return object;
+  }
+
+})();
+
+
+(function() {
+  'use strict';
+
+  angular
+    .module('jawboneApp')
+    .filter('patientMgrV3filter', FilterFtn)    
+    .factory('PatientMgrV3Interface', InterfaceFtn)  
+    .factory('PatientMgrV3Obj', ObjectFtn)
+    .controller('PatientMgrV3Ctrl', CtrlFtn)
+    .directive('patientMgrV3', DirFtn);
+
+  //----------------------------------------------------
+  //  FILTER FUNCTION
+  //----------------------------------------------------  
+  function FilterFtn() {
+    return function(arg) {  
+      if(arg) {
+      	// do something with arg
+        return arg;
+      }
+      return arg;
+    }     
+  }
+
+  //----------------------------------------------------
+  //  INTERFACE FUNCTION
+  //----------------------------------------------------  
+  function InterfaceFtn($log, BaseInterface) {
+    var iface = function(config) {
+      var ifaceInst = new BaseInterface();
+      var config = config || {};
+
+      ifaceInst.config = {   
+      	groupId: config.groupId || 0      
+      };
+
+      return ifaceInst;            
+    };
+    return iface;
+  }
+
+  //----------------------------------------------------
+  //  OBJECT FUNCTION
+  //----------------------------------------------------  
+  function ObjectFtn($log, PatientMgrV3Interface, BaseComp, ListViewerV3Interface, ListViewerElemInterface, ListElemAPI, SleepsListInterface, SleepsChartInterface, PatientV3Obj, JawboneService) {
+    var object = function(iface) {
+
+    	var onRender = onRenderFtn;
+    	var activateEditMode = activateEditModeFtn;
+
+      var objInst = new BaseComp();
+      objInst.mode = 'view';
+      objInst.patientsListInterface = null;
+      objInst.seletedPatient = null;
+      objInst.sleepsChartInterface = null;
+      objInst.sleepsListInterface = null;
+
+      objInst.api = {
+      	render: function(cb) {
+      		onRender();
+      		cb();
+      	},
+      	getMode : function() {
+      		return objInst.mode;
+      	},
+
+        refresh : function() {
+          objInst.patientsListInterface.getAPI().refresh();
+        }
+      };
+
+      function onRenderFtn() {
+
+      	objInst.patientsListInterface = new ListViewerV3Interface({
+    			getElementsObj : JawboneService.makeBatch(JawboneService.makeFieldGetter('groups', iface.config.groupId, 'members')),
+    			makeListElementFtn : function(listData) {
+    				return new ListViewerElemInterface({
+    				  api : new ListElemAPI(listData),
+    				  data : new PatientV3Obj(listData.element)
+    				});
+    			},
+    			onSelect : function(element, index) {
+    				activateEditMode(element);
+    			},
+    			headerTpl : 'app/groups/group-manager-v3/_group-list-action-bar-tpl.html'		        
+    		});
+      }
+
+      function activateEditModeFtn(selectedPatient) {
+        objInst.mode = 'edit';
+        objInst.selectedPatient = selectedPatient.config.data;
+        var patientId = selectedPatient.config.data;
+
+        objInst.sleepsChartInterface = new SleepsChartInterface({
+          patient : patientId
+        });
+
+        objInst.sleepsListInterface = new SleepsListInterface({
+          patient : patientId
+        });
+      }
+
+      return objInst;
+    };
+    return object;
+  }
+
+  //----------------------------------------------------
+  //  CTRL FUNCTION
+  //----------------------------------------------------  
+  function CtrlFtn($scope, PatientMgrV3Obj, BaseInterface) {
+    var vm = this;  
+    vm.obj = null;
+
+    $scope.$watch(function(scope) {
+      return (vm.iface);
+    }, function(iface, oldval) {
+      if(!iface) {
+      	var iface = new BaseInterface()
+      	vm.obj = new PatientMgrV3Obj(iface);
+      	iface.setAPI(vm.obj.getAPI);
+      	vm.obj.api.render(function() {
+
+      	});
+      } else {
+        vm.obj = new PatientMgrV3Obj(iface);
+        iface.setAPI(vm.obj.getAPI);
+        vm.obj.api.render(function() {
+        });
+      }
+    }); 
+  }
+
+  //----------------------------------------------------
+  //  DIRECTIVE
+  //----------------------------------------------------  
+  function DirFtn() {
+    var directive = {
+      restrict: 'E',
+      scope: {},
+      controller: 'PatientMgrV3Ctrl',
+      controllerAs: 'ctrl',
+      bindToController: {
+        iface : '='
+      },
+      templateUrl: 'app/patient/patient-manager-v3/_patient-mgr-v3-tpl.html'
+    };
+    return directive;   
+  }
+})();
+
 (function() {
   'use strict';
 
@@ -2469,9 +3081,13 @@ var utils = (function(angular) {
   angular
     .module('jawboneApp')
     .controller('DefaultModalInstanceCtrl', DefaultModalInstanceCtrl)
+    .factory('BaseSelector', BaseSelectorFtn)
     .factory('ModalService', ModalService)
     .factory('CommonModals', CommonModals);
 
+    //--------------------------------------------------------------------
+    // DEFAULT MODAL INSTANCE CTRL
+    //--------------------------------------------------------------------
 	function DefaultModalInstanceCtrl(resolveArg, $uibModalInstance, $log) {
 		var vm = this;
 		vm.resolveArg = resolveArg;
@@ -2486,9 +3102,37 @@ var utils = (function(angular) {
 		};
 	 }
 
+    //--------------------------------------------------------------------
+    // BASE SELECTOR
+    //--------------------------------------------------------------------
+	 function BaseSelectorFtn($log, BaseInterface) {
+	 	var selector = function(config) {
+	 		var selectorInst = new BaseInterface();
+	 		config = config || {};
+	 		var selection = null;
+
+	 		selectorInst.iface = config.iface;
+	 		selectorInst.tpl = config.tpl;
+	 		selectorInst.onSelect = function(arg) {
+	 			$log.info('selection made: ' + JSON.stringify(arg.iface));
+	 		};
+	 		selectorInst.onConfirm = function(arg) {
+	 			$log.info('base selector was confirmed: ' + JSON.stringify(arg.iface));
+	 			selectorInst.iface.config.onConfirm(arg.iface);
+	 		};
+
+	 		return selectorInst;
+	 	};
+	 	return selector;
+	 }
+
+    //--------------------------------------------------------------------
+    // COMMON MODAL TYPES
+    //--------------------------------------------------------------------
 	function CommonModals($log, $q, ModalService) {
 		var service = {
-			confirm: confirm
+			confirm: confirm,
+			selector: selector
 		};
 		return service;
 
@@ -2505,6 +3149,13 @@ var utils = (function(angular) {
 			.then(function(response) {
 				return response.confirmed;
 			});			
+		}
+
+		function selector(selectObj) {
+			return ModalService.onClick(selectObj)
+			.then(function(response) {
+				return response.confirmed;
+			});						
 		}
 	}
 
@@ -2528,9 +3179,9 @@ var utils = (function(angular) {
 	  	*	GET DATA
 	  	* 	MODIFY THIS TO GET A SPECIFIED USER'S DATA FROM SERVER
 	  	*/
-	  	function onClick(params) {
+	  	function onClick(ps) {
 	  		//$log.info('params: ' + JSON.stringify(params));
-	  		var ps = params || {};
+	  		ps = ps || {};
 	  		var ctrl = ps.ctrl || 'DefaultModalInstanceCtrl';
 	  		var modalSize = ps.size || 'md';
 	  		ps.tpl = ps.tpl || 'app/_default-modal-tpl.html';
@@ -2558,15 +3209,56 @@ var utils = (function(angular) {
         	});
 
 	        modalInstance.result.then(function(modalObj) {
-	         	modalObj.onConfirm();
+	         	modalObj.onConfirm(ps);
 	         	deferred.resolve(modalObj);
 	        }, function(modalObj) {
-	          modalObj.onDismiss();
+	          modalObj.onDismiss(ps);
 	          deferred.resolve(modalObj);
 	        });
 
 	        return deferred.promise;        
 	  	}
+
+
+	  	// function onClick(params) {
+	  	// 	//$log.info('params: ' + JSON.stringify(params));
+	  	// 	var ps = params || {};
+	  	// 	var ctrl = ps.ctrl || 'DefaultModalInstanceCtrl';
+	  	// 	var modalSize = ps.size || 'md';
+	  	// 	ps.tpl = ps.tpl || 'app/_default-modal-tpl.html';
+	  	// 	ps.onConfirm = ps.onConfirm || function() {
+	  	// 		$log.info('supply on confirm ftn');
+	  	// 	};
+	  	// 	ps.onDismiss = ps.onDismiss || function() {
+	  	// 		$log.info('supply on dismiss ftn');
+	  	// 	};
+
+	  	// 	var deferred = $q.defer();
+    //     	var modalInstance = $uibModal.open({
+	   //        	animation: false,
+    // 	      	ariaLabelledBy: 'modal-title',
+    //     	  	ariaDescribedBy: 'modal-body',
+    //       		templateUrl: 'app/_modal-frame-tpl.html',
+    //       		controller: ctrl,
+    //       		controllerAs: 'ctrl',
+    //       		size: modalSize,
+    //       		resolve: {
+    //         		resolveArg : function () {
+    //           			return ps;
+    //         		}
+    //       		}
+    //     	});
+
+	   //      modalInstance.result.then(function(modalObj) {
+	   //       	modalObj.onConfirm(ps);
+	   //       	deferred.resolve(modalObj);
+	   //      }, function(modalObj) {
+	   //        modalObj.onDismiss(ps);
+	   //        deferred.resolve(modalObj);
+	   //      });
+
+	   //      return deferred.promise;        
+	  	// }
 
 	}
 })();
@@ -2629,7 +3321,7 @@ var utils = (function(angular) {
     var adaptor = function(config) {
       var adaptorInst = this;
 
-      $log.info('config passed to APIFtn: ' + JSON.stringify(config));
+      //$log.info('config passed to APIFtn: ' + JSON.stringify(config));
 
       adaptorInst.listAPI = config.api;
       adaptorInst.index = config.index;
@@ -2671,7 +3363,6 @@ var utils = (function(angular) {
         event.stopPropagation();        
       };
 
-      //set the breakpoint
       $log.info('is the list in delete mode? ' + adaptorInst.listAPI.isDeleteMode());
       if(adaptorInst.listAPI.isDeleteMode()) {
         adaptorInst.deleteMode = true;
@@ -2792,7 +3483,10 @@ var utils = (function(angular) {
         onElementClicked : config.onElementClicked || function(action, element, index) {
           $log.info('passed to iface: element of index clicked ' + index);
         },
-        onDeselect : config.onDeselect || function(element) {
+        onSelect : config.onSelect || function(element, index) {
+          $log.info('supply an onSelect function');
+        },
+        onDeselect : config.onDeselect || function(element, index) {
           $log.info('supply on onDeselect function');
         },
         onDelete : config.onDelete || function(elem, index, cb) {
@@ -2818,7 +3512,7 @@ var utils = (function(angular) {
     	var objInst = new BaseComp();
     	objInst.elements = [];
       objInst.deleteMode = false;
-      // set breakpoint here
+      objInst.selected = parseInt(-1);
 
     	// private functions
     	var populate = populateFtn;
@@ -2867,7 +3561,7 @@ var utils = (function(angular) {
         // PROPAGATE EVENT TO EVERY LIST ELEMENT
         propagateEvent: function(event, data) {
           angular.forEach(objInst.elements, function(element) {
-            //set breakpoint
+
             element.notify(event, data);
           });
         },
@@ -2966,7 +3660,7 @@ var utils = (function(angular) {
           }, list);
 
           $log.info('size of list: ' + JSON.stringify(list.length));
-          $log.info('elements : ' + JSON.stringify(list));
+          //$log.info('elements : ' + JSON.stringify(list));
 
           if(onDone) {
             onDone({
@@ -2990,9 +3684,8 @@ var utils = (function(angular) {
 
         // tell an element and the interface if it was deselected
         if(obj.selected !== -1 && obj.selected < obj.elements.length) {
-          obj.elements[obj.selected].notify('deselected');  
-          //iface.notify('deselected', obj.elements[obj.selected], index);
-          iface.config.onElementClicked('deselected', obj.elements[obj.selected], index);
+          obj.elements[obj.selected].notify('deselect');  
+          iface.config.onDeselect(obj.elements[obj.selected], index);          
         }
 
         // tell the interface of click event
@@ -3002,7 +3695,7 @@ var utils = (function(angular) {
         if(obj.selected !== index) {
           obj.selected = index;          
           //iface.notify('selected', obj.elements[index], index);
-          iface.config.onElementClicked('selected', obj.elements[index], index);
+          iface.config.onSelect(obj.elements[index], index);
         } else {
           obj.selected = -1;
         }
@@ -3047,7 +3740,7 @@ var utils = (function(angular) {
 
     // CALCULATE THE NBR FORWARDS
     var calculateNoForwards = function(listdata, chunksize) {
-      // set breakpoint here
+
       var total = listdata.totalElems;
       var totalPages = Math.ceil(total / chunksize);
       var nbrOnLastPage = parseInt(total % chunksize);
@@ -4545,6 +5238,7 @@ var utils = (function(angular) {
     .factory('JawboneDataObj', JawboneDataObjFtn)
     .factory('BatchObj', BatchObjFtn)
     .factory('GroupService', GroupServiceFtn)
+    .factory('SleepService', SleepServiceFtn)
     .factory('JawboneService', JawboneService);
 
 	//------------------------------------------------------
@@ -4616,10 +5310,11 @@ var utils = (function(angular) {
 	//------------------------------------------------------
 	//  JAWBONE DATA SERVICE 
 	//------------------------------------------------------  
-	function JawboneService($log, $q, $http, JawboneDataObj, BatchObj, GroupService) {
+	function JawboneService($log, $q, $http, JawboneDataObj, BatchObj, GroupService, SleepService) {
 		var jboneData = null;
 		var setUserCB = [];
 		var groupService = new GroupService();
+		var sleepService = new SleepService();
 	    var service = {
 	  		init : init,
 	  		getMainUser : getMainUser,
@@ -4634,12 +5329,17 @@ var utils = (function(angular) {
 	  		createNote : createNote,
 	  		updateNote : updateNote,
 	  		deleteNote : deleteNote,
-	  		groupService : getGroupService
+	  		groupService : getGroupService,
+	  		sleepService : getSleepService
 	  	};
 	  	return service;    
 
 	  	function getGroupService() {
 	  		return groupService;
+	  	}
+
+	  	function getSleepService() {
+	  		return sleepService;
 	  	}
 
 	  	/*
@@ -4684,6 +5384,7 @@ var utils = (function(angular) {
 	  	}
 
 	  	function makeFieldGetter(root, id, field) {
+	  		var id = id || 'default';
 	  		return ('/' + root + '/' + id + '/' + field);
 	  	}
 
@@ -4859,6 +5560,43 @@ var utils = (function(angular) {
 				return false;
 			});
 		}
+	} 
+
+	//-----------------------------------------
+	//	SLEEP SERVICE
+	//-----------------------------------------	
+	function SleepServiceFtn($log, $q, $http) {
+		var SleepService = function() {
+			var obj = this;
+			obj.getSleepTicks = getSleepTicks;
+			obj.getSleepDetails = getSleepDetails;
+		};
+		return SleepService;
+
+		function getSleepTicks(sleepId) {
+			return $http.get('/sleeps/ticks/' + sleepId)
+			.then(function(response) {
+				//$log.info('response to get sleep: ' + JSON.stringify(response));
+				return response.data;
+			})
+			.catch(function(errResponse) {
+				$log.info('err response to get sleep ticks: ' + JSON.stringify(errResponse));
+				return errResponse;
+			});
+		}
+
+		function getSleepDetails(sleepId) {
+			return $http.get('/sleeps/details/' + sleepId)
+			.then(function(response) {
+				//$log.info('response to get sleep: ' + JSON.stringify(response));
+				return response.data;
+			})
+			.catch(function(errResponse) {
+				$log.info('err response to get sleep details: ' + JSON.stringify(errResponse));
+				return errResponse;
+			});
+		}
+
 	} 
 
 })();
@@ -5762,6 +6500,206 @@ var utils = (function(angular) {
       return obj;
     };
     return GroupsPatientsBuilder;
+  }
+})();
+
+
+
+(function() {
+  'use strict';
+
+  angular
+    .module('jawboneApp')
+    .factory('GroupV3Obj', ObjectFtn);
+
+  //----------------------------------------------------
+  //  OBJECT FUNCTION
+  //----------------------------------------------------  
+  function ObjectFtn($log) {
+    var object = function(data) {
+
+    	$log.info('data passed to group obj: ' + JSON.stringify(data));
+   		var objInst = this;
+      objInst._id = data._id;
+   		objInst.name = data.name || null;
+   		objInst.description = data.description || null;
+   		objInst.size = data.members.length || 0;
+   		objInst.template = 'app/groups/group-manager-v3/_group-element-tpl.html';
+
+		return objInst;
+    };
+    return object;
+  }
+})();
+
+
+(function() {
+  'use strict';
+
+  angular
+    .module('jawboneApp')
+    .filter('groupManagerV3filter', FilterFtn)    
+    .factory('GroupManagerV3Interface', InterfaceFtn)  
+    .factory('GroupManagerV3Obj', ObjectFtn)
+    .controller('GroupManagerV3Ctrl', CtrlFtn)
+    .directive('groupManagerV3', DirFtn);
+
+  //----------------------------------------------------
+  //  FILTER FUNCTION
+  //----------------------------------------------------  
+  function FilterFtn() {
+    return function(arg) {  
+      if(arg) {
+      	// do something with arg
+        return arg;
+      }
+      return arg;
+    }     
+  }
+
+  //----------------------------------------------------
+  //  INTERFACE FUNCTION
+  //----------------------------------------------------  
+  function InterfaceFtn($log, BaseInterface) {
+    var iface = function(config) {
+      var ifaceInst = new BaseInterface();
+      var config = config || {};
+
+      ifaceInst.config = {          
+      };
+
+      return ifaceInst;            
+    };
+    return iface;
+  }
+
+  //----------------------------------------------------
+  //  OBJECT FUNCTION
+  //----------------------------------------------------  
+  function ObjectFtn($log, GroupManagerV3Interface, BaseComp, ListViewerV3Interface, ListViewerElemInterface, ListElemAPI, GroupV3Obj, JawboneService, PatientMgrV3Interface, AdminMgrInterface) {
+    var object = function(iface) {
+
+    	var activateEditMode = activateEditModeFtn;
+
+      var objInst = new BaseComp();
+      objInst.groupList = null;
+      objInst.patientMgrInterface = null;
+      objInst.adminMgrInterface = null;
+      objInst.mode = 'view';
+      objInst.patientAdminView = 'admin';
+      objInst.selectedGroup = null;
+
+      objInst.api = {
+      	render: function(cb) {
+      		// create out group list
+      		objInst.groupList = new ListViewerV3Interface({
+      			getElementsObj : JawboneService.makeBatch(JawboneService.makeEndpoint('groups')),
+      			makeListElementFtn : function(listData) {
+			        return new ListViewerElemInterface({
+			          api : new ListElemAPI(listData),
+			          data : new GroupV3Obj(listData.element)
+			        });
+      			},
+		        onSelect : function(element, index) {
+		          activateEditMode(element);
+		        },
+          		headerTpl : 'app/groups/group-manager-v3/_group-list-action-bar-tpl.html'		        
+      		});
+      	},
+
+      	getMode: function() {
+      		return objInst.mode;
+      	},
+
+      	setViewMode: function() {
+      		objInst.mode = 'view';
+      	},
+
+        isPatientView : function() {
+          return (objInst.patientAdminView === 'patient');
+        },
+
+        isAdminView : function() {
+          return (objInst.patientAdminView === 'admin');
+        },
+
+        setPatientView : function() {
+          objInst.patientAdminView = 'patient';
+          objInst.patientMgrInterface.getAPI().refresh();
+          //tell the patient manager interface to refresh
+        },
+
+        setAdminView : function() {
+          objInst.patientAdminView = 'admin';
+          objInst.adminMgrInterface.getAPI().refresh();
+          //tell the admin manager interface to refresh
+        }
+
+      };
+
+      function activateEditModeFtn(selectedGroup) {
+      	objInst.mode = 'edit';
+        objInst.selectedGroup = selectedGroup.config.data;
+        var groupId = selectedGroup.config.data._id;
+        $log.info('create with id: ' + JSON.stringify(groupId));
+
+        objInst.patientMgrInterface = new PatientMgrV3Interface({
+          groupId : groupId
+        });
+
+        objInst.adminMgrInterface = new AdminMgrInterface({
+          groupId : groupId
+        });
+
+        $log.info('group element was selected: ' + JSON.stringify(selectedGroup));
+      }
+
+      return objInst;
+    };
+    return object;
+  }
+
+  //----------------------------------------------------
+  //  CTRL FUNCTION
+  //----------------------------------------------------  
+  function CtrlFtn($scope, GroupManagerV3Obj, BaseInterface) {
+    var vm = this;  
+    vm.obj = null;
+
+    $scope.$watch(function(scope) {
+      return (vm.iface);
+    }, function(iface, oldval) {
+    	if(!iface) {
+    		var iface = new BaseInterface();
+    		vm.obj = new GroupManagerV3Obj(iface);
+    		iface.setAPI(vm.obj.getAPI);
+    		vm.obj.api.render(function(arg) {
+
+    		});	
+    	} else {
+	        vm.obj = new GroupManagerV3Obj(iface);
+	        iface.setAPI(vm.obj.getAPI);
+	        vm.obj.api.render(function(arg) {
+        	});
+      	}
+    }); 
+  }
+
+  //----------------------------------------------------
+  //  DIRECTIVE
+  //----------------------------------------------------  
+  function DirFtn() {
+    var directive = {
+      restrict: 'E',
+      scope: {},
+      controller: 'GroupManagerV3Ctrl',
+      controllerAs: 'ctrl',
+      bindToController: {
+        iface : '='
+      },
+      templateUrl: 'app/groups/group-manager-v3/_group-manager-v3-tpl.html'
+    };
+    return directive;   
   }
 })();
 
@@ -6748,6 +7686,304 @@ var jbChartUtils = (function(angular) {
       	chart.data = [];
       	chart.options = {
 	        // 'title': 'blank',
+	        //'chartArea': { 'left':'40','top':'40','width':'60%','height':'75%'},
+	        'chartArea': { 'left':'80','top':'40','width':'60%','height':'75%'},
+	        'backgroundColor.fill': '#00ffff',
+	        'explorer': { 
+	          'actions': ['dragToZoom', 'rightClickToReset'],
+	          'keepInBounds': true
+	        },
+	        'hAxis' : {
+	          'title': 'date'
+	        },
+	        'vAxis' : {
+			'title' : 'minutes',
+			'count' : 60
+        	}
+      	};
+      	return chart;
+	}	
+})(angular);
+
+(function(cutils) {
+  'use strict';
+
+  angular
+    .module('jawboneApp')
+    .filter('chartV3filter', FilterFtn)    
+    .factory('ChartV3Interface', InterfaceFtn)  
+    .factory('ChartV3Obj', ObjectFtn)
+    .controller('ChartV3Ctrl', CtrlFtn)
+    .directive('chartV3', DirFtn);
+
+    var id = 'chart-v3/chart-comp: ';
+
+  //----------------------------------------------------
+  //  FILTER FUNCTION
+  //----------------------------------------------------  
+  function FilterFtn() {
+    return function(arg) {  
+      if(arg) {
+      	// do something with arg
+        return arg;
+      }
+      return arg;
+    }     
+  }
+
+  //----------------------------------------------------
+  //  INTERFACE FUNCTION
+  //----------------------------------------------------  
+  function InterfaceFtn($log, BaseInterface) {
+    var iface = function(config) {
+      var ifaceInst = new BaseInterface();
+      var config = config || {};
+
+  		ifaceInst.config = {  
+        plots : config.plots || [],
+  			loaderMessage: config.loaderMessage || null,          
+  			getElementsObj : config.getElementsObj || null,
+  			makeElement : config.makeElement || null,
+  			preprocessElements : config.preprocessElements || null,
+  			plotParams : config.plotParams || null,
+        getAdditionalPlotData : config.getAdditionalPlotData || function(cb) {
+          $log.info('supply a getAdditionalPlotData ftn');
+          cb(null);
+        },
+        canAddPlots: config.canAddPlots || false
+  		};
+
+      ifaceInst.notify = function(eventName) {
+        var api = ifaceInst.getObjectAPI();
+        api.notify(eventName);
+      };
+
+      return ifaceInst;
+    };
+    return iface;
+  }
+
+  //----------------------------------------------------
+  //  OBJECT FUNCTION
+  //----------------------------------------------------  
+  function ObjectFtn($log, BaseComp, ChartV3Interface, PlotGenerator) {
+    var object = function(iface) {
+
+      //var initialise = initialiseFtn;
+    	var processElements = processElementsFtn;
+      var appendElements = appendElementsFtn;
+    	var selectPlot = selectPlotFtn;
+    	var removeNullPoints = removeNullPointsFtn;
+    	var convertToArr = convertToArrFtn;
+    	var extract = extractFtn;
+    	var obj = new BaseComp();
+      obj.graphData = [];
+      obj.plots = iface.config.plots || [];
+      obj.selected = 0;
+
+      obj.api = {
+        render: function(cb) {
+          $log.info('called render function of chartv3obj');
+          obj.chart = cutils.createJawboneChartLayout();
+          iface.config.getElementsObj.get()
+          .then(function(result) {
+            processElements(iface, result.data, iface.config.plotParams);
+            cb('done');
+          });
+        },
+        switchToPlot: function(index) {
+          selectPlot(iface, index, obj.graphData);
+        },
+        getGraphData: function() {
+          $log.info('called get graph data');
+          return obj.chart.data;
+        },
+        canAddPlots: function() {
+          return iface.config.canAddPlots;
+        },
+        appendPlot: function() {
+          $log.info('request to append plot');
+          iface.config.getAdditionalPlotData(function(getAdditionalPlotsObj) {
+            $log.info('got the additional plot data...' + JSON.stringify(getAdditionalPlotsObj));
+            getAdditionalPlotsObj.get()
+            .then(function(result) {
+              appendElements(iface, result.data, iface.config.plotParams);
+            });
+          });
+        }
+      };
+
+      //----------------------------------------------
+      // append elements ftn 
+      //----------------------------------------------        
+      function appendElementsFtn(iface, elems, plotParams) {
+        var newElements = [];
+
+        angular.forEach(elems, function(value) {
+          this.push(iface.config.makeElement(value));
+        }, newElements);
+
+        iface.config.preprocessElements(newElements);
+        obj.graphData = PlotGenerator.appendPlot(obj.graphData, newElements, plotParams);   
+
+        selectPlot(iface, 0, obj.graphData);
+      }
+
+    	//----------------------------------------------
+    	// process elements 
+    	//----------------------------------------------      	
+    	function processElementsFtn(iface, elems, plotParams) {
+
+    		//$log.info('elems for graph: ' + JSON.stringify(elems, true, 1));
+
+        var elements = [];
+        angular.forEach(elems, function(value) {
+          this.push(iface.config.makeElement(value));
+        }, elements);
+
+        iface.config.preprocessElements(elements);
+        obj.graphData = PlotGenerator.preparePlot(elements, plotParams);  
+
+        //$log.info('graph data after prepare: ' + JSON.stringify(obj.graphData, true, 1));
+
+        selectPlot(iface, 0, obj.graphData);
+    	}
+
+    	//----------------------------------------------
+    	// process elements 
+    	//----------------------------------------------      	
+    	function selectPlotFtn(iface, index, gdata) {
+        //gdata = gdata || obj.graphData;
+        obj.selected = iface.config.plots[index];
+        var chartdata = convertToArr(iface, gdata, index);
+
+        removeNullPoints(chartdata);
+
+        //obj.chart.options.title = obj.selected;
+        //$log.info('chart data: ' + JSON.stringify(chartdata, true, 3));
+        obj.chart.data = google.visualization.arrayToDataTable(chartdata);
+        //$log.info('chart data: ' + JSON.stringify(obj.chart.data, true, 3));
+        //onStateChange('ready');
+    	}
+
+    	//----------------------------------------------
+    	// process elements 
+    	//----------------------------------------------      	
+    	function removeNullPointsFtn(arr) {
+        for(var i = 1; i < arr.length; i++) {
+          var elem = arr[i];
+          if(!elem[1]) elem[1] = 0;
+        }        
+	    }
+
+    	//----------------------------------------------
+    	// process elements 
+    	//----------------------------------------------      	
+  		function convertToArrFtn(iface, graphData, yValueField) {
+  			var arrData = [];
+  			arrData.push(graphData.names); // add the header
+  			angular.forEach(graphData.data, function(val) {
+  			  var elem = [];
+  			  elem.push(val.x); // push the date 
+  			  
+  			  angular.forEach(val.y, function(yplot) {
+  			    elem.push(extract(iface, yplot, yValueField));
+  			  },val.y);
+
+  			  //elem.push(extracFtn(val.y[0], yValueField)); // push the y axis value
+  			  this.push(elem);
+  			}, arrData);
+  			return arrData;
+  		}
+
+    	//----------------------------------------------
+    	// extract function 
+    	//----------------------------------------------      	
+  		function extractFtn(iface, yplot, fieldIdx) {
+        var pnames = iface.config.plots;
+        var fieldToGet = pnames[fieldIdx];
+        // $log.info('field idx: ' + fieldIdx);
+        // $log.info('pnames: ' + JSON.stringify(pnames));
+        // $log.info('obj is : ' + JSON.stringify(yplot));
+        // $log.info('get the field: ' + fieldToGet + ' result: ' + JSON.stringify(yplot[pnames[fieldIdx]]));  
+        return yplot[pnames[fieldIdx]];
+      }
+
+      return obj;
+    };
+    return object;
+  }
+
+  //----------------------------------------------------
+  //  CTRL FUNCTION
+  //----------------------------------------------------  
+  function CtrlFtn($scope, $log, ChartV3Obj, googleChartApiPromise, BaseCtrl) {
+    var vm = this;  
+    vm.obj = null;
+
+    googleChartApiPromise.then(function() {
+      new BaseCtrl(vm.iface, function(createdIface) {
+        return new ChartV3Obj(createdIface);
+      }, function(obj) {
+        vm.obj = obj;
+      });
+    });
+  }
+
+  // function CtrlFtn($scope, $log, ChartV3Obj, googleChartApiPromise) {
+  //   var vm = this;  
+  //   vm.obj = null;
+
+  //   $scope.$watch(function(scope) {
+  //     return (vm.iface);
+  //   }, function(iface, oldval) {
+  //     if(iface) {
+  //       googleChartApiPromise.then(function() {
+  //       	$log.info(id + ' loaded google chart api');
+  //     		vm.obj = new ChartV3Obj(iface);
+  //         iface.setAPI(vm.obj.getAPI);
+  //         vm.obj.api.render(function() {
+  //           $log.info('render the chart obj');
+  //         });
+  //       });
+  //     }
+  //   }); 
+  // }
+
+  //----------------------------------------------------
+  //  DIRECTIVE
+  //----------------------------------------------------  
+  function DirFtn() {
+    var directive = {
+      restrict: 'E',
+      scope: {},
+      controller: 'ChartV3Ctrl',
+      controllerAs: 'ctrl',
+      bindToController: {
+        iface : '='
+      },
+      templateUrl: 'app/chart-v3/_chart-tpl.html'
+    };
+    return directive;   
+  }
+})(jbChartUtils);
+
+var jbChartUtils = (function(angular) {
+	'use strict';
+
+	var id = 'chart-v2/chart-utils ';
+
+	return {
+		createJawboneChartLayout : createJawboneChartFtn
+	};
+
+	function createJawboneChartFtn() {
+		console.log(id + ' create jawbone chart function');
+      	var chart = {};
+      	chart.type = "LineChart";
+      	chart.data = [];
+      	chart.options = {
+	        // 'title': 'blank',
 	        'chartArea': { 'left':'40','top':'40','width':'60%','height':'75%'},
 	        'backgroundColor.fill': '#00ffff',
 	        'explorer': { 
@@ -7016,6 +8252,9 @@ var jbChartUtils = (function(angular) {
         var i, x;
         for (var i = startIdx; i < arr.length; i++) {
             x = arr[i];
+            // console.log('startIdx is : ' + startIdx);
+            // console.log('i is : ' + i);
+            // console.log('x is : ' + arr[i]);            
             if (cond(x)) return parseInt(i);
         }
         return (-1);
@@ -7114,30 +8353,27 @@ var jbChartUtils = (function(angular) {
                 this.push(PlotGenerator.createEmpty(value));
             }, arr); 
 
-            //$log.info('data for prepare plot: ' + JSON.stringify(data));
-
-            //$log.info('dae arr: ' + JSON.stringify(dateArr));
-
-            // populate for every data entry within the date range
-            angular.forEach(data, function(value) {            
+            for(var i = 0; i < data.length; i++) {
                 //find the index into the date array to add this 'value'
                 idx = findIndexOf(dateArr, function(elem) {
-                    var jsdate = JawboneChartUtils.jawboneToJSDate(value.date);
+                    var jsdate = JawboneChartUtils.jawboneToJSDate(data[i].date);
                     //$log.info('elem: ' + elem);
                     //$log.info('date is ' + elem.toDateString() + ' jsdate: ' + jsdate.toDateString());
+                    // if(elem.toDateString() === jsdate.toDateString()) {
+                    //     $log.info('have a matching date: ' + JSON.stringify(data[i]));
+                    // }
                     return (elem.toDateString() === jsdate.toDateString());  
                 }, idx);     
 
                 // $log.info('value: ' + JSON.stringify(value));
-                // $log.info('position in date: ' + idx);
 
                 if(idx === -1) {
-                    return;
+                    break;
                 } else {
                     //$log.info('value to add is : ' + JSON.stringify(value));
-                    PlotGenerator.addToArray(this, idx, 0, value);
+                    PlotGenerator.addToArray(arr, idx, 0, data[i]);
                 }
-            }, arr);
+            }
 
             //$log.info('data arry: ' + JSON.stringify(arr));
 
@@ -7145,6 +8381,7 @@ var jbChartUtils = (function(angular) {
         };        
 
         PlotGenerator.appendPlot = function(original, dataToAppend, plotParams) {
+
             var arrData = original.data;
             // var start = arrData[0].x;
             // var end = arrData[arrData.length - 1].x;
@@ -7359,15 +8596,159 @@ var jbChartUtils = (function(angular) {
     return directive;   
   }
 })();
+
+(function() {
+  'use strict';
+
+  angular
+    .module('jawboneApp')
+    .filter('adminManagerV3filter', FilterFtn)    
+    .factory('AdminManagerV3Interface', InterfaceFtn)  
+    .factory('AdminManagerV3Obj', ObjectFtn)
+    .controller('AdminManagerV3Ctrl', CtrlFtn)
+    .directive('adminMgrV3', DirFtn);
+
+  //----------------------------------------------------
+  //  FILTER FUNCTION
+  //----------------------------------------------------  
+  function FilterFtn() {
+    return function(arg) {  
+      if(arg) {
+      	// do something with arg
+        return arg;
+      }
+      return arg;
+    }     
+  }
+
+  //----------------------------------------------------
+  //  INTERFACE FUNCTION
+  //----------------------------------------------------  
+  function InterfaceFtn($log, BaseInterface) {
+    var iface = function(config) {
+      var ifaceInst = new BaseInterface();
+      var config = config || {};
+
+      ifaceInst.config = {   
+        groupId: config.groupId || 0      
+      };
+
+      return ifaceInst;            
+    };
+    return iface;
+  }
+
+  //----------------------------------------------------
+  //  OBJECT FUNCTION
+  //----------------------------------------------------  
+  function ObjectFtn($log, AdminManagerV3Interface, BaseComp, ListViewerV3Interface, ListViewerElemInterface, ListElemAPI, PatientV3Obj, JawboneService) {
+    var object = function(iface) {
+
+      var onRender = onRenderFtn;
+      var activateEditMode = activateEditModeFtn;
+
+      var objInst = new BaseComp();
+      objInst.mode = 'view';
+      objInst.adminsListInterface = null;
+      objInst.seletedAdmin = null;
+      //objInst.sleepsChartInterface = null;
+      //objInst.sleepsListInterface = null;
+
+      objInst.api = {
+        render: function(cb) {
+          onRender();
+          cb();
+        },
+        getMode : function() {
+          return objInst.mode;
+        },
+        refresh : function() {
+          $log.info('refresh the admin manager');
+          objInst.adminsListInterface.getAPI().refresh();
+        }       
+      };
+
+      function onRenderFtn() {
+
+        objInst.adminsListInterface = new ListViewerV3Interface({
+          getElementsObj : JawboneService.makeBatch(JawboneService.makeFieldGetter('groups', iface.config.groupId, 'admins')),
+          makeListElementFtn : function(listData) {
+            return new ListViewerElemInterface({
+              api : new ListElemAPI(listData),
+              data : new PatientV3Obj(listData.element)
+            });
+          },
+          onSelect : function(element, index) {
+            activateEditMode(element);
+          },
+          headerTpl : 'app/groups/group-manager-v3/_group-list-action-bar-tpl.html'           
+        });
+      }
+
+      function activateEditModeFtn(selectedAdmin) {
+        objInst.mode = 'edit';
+        //var patientId = selectedPatient.config.data._id;
+        var adminId = selectedAdmin.config.data;
+      }
+
+      return objInst;
+    };
+    return object;
+  }
+
+  //----------------------------------------------------
+  //  CTRL FUNCTION
+  //----------------------------------------------------  
+  function CtrlFtn($scope, AdminManagerV3Obj, BaseCtrl) {
+    var vm = this;  
+    vm.obj = null;
+
+    new BaseCtrl(vm.iface, function(createdIface) {
+      return new AdminManagerV3Obj(createdIface);
+    }, function(obj) {
+      vm.obj = obj;
+    });
+
+    // $scope.$watch(function(scope) {
+    //   return (vm.iface);
+    // }, function(iface, oldval) {
+    //   if(iface) {
+    //     vm.obj = new AdminManagerV3Obj(iface);
+    //     iface.setAPI(vm.obj.getAPI);
+    //     vm.obj.api.render(function() {
+    //     });
+    //   }
+    // }); 
+  }
+
+  //----------------------------------------------------
+  //  DIRECTIVE
+  //----------------------------------------------------  
+  function DirFtn() {
+    var directive = {
+      restrict: 'E',
+      scope: {},
+      controller: 'AdminManagerV3Ctrl',
+      controllerAs: 'ctrl',
+      bindToController: {
+        iface : '='
+      },
+      templateUrl: 'app/admins/admin-manager-v3/_admin-manager-tpl.html'
+    };
+    return directive;   
+  }
+})();
+
 angular.module("jbtemplates").run(["$templateCache", function($templateCache) {$templateCache.put("app/_default-confirm-modal-tpl.html","<h3>{{ctrl.resolveArg.msg}}</h3>");
 $templateCache.put("app/_default-modal-tpl.html","default modal template");
 $templateCache.put("app/_modal-frame-tpl.html","<div class=\"modal-body\" id=\"modal-body\" style=\"padding: 4px;\"><div ng-include=\"ctrl.template\"></div></div><div class=\"modal-footer\" style=\"padding: 4px; background: rgba(221, 221, 221, 0.3);\"><div class=\"btn-group\"><div class=\"btn btn-default\" ng-click=\"ctrl.cancel()\">Cancel</div><div class=\"btn btn-default\" ng-disabled=\"true\">&nbsp;</div><div class=\"btn btn-default\" ng-click=\"ctrl.ok()\">OK</div></div></div>");
 $templateCache.put("app/main.html","<div class=\"container\"><div ui-view=\"\"></div></div>");
 $templateCache.put("app/user.html","<div class=\"container\"><a href=\"/login/jawbone\">login jawbone</a><div ui-view=\"\"></div></div>");
+$templateCache.put("app/chart-v2/_chart-tpl.html","<loader obj=\"ctrl.co.loaderMessage\" ng-show=\"ctrl.state !== \'ready\'\"></loader><div class=\"chart-area animated\" ng-show=\"ctrl.state === \'ready\'\"><div class=\"chart-header\"><span uib-dropdown=\"\"><a class=\"btn btn-default\" uib-dropdown-toggle=\"\">{{ctrl.obj.selected || \'select a plot...\'}} <span class=\"caret\"></span></a><ul uib-dropdown-menu=\"\"><li ng-repeat=\"item in ctrl.obj.plots track by $index\"><span ng-click=\"ctrl.obj.api.switchToPlot($index)\">{{item}}</span></li></ul></span> <span class=\"btn btn-default\" ng-click=\"ctrl.obj.api.appendPlot()\">compare with</span></div><div class=\"chart-body\"><div class=\"chart-element\"><div google-chart=\"\" chart=\"ctrl.obj.chart\" style=\"height:300px; width:570px; border: 1px solid #fff;\"></div></div></div></div>");
 $templateCache.put("app/chart/_chart-tpl.html","<loader obj=\"ctrl.co.loaderMessage\" ng-show=\"ctrl.state !== \'ready\'\"></loader><div class=\"chart-area animated\" ng-show=\"ctrl.state === \'ready\'\"><div class=\"chart-header\"><span uib-dropdown=\"\"><a class=\"btn btn-default\" uib-dropdown-toggle=\"\">{{ctrl.co.chart.selected || \'select a plot...\'}} <span class=\"caret\"></span></a><ul uib-dropdown-menu=\"\"><li ng-repeat=\"item in ctrl.co.chart.plots track by $index\"><span ng-click=\"ctrl.co.chart.selectPlot($index)\">{{item}}</span></li></ul></span> <span class=\"btn btn-default\" ng-click=\"ctrl.co.onClick()\">compare with</span></div><div class=\"chart-body\"><div class=\"chart-element\"><div google-chart=\"\" chart=\"ctrl.co.chart.chart\" style=\"height:300px; width:570px; border: 1px solid #fff;\"></div></div></div></div>");
+$templateCache.put("app/chart-v3/_chart-tpl.html","<div class=\"chart-area animated\"><div class=\"chart-header\"><span uib-dropdown=\"\"><a class=\"btn btn-default\" uib-dropdown-toggle=\"\">{{ctrl.obj.selected || \'select a plot...\'}} <span class=\"caret\"></span></a><ul uib-dropdown-menu=\"\"><li ng-repeat=\"item in ctrl.obj.plots track by $index\"><span ng-click=\"ctrl.obj.api.switchToPlot($index)\">{{item}}</span></li></ul></span> <span class=\"btn btn-default\" ng-click=\"ctrl.obj.api.appendPlot()\" ng-show=\"ctrl.obj.api.canAddPlots()\">compare with</span></div><div class=\"chart-body\"><div class=\"chart-element\"><div google-chart=\"\" chart=\"ctrl.obj.chart\" style=\"height:300px; width:570px; border: 1px solid #fff;\"></div></div></div></div>");
 $templateCache.put("app/dropdown/_default-dropdown-tpl.html","<span class=\"glyphicon glyphicon-menu-hamburger obi-default-dropdown-box\"></span>");
 $templateCache.put("app/dropdown/_dropdown-tpl.html","<div class=\"obi-dropdown-container\" ng-class=\"{ \'obi-show\': ctrl.visible }\" obi-click-elsewhere=\"ctrl.onDeselect()\"><div class=\"obi-dropdown-display\" ng-click=\"ctrl.show();\" ng-class=\"{ \'clicked\': ctrl.visible }\"><span ng-include=\"ctrl.ddobj.templateUrl\"></span></div><div class=\"obi-dropdown-list\"><ul><li ng-repeat=\"$item in ctrl.ddobj.filters track by $index\" ng-click=\"ctrl.setSelected($index)\"><h5 ng-if=\"ctrl.ddobj.selectedFilterIdx === $index\">{{$item}} <small><span class=\"glyphicon glyphicon-ok\"></span></small></h5><h5 ng-if=\"ctrl.ddobj.selectedFilterIdx !== $index\">{{$item}} &nbsp;</h5></li></ul></div></div>");
-$templateCache.put("app/chart-v2/_chart-tpl.html","<loader obj=\"ctrl.co.loaderMessage\" ng-show=\"ctrl.state !== \'ready\'\"></loader><div class=\"chart-area animated\" ng-show=\"ctrl.state === \'ready\'\"><div class=\"chart-header\"><span uib-dropdown=\"\"><a class=\"btn btn-default\" uib-dropdown-toggle=\"\">{{ctrl.obj.selected || \'select a plot...\'}} <span class=\"caret\"></span></a><ul uib-dropdown-menu=\"\"><li ng-repeat=\"item in ctrl.obj.plots track by $index\"><span ng-click=\"ctrl.obj.api.switchToPlot($index)\">{{item}}</span></li></ul></span> <span class=\"btn btn-default\" ng-click=\"ctrl.obj.api.appendPlot()\">compare with</span></div><div class=\"chart-body\"><div class=\"chart-element\"><div google-chart=\"\" chart=\"ctrl.obj.chart\" style=\"height:300px; width:570px; border: 1px solid #fff;\"></div></div></div></div>");
 $templateCache.put("app/fileHandler/_file-download-tpl.html","<textarea class=\"download-textarea\" ng-model=\"ctrl.do.content | json\" name=\"textarea\" rows=\"20\">\r\n</textarea> <a href=\"\" class=\"btn btn-primary btn-small\" ng-click=\"ctrl.do.download()\">Download</a>");
 $templateCache.put("app/form-utils/_expander-tpl.html","<span>{{text | limitTo: textLimit }}</span> <span ng-if=\"text.length > limit\"><a ng-if=\"expanded\" ng-click=\"expanderClick()\" style=\"font-size: 90%;\">...(less)</a> <a ng-if=\"!expanded\" ng-click=\"expanderClick()\" style=\"font-size: 90%;\">...(more)</a></span>");
 $templateCache.put("app/form-utils/_form-input-tpl.html","<div class=\"form-group jbv-form-group\" ng-class=\"{ \'has-error\' : ctrl.fo.email.$invalid && !ctrl.fo.email.$pristine }\"><label for=\"email\">Email address:</label> {{ctrl.fo.email | json}}<p>{{ctrl.fo.name}}</p><p>{{ctrl.name}}</p><div class=\"jbv-input\"><p>{{ctrl.fo.name}}</p><input type=\"email\" name=\"{{ctrl.fo.name}}\" class=\"form-control\" id=\"email\" required=\"\" ng-minlength=\"5\" ng-model=\"ctrl.fo.model.email\"><div ng-if=\"ctrl.fo.email.$valid\" class=\"jbv-input-status-ok\"><span class=\"glyphicon glyphicon-ok ok\"></span></div><div ng-if=\"ctrl.fo.email.$dirty && ctrl.fo.email.$invalid\" class=\"jbv-input-status-bad\"><span class=\"glyphicon glyphicon-remove invalid\"></span></div></div><p ng-show=\"ctrl.fo.email.$invalid && ctrl.fo.email.$touched\" class=\"help-block jbv-input-status-msg\">invalid email!</p></div><div class=\"form-group\" ng-class=\"{ \'has-error\' : registerForm.emailrt.$invalid && !registerForm.emailrt.$pristine }\"><label for=\"email\">Confirm Email address:</label> <input type=\"email\" name=\"emailrt\" class=\"form-control\" id=\"emailrt\" compare-to=\"gateway.credentials.email\" ng-model=\"register.emailrt\"><p ng-show=\"registerForm.emailrt.$invalid && registerForm.emailrt.$touched\">Emails do not match!</p></div>");
@@ -7377,6 +8758,7 @@ $templateCache.put("app/gateway/about.html","<h4>our about page</h4>");
 $templateCache.put("app/gateway/gateway-main.html","<div ui-view=\"\"></div>");
 $templateCache.put("app/gateway/home.html","<div id=\"mainarea\"><div id=\"sidebar\"><span class=\"btn btn-primary-outline\" ng-click=\"gateway.showPatient()\" ng-class=\"{ \'btn-default\' : gateway.mode === \'patient\'}\">Patient</span> <span class=\"btn btn-primary-outline\" ng-click=\"gateway.showTherapist()\" ng-class=\"{ \'btn-default\' : gateway.mode === \'therapist\'}\">Therapist</span><hr><div class=\"panel panel-default\" ng-show=\"gateway.mode === \'patient\' || gateway.mode === \'therapist\'\"><div class=\"panel-heading\">{{gateway.getLoginMessage()}}</div><div class=\"panel-body\"><form name=\"loginForm\" class=\"form-area\" action=\"{{gateway.getLogin()}}\" method=\"post\" novalidate=\"\"><div class=\"form-group\"><label for=\"email\">Email address:</label> <input type=\"email\" name=\"email\" class=\"form-control\" id=\"email\"></div><div class=\"form-group\"><label for=\"pwd\">Password:</label> <input type=\"password\" name=\"password\" class=\"form-control\" id=\"pwd\"></div><div class=\"checkbox\"><label><input type=\"checkbox\"> Remember me</label></div><button type=\"submit\" class=\"btn btn-default\">Login</button></form></div></div><div class=\"panel panel-default\" ng-show=\"gateway.mode === \'patient\'\"><div class=\"panel-heading\">or register as a new user</div><div class=\"panel-body\"><form name=\"registerForm\" class=\"form-area\" action=\"/register/user\" method=\"post\" novalidate=\"\"><div class=\"form-group jbv-form-group\" ng-class=\"{ \'has-error\' : registerForm.email.$invalid && !registerForm.email.$pristine }\"><label for=\"email\">Email address:</label><div class=\"jbv-input\"><input type=\"email\" name=\"email\" class=\"form-control\" id=\"email\" required=\"\" ng-minlength=\"5\" ng-model=\"gateway.credentials.email\"><div ng-if=\"registerForm.email.$touched && registerForm.email.$valid\" class=\"jbv-input-status-ok\"><span class=\"glyphicon glyphicon-ok ok\"></span></div><div ng-if=\"registerForm.email.$touched && registerForm.email.$invalid\" class=\"jbv-input-status-bad\"><span class=\"glyphicon glyphicon-remove invalid\"></span></div></div><p ng-show=\"registerForm.email.$invalid && registerForm.email.$touched\" class=\"help-block jbv-input-status-msg\">invalid email!</p></div><div class=\"form-group jbv-form-group\" ng-class=\"{ \'has-error\' : registerForm.emailrt.$invalid && !registerForm.emailrt.$pristine }\"><label for=\"email\">Confirm Email address:</label><div class=\"jbv-input\"><input type=\"email\" name=\"emailrt\" class=\"form-control\" id=\"emailrt\" compare-to=\"gateway.credentials.email\" ng-model=\"register.emailrt\"><div ng-if=\"registerForm.emailrt.$touched && registerForm.emailrt.$valid\" class=\"jbv-input-status-ok\"><span class=\"glyphicon glyphicon-ok ok\"></span></div><div ng-if=\"registerForm.emailrt.$touched && registerForm.emailrt.$invalid\" class=\"jbv-input-status-bad\"><span class=\"glyphicon glyphicon-remove invalid\"></span></div></div><p ng-show=\"registerForm.emailrt.$invalid && registerForm.emailrt.$touched\" class=\"help-block jbv-input-status-msg\">Emails do not match!</p></div><div class=\"form-group jbv-form-group\" ng-class=\"{ \'has-error\' : registerForm.password.$invalid && registerForm.password.$touched }\"><label for=\"pwd\">Password:</label><div class=\"jbv-input\"><input type=\"password\" name=\"password\" class=\"form-control\" id=\"pwd\" ng-model=\"gateway.credentials.password\" ng-minlength=\"4\" ng-maxlength=\"20\"><div ng-if=\"registerForm.password.$touched && registerForm.password.$valid\" class=\"jbv-input-status-ok\"><span class=\"glyphicon glyphicon-ok ok\"></span></div><div ng-if=\"registerForm.password.$touched && registerForm.password.$invalid\" class=\"jbv-input-status-bad\"><span class=\"glyphicon glyphicon-remove invalid\"></span></div></div><p ng-show=\"registerForm.password.$error.minlength && registerForm.password.$touched\" class=\"help-block jbv-input-status-msg\">password is too short.</p><p ng-show=\"registerForm.password.$error.maxlength\" class=\"help-block jbv-input-status-msg\">password is too long.</p></div><div class=\"form-group jbv-form-group\" ng-class=\"{ \'has-error\' : registerForm.pwdrt.$invalid && !registerForm.pwdrt.$pristine }\"><label for=\"pwdrt\">Confirm Password:</label><div class=\"jbv-input\"><input type=\"password\" name=\"pwdrt\" class=\"form-control\" id=\"pwdrt\" compare-to=\"gateway.credentials.password\" ng-model=\"register.pwdrt\"><div ng-if=\"registerForm.password.$touched && registerForm.pwdrt.$valid\" class=\"jbv-input-status-ok\"><span class=\"glyphicon glyphicon-ok ok\"></span></div><div ng-if=\"registerForm.pwdrt.$touched && registerForm.pwdrt.$invalid\" class=\"jbv-input-status-bad\"><span class=\"glyphicon glyphicon-remove invalid\"></span></div></div><p ng-show=\"registerForm.pwdrt.$invalid && registerForm.pwdrt.$touched\" class=\"help-block jbv-input-status-msg\">Passwords do not match!</p></div><button type=\"submit\" class=\"btn btn-default\" ng-disabled=\"registerForm.$invalid || registerForm.$pristine\">Register</button></form></div></div></div><div id=\"jbv-maincontent\"></div></div>");
 $templateCache.put("app/goals/_goals-tpl.html","<div><h3>Goals</h3><p>Sleep Total: {{ctrl.go.sleepTotal}}</p><p>Move Steps: {{ctrl.go.moveSteps}}</p><p>Sleep Remaining: {{ctrl.go.sleepRem}}</p><p>Intake Calories Remaining: {{ctrl.go.intakeCaloriesRem | number:2}}</p><p>Move Steps Remaining: {{ctrl.go.moveStepsRem}}</p></div>");
+$templateCache.put("app/img-uploader/_img-uploader-tpl.html","<p>image length: {{ctrl.image.length}}</p><p>new image length: {{ctrl.newImage}}</p><p>new cropped length: {{ctrl.newCroppedImage.length}}</p><button class=\"btn btn-primary\" ngf-select=\"\" ng-model=\"ctrl.newImage\" accept=\"image/*\">Select Image</button><hr><div ngf-drop=\"\" ng-model=\"ctrl.newImage\" ngf-pattern=\"image/*\" class=\"cropArea\"><img-crop image=\"ctrl.newImage | ngfDataUrl\" area-type=\"square\" result-image=\"ctrl.newCroppedImage\"></img-crop></div>");
 $templateCache.put("app/groups/_group-edit-form-tpl.html","<p>show create form</p><div class=\"btn btn-default\" ng-click=\"ctrl.obj.onCommitCB()\">done</div><div class=\"btn btn-default\" ng-click=\"ctrl.obj.onAddPatient()\">add patient</div><div class=\"btn btn-default\" ng-click=\"ctrl.obj.onAddAdmin()\">add admin</div>");
 $templateCache.put("app/groups/_group-element-tpl.html","<div class=\"user-list-element\" ng-class=\"{\'active\' : ctrl.obj.element.api.selected, \'deleteMode\' : ctrl.obj.element.api.deleteMode }\" ng-click=\"ctrl.obj.element.api.clickedView()\"><img ng-src=\"assets/group.png\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.element.name}}</div><div class=\"features\"><p>{{ctrl.obj.element.description}}</p><p>{{ctrl.obj.element.size}} members</p></div></div><div ng-show=\"ctrl.obj.element.api.deleteMode\" class=\"delete-widget pulser-anim\"><p><span class=\"glyphicon glyphicon-remove faded-glyph\"></span></p></div><div ng-show=\"ctrl.obj.element.api.confirmDeleteMode\" class=\"delete-confirm-widget slider-anim\" visible-click-elsewhere=\"ctrl.obj.element.api.cancel($event)\"><span class=\"btn btn-default\" ng-click=\"ctrl.obj.element.api.delete($event)\">confirm</span> <span class=\"btn btn-default\" ng-click=\"ctrl.obj.element.api.cancel($event)\">cancel</span></div></div>");
 $templateCache.put("app/groups/_group-header-bar-tpl.html","<div style=\"padding: 3px; border-top: 1px solid #ddd;\"><div class=\"btn-group\" style=\"float: right;\"><div class=\"btn btn-default\" ng-click=\"ctrl.obj.listobj.headerFtns.createGroup()\"><span class=\"glyphicon glyphicon-user faded-glyph\"></span> create group</div><div class=\"btn btn-default\" ng-click=\"ctrl.obj.listobj.headerFtns.deleteGroups()\"><span class=\"glyphicon glyphicon-remove faded-glyph\"></span> remove groups</div></div><div style=\"clear: both;\"></div></div>");
@@ -7385,7 +8767,6 @@ $templateCache.put("app/groups/_group-mgr-tpl.html","<div class=\"patient-area\"
 $templateCache.put("app/groups/_group-patients-action-bar-tpl.html","<div class=\"btn-group\" style=\"float: right;\"><div class=\"btn btn-default\" ng-click=\"ctrl.obj.listobj.headerFtns.addPatientToGroup()\"><span class=\"glyphicon glyphicon-user faded-glyph\"></span> add patient to group</div><div class=\"btn btn-default\" ng-click=\"ctrl.obj.listobj.headerFtns.removePatientFromGroup()\"><span class=\"glyphicon glyphicon-remove faded-glyph\"></span> remove patient from group</div></div><div style=\"clear: both;\"></div>");
 $templateCache.put("app/groups/_group-summary-action-bar-tpl.html","<div class=\"btn btn-default\" ng-click=\"ctrl.pso.parent.switchView()\" style=\"float : left;\"><span class=\"glyphicon glyphicon-th-list faded-glyph\"></span> back to groups view</div><div class=\"btn-group\" style=\"float: right;\"><div class=\"btn btn-default\" ng-click=\"ctrl.pso.parent.addPatient()\"><span class=\"glyphicon glyphicon-pencil faded-glyph\"></span> edit group</div></div><div style=\"clear: both;\"></div>");
 $templateCache.put("app/groups/_group-summary-tpl.html","<div class=\"patient-header\"><div class=\"patient-info\"><img ng-src=\"{{ctrl.pso.user.profile.image | defaultGroup }}\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.pso.group.name}}</div><div class=\"features\"><p>{{ctrl.pso.group.description}}</p><p>{{ctrl.pso.group.members.length}} members</p></div></div></div><hr><div style=\"clear: both;\"></div><div ng-include=\"ctrl.pso.actionBar\"></div></div>");
-$templateCache.put("app/img-uploader/_img-uploader-tpl.html","<p>image length: {{ctrl.image.length}}</p><p>new image length: {{ctrl.newImage}}</p><p>new cropped length: {{ctrl.newCroppedImage.length}}</p><button class=\"btn btn-primary\" ngf-select=\"\" ng-model=\"ctrl.newImage\" accept=\"image/*\">Select Image</button><hr><div ngf-drop=\"\" ng-model=\"ctrl.newImage\" ngf-pattern=\"image/*\" class=\"cropArea\"><img-crop image=\"ctrl.newImage | ngfDataUrl\" area-type=\"square\" result-image=\"ctrl.newCroppedImage\"></img-crop></div>");
 $templateCache.put("app/list-viewer/_default-headerbar-tpl.html","<div class=\"trends-header-bar\"><span>&nbsp;</span></div>");
 $templateCache.put("app/list-viewer/_default-lve-tpl.html","<div class=\"trends-element-style\"><span>default</span><h3>hello!</h3></div>");
 $templateCache.put("app/list-viewer/_list-viewer-tpl.html","<loader obj=\"ctrl.lo.listobj.loaderMessage\" ng-show=\"ctrl.state === \'loading\'\"></loader><div class=\"list-view-box animated\" ng-show=\"ctrl.state === \'ready\'\"><div class=\"heading\">{{ctrl.lo.listobj.heading}}</div><div class=\"filter-container\" ng-show=\"ctrl.hasFilter\"><input type=\"text\" class=\"form-control\" placeholder=\"search for...\" ng-model=\"searchtext\"></div><p></p><header-bar tpl=\"ctrl.lo.listobj.headerbar\" obj=\"ctrl.lo.listobj\"></header-bar><div id=\"listviewerbox\" class=\"list-viewer-elements\" mouse-wheel-up=\"ctrl.didMouseWheelUp()\" mouse-wheel-down=\"ctrl.didMouseWheelDown()\"><ul><li ng-repeat=\"elem in ctrl.lo.listobj.elements track by $index\"><lvelem tpl=\"ctrl.lo.listobj.template\" obj=\"elem\" i=\"{{$index}}\"></lvelem></li></ul></div><div class=\"scroll-control\" ng-show=\"ctrl.hasScrollers\"><span class=\"btn btn-default scroll-button\" ng-click=\"ctrl.back()\" ng-disabled=\"ctrl.atStart()\"><span class=\"glyphicon glyphicon-chevron-up\"></span></span> <span class=\"btn btn-default scroll-button\" ng-click=\"ctrl.forward()\" ng-disabled=\"ctrl.atEnd()\"><span class=\"glyphicon glyphicon-chevron-down\"></span></span></div></div>");
@@ -7406,10 +8787,11 @@ $templateCache.put("app/patient/_patient-notes-viewer-tpl.html","<notes-viewer o
 $templateCache.put("app/patient/_patient-summary-action-bar-tpl.html","<div class=\"btn btn-default\" ng-click=\"ctrl.pso.parent.switchView()\" style=\"float : left;\"><span class=\"glyphicon glyphicon-th-list faded-glyph\"></span> back to patients view</div><div class=\"btn-group\" style=\"float: right;\"><div class=\"btn btn-default\" ng-click=\"ctrl.pso.parent.showPatientNotes()\"><span class=\"glyphicon glyphicon-list-alt faded-glyph\"></span> show patient notes</div><div class=\"btn btn-default\" ng-click=\"ctrl.pso.parent.downloadToCSV()\"><span class=\"glyphicon glyphicon-stats faded-glyph\"></span> download to csv file</div></div><div style=\"clear: both;\"></div>");
 $templateCache.put("app/patient/_patient-summary-tpl.html","<div class=\"patient-header\"><div class=\"patient-info\"><img ng-src=\"{{ctrl.pso.user.profile.image | defaultPatient }}\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.pso.user.profile.first}} {{ctrl.pso.user.profile.last}}</div><div class=\"features\"><p>Weight: {{ctrl.pso.user.profile.weight | number: 2}}</p><p>Gender: {{ctrl.pso.user.profile.gender}}</p><p>Height: {{ctrl.pso.user.profile.height}}</p></div></div></div><hr><div style=\"clear: both;\"></div><div ng-include=\"ctrl.pso.actionBar\"></div></div>");
 $templateCache.put("app/profile/_sleeps-element-tpl.html","<div class=\"trends-element-style\">date : {{ctrl.obj.date | jbDate}} title : {{ctrl.obj.title}} sounds : {{ctrl.obj.sounds}} awakenings : {{ctrl.obj.awakenings}} light : {{ctrl.obj.light}}</div>");
+$templateCache.put("app/profile/_user-modal-tpl.html","<h3>choose a user</h3><user-viewer-v3 iface=\"ctrl.resolveArg.iface\"></user-viewer-v3>ctrler: {{ctrl.resolveArg | json}}");
 $templateCache.put("app/profile/friends.html","friends");
 $templateCache.put("app/profile/moves.html","");
 $templateCache.put("app/profile/profile-main.html","<div class=\"profile-side-bar\"><user obj=\"profile.userprofile\"></user><ul><li><a ui-sref=\"profile.sleeps\"><span class=\"glyphicon glyphicon-bed\"></span> Sleeps</a></li><li><a ui-sref=\"profile.friends\"><span class=\"glyphicon glyphicon-user\"></span> Friends</a></li><li><a ui-sref=\"profile.moves\"><span class=\"glyphicon glyphicon-transfer\"></span> Moves</a></li><li><a ui-sref=\"profile.trends\"><span class=\"glyphicon glyphicon-stats\"></span> Trends</a></li></ul></div><div class=\"profile-main-panel slide-eff\" ui-view=\"\"></div>");
-$templateCache.put("app/profile/sleeps.html","<list-viewer-v3 iface=\"profile.sleepsListIface\"></list-viewer-v3><notes-viewer-v3 iface=\"profile.notesViewerIface\"></notes-viewer-v3>");
+$templateCache.put("app/profile/sleeps.html","<notes-viewer-v3 iface=\"profile.notesViewerIface\"></notes-viewer-v3><chart-v3 iface=\"profile.sleepsChartIface\"></chart-v3><list-viewer-v3 iface=\"profile.sleepsListIface\"></list-viewer-v3>");
 $templateCache.put("app/profile/trends.html","<chart obj=\"profile.trendschart\"></chart><listviewer obj=\"profile.trends\"></listviewer>");
 $templateCache.put("app/profile/user.html","");
 $templateCache.put("app/recent-users/_recent-users-tpl.html","");
@@ -7417,7 +8799,7 @@ $templateCache.put("app/side-menu/_side-menu-tpl.html","side menu tempate");
 $templateCache.put("app/sleeps/_sleeps-chart-download-tpl.html","<h3>Sleeps Data as CSV</h3><file-downloader obj=\"ctrl.resolveArg.downloader\"></file-downloader>");
 $templateCache.put("app/sleeps/_sleeps-element-tpl.html","<div class=\"trends-element-style\" ng-class=\"{\'active\' : ctrl.obj.element.api.selected }\" ng-click=\"ctrl.obj.element.api.clickedView()\"><span>{{ctrl.obj.element.date | jbDate}}</span> <span>{{ctrl.obj.element.title | minutesConverter:\'hrs-mins\'}}</span> <span>{{ctrl.obj.element.sounds}}</span> <span>{{ctrl.obj.element.awakenings}}</span> <span>{{ctrl.obj.element.light}}</span></div>");
 $templateCache.put("app/sleeps/_sleeps-header-tpl.html","<div class=\"trends-header-bar\"><span>date</span> <span>duration</span> <span>sounds</span> <span>awakenings</span> <span>light</span></div>");
-$templateCache.put("app/superuser/groups.html","<group-mgr obj=\"profile.groups\"></group-mgr>");
+$templateCache.put("app/superuser/groups.html","<group-manager-v3 obj=\"profile.groupMgrIface\"></group-manager-v3>");
 $templateCache.put("app/superuser/patients.html","<patient-mgr obj=\"profile.patients\"></patient-mgr>");
 $templateCache.put("app/superuser/profile-main.html","<div class=\"profile-side-bar\"><user obj=\"profile.userprofile\"></user><ul><li><a ui-sref=\"profile.groups\"><span class=\"glyphicon glyphicon-bed\"></span> Groups ({{profile.userprofile.profiledata.stats.nbrGroups}})</a></li><li><a ui-sref=\"profile.patients\"><span class=\"glyphicon glyphicon-user\"></span> Patients ({{profile.userprofile.profiledata.stats.nbrPatients | json}})</a></li><li><a ui-sref=\"profile.moves\"><span class=\"glyphicon glyphicon-transfer\"></span> Moves</a></li><li><a ui-sref=\"profile.trends\"><span class=\"glyphicon glyphicon-stats\"></span> Trends</a></li></ul><listviewer obj=\"profile.recentUsers\"></listviewer></div><div class=\"profile-main-panel slide-eff\" ui-view=\"\"></div>");
 $templateCache.put("app/trends/_trends-element-tpl.html","<div class=\"trends-element-style\" ng-class=\"{\'active\' : ctrl.obj.element.selected }\"><span>{{ctrl.obj.element.date | jbDate}}</span> <span>{{ctrl.obj.element.weight | number: 2}}</span> <span>{{ctrl.obj.element.height | number: 2}}</span> <span>{{ctrl.obj.element.bmr | number: 2}}</span> <span>{{ctrl.obj.element.totalCalories | number: 2}}</span> <span>{{ctrl.obj.element.age | number: 0}}</span></div>");
@@ -7428,19 +8810,28 @@ $templateCache.put("app/user/_default-user-detail-tpl.html","<h5>Weight {{ctrl.u
 $templateCache.put("app/user/_user-element-tpl.html","<div class=\"user-list-element\" ng-class=\"{\'active\' : ctrl.obj.element.selected }\"><img ng-src=\"{{ctrl.uo.profile.image}}\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.element.first}} {{ctrl.obj.element.last}}</div><div class=\"features\"><p>Weight: {{ctrl.obj.element.weight | number: 2}}</p><p>Gender: {{ctrl.obj.element.gender}}</p><p>Height: {{ctrl.obj.element.height}}</p></div></div></div>");
 $templateCache.put("app/user/_user-select-modal-tpl.html","<listviewer obj=\"ctrl.resolveArg.userlist\"></listviewer>");
 $templateCache.put("app/user/_user-tpl.html","<div class=\"user-outer-box\"><div class=\"img-container\" ng-click=\"ctrl.uo.onClick()\"><img ng-src=\"{{ctrl.uo.profile.image | defaultPatient }}\" alt=\"image\" width=\"200px\" height=\"200px\"><p>{{ctrl.uo.profile.first}} {{ctrl.uo.profile.last}}</p></div><div ng-include=\"\'app/user/_default-user-detail-tpl.html\'\"></div></div>");
+$templateCache.put("app/admins/admin-manager-v3/_admin-manager-tpl.html","<h3>this is the admin manager</h3><div class=\"patient-area\" ng-if=\'ctrl.obj.api.getMode() === \"view\"\'><list-viewer-v3 iface=\"ctrl.obj.adminsListInterface\"></list-viewer-v3></div><div class=\"patient-area\" ng-if=\'ctrl.obj.api.getMode() === \"edit\"\'><h3>the admin summary</h3></div>");
 $templateCache.put("app/groups/admins/_admin-action-bar-tpl.html","<div style=\"padding: 3px; border-top: 1px solid #ddd;\"><div class=\"btn-group\" style=\"float: right;\"><div class=\"btn btn-default\" ng-click=\"ctrl.iface.header.headerObj.createAdmin()\"><span class=\"glyphicon glyphicon-user faded-glyph\"></span> add admin</div><div class=\"btn btn-default\" ng-click=\"ctrl.iface.header.headerObj.deleteAdmins()\"><span class=\"glyphicon glyphicon-remove faded-glyph\"></span> remove admins</div></div><div style=\"clear: both;\"></div></div>");
 $templateCache.put("app/groups/admins/_admin-mgr-tpl.html","<listviewer-v2 iface=\"ctrl.obj.listIface\"></listviewer-v2>");
 $templateCache.put("app/groups/group-creator/_group-creator-tpl.html","<div ng-include=\"ctrl.obj.api.getGroupDetails()\"></div><div class=\"btn btn-default\">save</div><div class=\"btn btn-default\">cancel</div>");
 $templateCache.put("app/groups/group-creator/_group-details-form-tpl.html","<div class=\"patient-header\"><div class=\"patient-info\"><img ng-src=\"{{ctrl.pso.user.profile.image | defaultGroup }}\" ng-click=\"ctrl.obj.api.editImage()\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\"><input type=\"text\" class=\"form-control\" id=\"name\" placeholder=\"enter group name\"></div><div class=\"features\"><textarea class=\"form-control notes-textarea\" rows=\"4\" id=\"comment\" placeholder=\"enter group description\"></textarea></div></div></div><hr><div style=\"clear: both;\"></div><div ng-include=\"ctrl.pso.actionBar\"></div></div><p>obj {{ctrl.obj | json}}</p>");
 $templateCache.put("app/groups/group-creator/_group-image-editor-tpl.html","<img-uploader obj=\"\"></img-uploader>");
+$templateCache.put("app/groups/group-manager-v3/_group-element-tpl.html","<div class=\"user-list-element\" ng-class=\"{\'active\' : ctrl.obj.api.getAPI().selected, \'deleteMode\' : ctrl.obj.api.getAPI().deleteMode }\" ng-click=\"ctrl.obj.api.getAPI().onClick()\"><img ng-src=\"assets/group.png\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.api.getData().name}}</div><div class=\"features\"><p>{{ctrl.obj.api.getData().description}}</p><p>{{ctrl.obj.api.getData().size}} members</p></div></div><div ng-show=\"ctrl.obj.api.getAPI().deleteMode\" class=\"delete-widget pulser-anim\"><p><span class=\"glyphicon glyphicon-remove faded-glyph\"></span></p></div><div ng-show=\"ctrl.obj.api.getAPI().confirmDeleteMode\" class=\"delete-confirm-widget slider-anim\" visible-click-elsewhere=\"ctrl.obj.element.api.cancel($event)\"><span class=\"btn btn-default\" ng-click=\"ctrl.obj.api.getAPI().delete($event)\">confirm</span> <span class=\"btn btn-default\" ng-click=\"ctrl.obj.api.getAPI().cancel($event)\">cancel</span></div></div>");
+$templateCache.put("app/groups/group-manager-v3/_group-list-action-bar-tpl.html","<div style=\"padding: 3px; border-top: 1px solid #ddd;\"><div class=\"btn-group\" style=\"float: right;\"><div class=\"btn btn-default\" ng-click=\'ctrl.obj.api.getListAPI().notify(\"deleteMode\")\'><span class=\"glyphicon glyphicon-remove faded-glyph\"></span> remove groups</div></div><div style=\"clear: both;\"></div></div>");
+$templateCache.put("app/groups/group-manager-v3/_group-manager-v3-tpl.html","<div class=\"patient-area\" ng-if=\'ctrl.obj.api.getMode() === \"view\"\'><list-viewer-v3 iface=\"ctrl.obj.groupList\"></list-viewer-v3></div><div class=\"patient-area\" ng-if=\'ctrl.obj.api.getMode() === \"create\"\'><div class=\"btn btn-default\" ng-click=\'ctrl.obj.mode = \"view\"\'>back</div><group-creator iface=\"ctrl.obj.groupCreatorInterface\"></group-creator></div><div class=\"patient-area\" ng-if=\'ctrl.obj.api.getMode() === \"edit\"\'><div class=\"patient-header\"><div class=\"patient-info\"><img ng-src=\"{{ctrl.obj.selectedGroup.image | defaultGroup }}\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.selectedGroup.name}}</div><div class=\"features\"><p>{{ctrl.obj.selectedGroup.description}}</p><p>{{ctrl.obj.selectedGroup.members.length}} members</p></div></div></div></div><div class=\"patient-header\"><ul><li ng-click=\"ctrl.obj.api.setViewMode()\">back</li><li ng-click=\"ctrl.obj.api.setViewMode()\">something</li></ul></div><div><ul class=\"header-titles\"><li ng-class=\"{\'selected\' : ctrl.obj.api.isPatientView()}\"><a ng-click=\"ctrl.obj.api.setPatientView()\">Patients</a></li><li ng-class=\"{\'selected\' : ctrl.obj.api.isAdminView()}\"><a ng-click=\"ctrl.obj.api.setAdminView()\">Admins</a></li></ul></div><patient-mgr-v3 ng-show=\"ctrl.obj.api.isPatientView()\" iface=\"ctrl.obj.patientMgrInterface\"></patient-mgr-v3><admin-mgr-v3 ng-show=\"ctrl.obj.api.isAdminView()\" iface=\"ctrl.obj.adminMgrInterface\"></admin-mgr-v3></div>");
 $templateCache.put("app/groups/patients/_patient-action-bar-tpl.html","<div style=\"padding: 3px; border-top: 1px solid #ddd;\"><div class=\"btn-group\" style=\"float: right;\"><div class=\"btn btn-default\" ng-click=\"ctrl.iface.header.headerObj.addPatient()\"><span class=\"glyphicon glyphicon-user faded-glyph\"></span> add patient</div><div class=\"btn btn-default\" ng-click=\"ctrl.iface.header.headerObj.removePatients()\"><span class=\"glyphicon glyphicon-remove faded-glyph\"></span> remove patient</div></div><div style=\"clear: both;\"></div></div>");
 $templateCache.put("app/groups/patients/_patient-mgr-tpl.html","<div class=\"patient-area\" ng-if=\'ctrl.obj.mode === \"view\"\'><listviewer-v2 iface=\"ctrl.obj.listIface\"></listviewer-v2></div><div class=\"patient-area\" ng-if=\'ctrl.obj.mode === \"edit\"\'><patient-summary iface=\"ctrl.obj.patientSummaryInterface\"></patient-summary><chart-v2 iface=\"ctrl.obj.sleepChartInterface\"></chart-v2><listviewer-v2 iface=\"ctrl.obj.sleepsListIface\"></listviewer-v2></div>");
 $templateCache.put("app/list-viewer/list-viewer-v2/_listviewer-tpl.html","<loader obj=\"ctrl.obj.loaderMessage\" ng-show=\"ctrl.state === \'loading\'\"></loader><div class=\"list-view-box animated\" ng-show=\"ctrl.state === \'ready\'\"><div class=\"heading\">{{ctrl.obj.header.heading}}</div><div class=\"filter-container\" ng-show=\"ctrl.hasFilter\"><input type=\"text\" class=\"form-control\" placeholder=\"search for...\" ng-model=\"searchtext\"></div><p></p><header-bar-v2 iface=\"ctrl.obj\"></header-bar-v2><div id=\"listviewerbox\" class=\"list-viewer-elements\" mouse-wheel-up=\"ctrl.didMouseWheelUp()\" mouse-wheel-down=\"ctrl.didMouseWheelDown()\"><ul><li ng-repeat=\"elem in ctrl.obj.elements track by $index\"><lvelem tpl=\"ctrl.obj.elementTemplate\" obj=\"elem\" i=\"{{$index}}\"></lvelem></li></ul></div><div class=\"scroll-control\" ng-show=\"ctrl.hasScrollers\"><span class=\"btn btn-default scroll-button\" ng-click=\"ctrl.back()\" ng-disabled=\"ctrl.atStart()\"><span class=\"glyphicon glyphicon-chevron-up\"></span></span> <span class=\"btn btn-default scroll-button\" ng-click=\"ctrl.forward()\" ng-disabled=\"ctrl.atEnd()\"><span class=\"glyphicon glyphicon-chevron-down\"></span></span></div></div>");
 $templateCache.put("app/list-viewer/list-viewer-v3/_list-viewer-tpl.html","<div class=\"list-view-box animated\"><div class=\"heading\">{{ctrl.obj.header.heading}}</div><div class=\"filter-container\" ng-show=\"ctrl.hasFilter\"><input type=\"text\" class=\"form-control\" placeholder=\"search for...\" ng-model=\"searchtext\"></div><p></p><header-bar-v3 iface=\"ctrl.obj.header\"></header-bar-v3><div id=\"listviewerbox\" class=\"list-viewer-elements\" mouse-wheel-up=\"ctrl.didMouseWheelUp()\" mouse-wheel-down=\"ctrl.didMouseWheelDown()\"><ul><li ng-repeat=\"elem in ctrl.obj.elements\"><list-viewer-elem iface=\"elem\"></list-viewer-elem></li></ul></div><div class=\"scroll-control\" ng-show=\"ctrl.hasScrollers\"><span class=\"btn btn-default scroll-button\" ng-click=\"ctrl.back()\" ng-disabled=\"ctrl.atStart()\"><span class=\"glyphicon glyphicon-chevron-up\"></span></span> <span class=\"btn btn-default scroll-button\" ng-click=\"ctrl.forward()\" ng-disabled=\"ctrl.atEnd()\"><span class=\"glyphicon glyphicon-chevron-down\"></span></span></div></div>");
-$templateCache.put("app/notes-viewer/notes-viewer-v3/_note-elem-tpl.html","<div class=\"notes-element-style\" ng-class=\"{\'active\' : ctrl.obj.api.getAPI().selected, \'deleteMode\' : ctrl.obj.api.getAPI().deleteMode }\" ng-click=\"ctrl.obj.api.getAPI().onClick()\"><span>{{ctrl.obj.api.getData().creationDate | date}}</span> <span>{{ctrl.obj.api.getData().owner.profile.first}} {{ctrl.obj.api.getData().owner.profile.last}}</span><div style=\"clear: both;\"></div><span><minifier text=\"ctrl.obj.api.getData().text\" limit=\"60\"></minifier></span><div ng-show=\"ctrl.obj.api.getAPI().deleteMode\" class=\"delete-widget pulser-anim\"><p><span class=\"glyphicon glyphicon-remove faded-glyph\"></span></p></div><div ng-show=\"ctrl.obj.api.getAPI().confirmDeleteMode\" class=\"notes-delete-confirm-widget slider-anim\" visible-click-elsewhere=\"ctrl.obj.api.getAPI().cancel($event)\"><span class=\"btn btn-default\" ng-click=\"ctrl.obj.api.getAPI().delete($event)\">confirm</span> <span class=\"btn btn-default\" ng-click=\"ctrl.obj.api.getAPI().cancel($event)\">cancel</span></div></div>");
+$templateCache.put("app/notes-viewer/notes-viewer-v3/_note-elem-tpl.html","<div class=\"notes-element-style\" ng-class=\"{\'active\' : ctrl.obj.api.getAPI().selected, \'deleteMode\' : ctrl.obj.api.getAPI().deleteMode }\" ng-click=\"ctrl.obj.api.getAPI().onClick()\"><span>{{ctrl.obj.api.getData().creationDate | date}}</span> <span>{{ctrl.obj.api.getData().owner.profile.first}} {{ctrl.obj.api.getData().owner.profile.last}}</span><div style=\"clear: both;\"></div><span><minifier text=\"ctrl.obj.api.getData().text\" limit=\"60\"></minifier></span><div ng-show=\"ctrl.obj.api.getAPI().deleteMode\" class=\"notes-delete-widget pulser-anim\"><p><span class=\"glyphicon glyphicon-remove faded-glyph\"></span></p></div><div ng-show=\"ctrl.obj.api.getAPI().confirmDeleteMode\" class=\"notes-delete-confirm-widget slider-anim\" visible-click-elsewhere=\"ctrl.obj.api.getAPI().cancel($event)\"><span class=\"btn btn-default\" ng-click=\"ctrl.obj.api.getAPI().delete($event)\">confirm</span> <span class=\"btn btn-default\" ng-click=\"ctrl.obj.api.getAPI().cancel($event)\">cancel</span></div></div>");
 $templateCache.put("app/notes-viewer/notes-viewer-v3/_notes-header-tpl.html","<div class=\"list-view-box animated\"><div class=\"jbv-new-note-hdr\"><div class=\"jbv-new-note-area\" ng-if=\"ctrl.obj.api.inCreateMode()\"><textarea class=\"notes-textarea\" ng-focus=\"ctrl.obj.api.prepareNewNote()\" ng-model=\"ctrl.obj.api.getTempNote().text\" name=\"textarea\" rows=\"5\" placeholder=\"create note...\">\r\n			</textarea><div style=\"float: right; margin-right: 14px; padding: 3px;\"><div class=\"btn-group\"><div class=\"btn btn-default\" ng-click=\"ctrl.obj.api.cancelNote()\" ng-disabled=\"!ctrl.obj.api.getTempNote().text\">clear</div><div class=\"btn btn-default\" ng-disabled=\"true\">&nbsp;</div><div class=\"btn btn-default\" ng-click=\"ctrl.obj.api.createNote()\" ng-disabled=\"!ctrl.obj.api.getTempNote().text\">save</div></div></div><div style=\"clear: both;\"></div></div><div class=\"jbv-new-note-area\" ng-if=\"ctrl.obj.api.inEditMode()\"><textarea class=\"notes-textarea\" ng-model=\"ctrl.obj.api.getTempNote().text\" name=\"textarea\" rows=\"5\" placeholder=\"update note...\">\r\n			</textarea><div style=\"float: right; margin-right: 14px; padding: 3px;\"><div class=\"btn-group\"><div class=\"btn btn-default\" ng-click=\"ctrl.obj.api.getList().api.deselectAll()\">cancel</div><div class=\"btn btn-default\" ng-disabled=\"true\">&nbsp;</div><div class=\"btn btn-default\" ng-click=\"ctrl.obj.api.editNote()\" ng-disabled=\"!ctrl.obj.api.getTempNote().text\">update</div></div></div><div style=\"clear: both;\"></div></div></div></div>");
 $templateCache.put("app/notes-viewer/notes-viewer-v3/_notes-list-action-bar-tpl.html","<div style=\"padding: 3px; border-top: 1px solid #ddd;\"><div class=\"btn-group\" style=\"float: right;\"><div class=\"btn btn-default\" ng-click=\'ctrl.obj.api.getListAPI().notify(\"deleteMode\")\'><span class=\"glyphicon glyphicon-remove faded-glyph\"></span> remove notes</div></div><div style=\"clear: both;\"></div></div>");
 $templateCache.put("app/notes-viewer/notes-viewer-v3/_notes-viewer-tpl.html","<notes-header-v3 iface=\"ctrl.obj.notesHeader\"></notes-header-v3><list-viewer-v3 iface=\"ctrl.obj.notesList\"></list-viewer-v3>");
-$templateCache.put("app/sleeps/sleeps-v3/_sleeps-list-elem-tpl.html","<div class=\"trends-element-style\" ng-class=\"{\'active\' : ctrl.obj.api.getAPI().selected }\" ng-click=\"ctrl.obj.api.getAPI().onClick()\"><span>{{ctrl.obj.api.getData().date | jbDate}}</span> <span>{{ctrl.obj.api.getData().title | minutesConverter:\'hrs-mins\'}}</span> <span>{{ctrl.obj.api.getData().sounds}}</span> <span>{{ctrl.obj.api.getData().awakenings}}</span> <span>{{ctrl.obj.api.getData().light}}</span></div>");
+$templateCache.put("app/patient/patient-manager-v3/_patient-mgr-v3-tpl.html","<div class=\"patient-area\" ng-if=\'ctrl.obj.api.getMode() === \"view\"\'><list-viewer-v3 iface=\"ctrl.obj.patientsListInterface\"></list-viewer-v3></div><div class=\"patient-area\" ng-if=\'ctrl.obj.api.getMode() === \"edit\"\'><div class=\"patient-header\"><div class=\"patient-info\"><img ng-src=\"{{ctrl.obj.selectedPatient.image | defaultPatient }}\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.selectedPatient.first}} {{ctrl.obj.selectedPatient.last}}</div><div class=\"features\"><p>Weight: {{ctrl.obj.selectedPatient.weight | number: 2}}</p><p>Gender: {{ctrl.obj.selectedPatient.gender}}</p><p>Height: {{ctrl.obj.selectedPatient.height}}</p></div></div></div></div><div class=\"patient-header\"><ul><li ng-click=\"ctrl.obj.api.setViewMode()\">back</li><li ng-click=\"ctrl.obj.api.setViewMode()\">something</li></ul></div><chart-v3 iface=\"ctrl.obj.sleepsChartInterface\"></chart-v3><list-viewer-v3 iface=\"ctrl.obj.sleepsListInterface\"></list-viewer-v3></div>");
+$templateCache.put("app/patient/patient-manager-v3/_patient-tpl.html","<div class=\"user-list-element\" ng-class=\"{\'active\' : ctrl.obj.api.getAPI().selected, \'deleteMode\' : ctrl.obj.api.getAPI().deleteMode }\" ng-click=\"ctrl.obj.api.getAPI().onClick()\"><img ng-src=\"assets/users.png\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.api.getData().first}} {{ctrl.obj.api.getData().last}}</div><div class=\"features\"><p>Weight: {{ctrl.obj.api.getData().weight | number: 2}}</p><p>Gender: {{ctrl.obj.api.getData().gender}}</p><p>Height: {{ctrl.obj.api.getData().height}}</p><p>Join date: {{ctrl.obj.api.getData().joinDate | date}}</p></div></div><div ng-show=\"ctrl.obj.api.getAPI().deleteMode\" class=\"delete-widget pulser-anim\"><p><span class=\"glyphicon glyphicon-remove faded-glyph\"></span></p></div><div ng-show=\"ctrl.obj.api.getAPI().confirmDeleteMode\" class=\"delete-confirm-widget slider-anim\" visible-click-elsewhere=\"ctrl.obj.api.getAPI().cancel($event)\"><span class=\"btn btn-default\" ng-click=\"ctrl.obj.api.getAPI().delete($event)\">confirm</span> <span class=\"btn btn-default\" ng-click=\"ctrl.obj.api.getAPI().cancel($event)\">cancel</span></div></div>");
+$templateCache.put("app/sleeps/sleeps-v3/_sleeps-header-tpl.html","<div class=\"trends-header-bar\"><span>date</span> <span>rem</span> <span>light</span> <span>deep</span> <span>time to sleep</span> <span>duration</span> <span>awake</span></div>");
+$templateCache.put("app/sleeps/sleeps-v3/_sleeps-list-elem-tpl.html","<div class=\"trends-element-style\" ng-class=\"{\'active\' : ctrl.obj.api.getAPI().selected }\" ng-click=\"ctrl.obj.api.getAPI().onClick()\"><span>{{ctrl.obj.api.getData().date | jbDate}}</span> <span>{{ctrl.obj.api.getData().rem | number:2}}</span> <span>{{ctrl.obj.api.getData().light | number:2}}</span> <span>{{ctrl.obj.api.getData().deep | number:2}}</span> <span>{{ctrl.obj.api.getData().timeToSleep}}</span> <span>{{ctrl.obj.api.getData().title | minutesConverter:\'hrs-mins\'}}</span> <span>{{ctrl.obj.api.getData().awake | number:2}}</span></div>");
+$templateCache.put("app/user/user-v3/_user-list-elem-tpl.html","<div class=\"user-list-element\" ng-class=\"{\'active\' : ctrl.obj.api.getAPI().selected }\" ng-click=\"ctrl.obj.api.getAPI().onClick()\"><img ng-src=\"{{ctrl.obj.api.getData().profile.image}}\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.api.getData().first}} {{ctrl.obj.api.getData().last}}</div><div class=\"features\"><p>Weight: {{ctrl.obj.api.getData().weight | number: 2}}</p><p>Gender: {{ctrl.obj.api.getData().gender}}</p><p>Height: {{ctrl.obj.api.getData().height}}</p></div></div></div>");
+$templateCache.put("app/user/user-viewer/_user-viewer-tpl.html","<list-viewer-v3 iface=\"ctrl.obj.listIface\"></list-viewer-v3>user viewer: {{ctrl.obj | json}}");
 $templateCache.put("app/groups/patients/patient-summary/_patient-summary-action-bar-tpl.html","<div class=\"btn btn-default\" ng-click=\"ctrl.obj.actionBarObj.actions.backToPatients()\" style=\"float : left;\"><span class=\"glyphicon glyphicon-th-list faded-glyph\"></span> back to patients view</div><div class=\"btn-group\" style=\"float: right;\"><div class=\"btn btn-default\" ng-click=\"ctrl.obj.actionBarObj.actions.showPatientNotes()\"><span class=\"glyphicon glyphicon-list-alt faded-glyph\"></span> show patient notes</div><div class=\"btn btn-default\" ng-click=\"ctrl.obj.actionBarObj.actions.downloadToCSV()\"><span class=\"glyphicon glyphicon-stats faded-glyph\"></span> download to csv file</div></div><div style=\"clear: both;\"></div>");
 $templateCache.put("app/groups/patients/patient-summary/_patient-summary-tpl.html","<div class=\"patient-header\"><div class=\"patient-info\"><img ng-src=\"{{ctrl.obj.patient.user.profile.image | defaultPatient }}\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.patient.user.profile.first}} {{ctrl.obj.patient.user.profile.last}}</div><div class=\"features\"><p>Weight: {{ctrl.obj.patient.user.profile.weight | number: 2}}</p><p>Gender: {{ctrl.obj.patient.user.profile.gender}}</p><p>Height: {{ctrl.obj.patient.user.profile.height}}</p></div></div></div><hr><div style=\"clear: both;\"></div><div ng-include=\"ctrl.obj.actionBarObj.template\"></div></div>");}]);

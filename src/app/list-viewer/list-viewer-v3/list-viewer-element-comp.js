@@ -17,7 +17,7 @@
     var adaptor = function(config) {
       var adaptorInst = this;
 
-      $log.info('config passed to APIFtn: ' + JSON.stringify(config));
+      //$log.info('config passed to APIFtn: ' + JSON.stringify(config));
 
       adaptorInst.listAPI = config.api;
       adaptorInst.index = config.index;
@@ -59,7 +59,6 @@
         event.stopPropagation();        
       };
 
-      //set the breakpoint
       $log.info('is the list in delete mode? ' + adaptorInst.listAPI.isDeleteMode());
       if(adaptorInst.listAPI.isDeleteMode()) {
         adaptorInst.deleteMode = true;

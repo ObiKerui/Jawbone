@@ -6,6 +6,7 @@
     .module('jawboneApp')
     .filter('sleepsListfilter', FilterFtn)    
     .factory('SleepsListInterface', InterfaceFtn)
+    .factory('SleepV3Service', ServiceFtn)
     .factory('SleepsV3Obj', ObjFtn);
 
   //----------------------------------------------------
@@ -26,19 +27,18 @@
   //----------------------------------------------------  
   function InterfaceFtn($log, ListViewerV3Interface, JawboneService, ListViewerElemInterface, SleepsV3Obj, ListElemAPI) {
     var iface = function(config) {
-      //var ifaceInst = this;
       var ifaceInst = new ListViewerV3Interface();
       var config = config || {};
 
-      ifaceInst.config = {      
-      	getElementsObj : JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps')),
-      	makeListElementFtn : function(listData) {
-          return new ListViewerElemInterface({
-            api : new ListElemAPI(listData),
-            data : new SleepsV3Obj(listData.element)
-          });
-      	}   
+      var userId = config.userId || null;
+      ifaceInst.config.getElementsObj = JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps', userId));
+      ifaceInst.config.makeListElementFtn = function(listData) {
+        return new ListViewerElemInterface({
+          api : new ListElemAPI(listData),
+          data : new SleepsV3Obj(listData.element)
+        });
       };
+      ifaceInst.config.headerTpl = 'app/sleeps/sleeps-v3/_sleeps-header-tpl.html';
 
       return ifaceInst;
     };
@@ -58,25 +58,87 @@
     }
   }  
 
-  function ObjFtn($log) {
+  function convertToHoursMins(durationInSeconds, $log) {
+    var sec_num = parseInt(durationInSeconds, 10);    
+    var hours   = Math.floor(sec_num / 3600) % 24;
+    var minutes = Math.floor(sec_num / 60) % 60;
+    $log.info('hours: ' + hours + ' mins rem: ' + minutes);
+  }
+
+  function ServiceFtn($log) {
+    var service = {
+
+    };
+    return service;
+  }
+
+  function ObjFtn($log, JawboneService) {
     var obj = function(data) {
     	var objInst = this;
 
-      $log.info('sleep data: ' + JSON.stringify(data));
+      $log.info('sleep data: ' + JSON.stringify(data, true, 3));
 
+      // retrieve specific sleep details
+      var sleepService = JawboneService.sleepService();
+      sleepService.getSleepTicks(data.xid)
+      .then(function(ticksResponse) {
+        sleepService.getSleepDetails(data.xid)
+        .then(function(detailsResponse) {
+          // $log.info('sleep ticks: ' + JSON.stringify(ticksResponse));
+          // $log.info('sleep details: ' + JSON.stringify(detailsResponse));
+        });
+
+        // var size = response.data.data.size;
+        // var timeToSleepOnset = (size > 0 ? response.data.data.items[0].time : 0);
+        // var timeCreated = (size > 0 ? objInst.timeCreated : 0);
+        // objInst.timeToSleep = (timeToSleepOnset - objInst.timeCreated);
+
+        // $log.info('time of first tick: ' + JSON.stringify(timeToSleepOnset));
+        // $log.info('time created: ' + JSON.stringify(timeCreated));
+        // $log.info('time asleep : ' + JSON.stringify(objInst.asleepTime));
+        // $log.info('time to sleep: ' + (objInst.asleepTime - timeCreated));
+        // $log.info('time to sleep: ' + (objInst.timeToSleep));
+      });
+
+      // sleeps breakpoint
       objInst.date = data.date || new Date();
       objInst.title = convertToMinutes(data.title, $log);
       var details = data.details || {};
-      objInst.sounds = details.sound || 'blank';
+      objInst.timeCreated = data.time_created || 0;
+      objInst.timeCompleted = data.time_completed || 0;
+      var deep_seconds = details.sound || 0;
+      objInst.deep = deep_seconds / 60.0;
       objInst.awakenings = details.awakenings || 0;
-      objInst.light = details.light || 0;
+      var rem_seconds = details.rem || 0;
+      objInst.rem = rem_seconds / 60.0;
+      var light_seconds = details.light || 0;
+      objInst.light = light_seconds / 60.0;
       objInst.sleep_time = details.sleep_time || 0;
-      objInst.awake_time = details.awake_time || 0;
-      objInst.awake = details.awake || 0;
-      objInst.rem = details.rem || 0;
+      objInst.awakeTime = details.awake_time || 0;
+      var awake_seconds = details.awake || 0;
+      objInst.awake = awake_seconds / 60.0;
       objInst.duration = details.duration || 0;
+      objInst.asleepTime = details.asleep_time || 0;
+      objInst.timeToSleep = (objInst.asleepTime - objInst.timeCreated);
+      var durationHoursMins = convertToHoursMins(objInst.duration, $log); 
       objInst.image = 'https://jawbone.com' + data.snapshot_image;
       objInst.template = 'app/sleeps/sleeps-v3/_sleeps-list-elem-tpl.html';
+
+      $log.info('time created: ' + objInst.timeCreated);
+      $log.info('time completed: ' + objInst.timeCompleted);
+      $log.info('asleep time: ' + objInst.asleepTime);
+      $log.info('awake time: ' + objInst.awakeTime);
+      var totalTime = (objInst.timeCompleted - objInst.timeCreated);
+      var sleepTime = (objInst.awakeTime - objInst.asleepTime);
+      $log.info('total time: ' + totalTime);
+      $log.info('asleep time: ' + sleepTime);
+      $log.info('diff: ' + (totalTime - sleepTime));
+
+      //objInst.deep = (need to get deep from sleep details);
+      // objInst.timeToSleep = (calculated);
+      // objInst.totalSleepTime = (calculated);
+      // objInst.totalSleepPeriod = (objInst.timeCompleted - objInst.timeCreated);
+      // objInst.sleepEfficiency = (caculated);
 
       return objInst;
     };

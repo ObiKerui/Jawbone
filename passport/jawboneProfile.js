@@ -8,7 +8,9 @@ var jawboneScope = [
 	'move_read',
 	'mood_read',
 	'meal_read',
-	'weight_read'
+	'weight_read',
+	'generic_event_read',
+	'heartrate_read'
 ];
 
 function parseResults(result, callback) {

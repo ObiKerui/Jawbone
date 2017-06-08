@@ -29,6 +29,11 @@ module.exports = function(app, passport) {
 
 	app.get('/sleeps/me', isLoggedIn, JBDataCtrl.getSleeps);
 	app.get('/sleeps/:id', isLoggedIn, JBDataCtrl.getSleeps);
+	app.get('/sleeps/ticks/:id', isLoggedIn, JBDataCtrl.getSleepTicks);
+	app.get('/sleeps/details/:id', isLoggedIn, JBDataCtrl.getSleepDetails);
+
+	app.get('/cardiac/me', isLoggedIn, JBDataCtrl.getCardiac);
+	app.get('/cardiac/:id', isLoggedIn, JBDataCtrl.getCardiac);
 	
 	app.get('/trends/me', isLoggedIn, JBDataCtrl.getTrends);
 	app.get('/trends/:id', isLoggedIn, JBDataCtrl.getTrends);

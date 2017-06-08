@@ -17,6 +17,9 @@
         var i, x;
         for (var i = startIdx; i < arr.length; i++) {
             x = arr[i];
+            // console.log('startIdx is : ' + startIdx);
+            // console.log('i is : ' + i);
+            // console.log('x is : ' + arr[i]);            
             if (cond(x)) return parseInt(i);
         }
         return (-1);
@@ -115,30 +118,27 @@
                 this.push(PlotGenerator.createEmpty(value));
             }, arr); 
 
-            //$log.info('data for prepare plot: ' + JSON.stringify(data));
-
-            //$log.info('dae arr: ' + JSON.stringify(dateArr));
-
-            // populate for every data entry within the date range
-            angular.forEach(data, function(value) {            
+            for(var i = 0; i < data.length; i++) {
                 //find the index into the date array to add this 'value'
                 idx = findIndexOf(dateArr, function(elem) {
-                    var jsdate = JawboneChartUtils.jawboneToJSDate(value.date);
+                    var jsdate = JawboneChartUtils.jawboneToJSDate(data[i].date);
                     //$log.info('elem: ' + elem);
                     //$log.info('date is ' + elem.toDateString() + ' jsdate: ' + jsdate.toDateString());
+                    // if(elem.toDateString() === jsdate.toDateString()) {
+                    //     $log.info('have a matching date: ' + JSON.stringify(data[i]));
+                    // }
                     return (elem.toDateString() === jsdate.toDateString());  
                 }, idx);     
 
                 // $log.info('value: ' + JSON.stringify(value));
-                // $log.info('position in date: ' + idx);
 
                 if(idx === -1) {
-                    return;
+                    break;
                 } else {
                     //$log.info('value to add is : ' + JSON.stringify(value));
-                    PlotGenerator.addToArray(this, idx, 0, value);
+                    PlotGenerator.addToArray(arr, idx, 0, data[i]);
                 }
-            }, arr);
+            }
 
             //$log.info('data arry: ' + JSON.stringify(arr));
 
@@ -146,6 +146,7 @@
         };        
 
         PlotGenerator.appendPlot = function(original, dataToAppend, plotParams) {
+
             var arrData = original.data;
             // var start = arrData[0].x;
             // var end = arrData[arrData.length - 1].x;

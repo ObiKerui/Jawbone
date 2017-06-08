@@ -1,0 +1,31 @@
+<h3>this is the admin manager</h3>
+
+<div class="patient-area" ng-if='ctrl.obj.api.getMode() === "view"'>
+
+	<list-viewer-v3
+		iface='ctrl.obj.adminsListInterface'>
+	</list-viewer-v3>
+
+</div>
+
+<div class="patient-area" ng-if='ctrl.obj.api.getMode() === "edit"'>
+
+	<h3>the admin summary</h3>
+	
+<!--  	<patient-summary-v3
+ 		iface='ctrl.obj.seletedPatient'>
+ 	</patient-summary-v3>
+ 	
+	<chart-v3 
+		iface='ctrl.obj.sleepsChartInterface'>
+	</chart-v3>
+
+	<list-viewer-v3
+		iface='ctrl.obj.sleepsListInterface'>
+	</list-viewer-v3>
+ -->
+<!--  	<notes-viewer 
+		obj=''
+	</notes-viewer>
+ -->
+</div>

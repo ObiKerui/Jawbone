@@ -1,0 +1,46 @@
+<div class="patient-area" ng-if='ctrl.obj.api.getMode() === "view"'>
+
+	<list-viewer-v3
+		iface='ctrl.obj.patientsListInterface'>
+	</list-viewer-v3>
+
+</div>
+
+<div class="patient-area" ng-if='ctrl.obj.api.getMode() === "edit"'>
+
+	<div class="patient-header">
+		<div class="patient-info">
+			<img ng-src="{{ctrl.obj.selectedPatient.image | defaultPatient }}" height='100px' width='100px'></img>
+			<div class="user-details">
+				<div class="name">
+					{{ctrl.obj.selectedPatient.first}} {{ctrl.obj.selectedPatient.last}}
+				</div>
+				<div class="features">
+					<p>Weight: {{ctrl.obj.selectedPatient.weight | number: 2}}</p>
+					<p>Gender: {{ctrl.obj.selectedPatient.gender}}</p>
+					<p>Height: {{ctrl.obj.selectedPatient.height}}</p>
+				</div> 
+			</div>
+		</div>
+	</div>
+
+ 	<div class="patient-header">
+ 		<ul>
+		 	<li ng-click='ctrl.obj.api.setViewMode()'>back</li>
+		 	<li ng-click='ctrl.obj.api.setViewMode()'>something</li>
+	 	</ul>
+ 	</div>
+
+	<chart-v3 
+		iface='ctrl.obj.sleepsChartInterface'>
+	</chart-v3>
+
+	<list-viewer-v3
+		iface='ctrl.obj.sleepsListInterface'>
+	</list-viewer-v3>
+
+<!--  	<notes-viewer 
+		obj=''
+	</notes-viewer>
+ -->
+</div>

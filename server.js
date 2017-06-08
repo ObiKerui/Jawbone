@@ -11,6 +11,7 @@ var config = require('./config');
 var app = express();
 var request = require('request');
 var session = require('express-session');
+var MongoStore = require('connect-mongo')(session);
 var cookieParser = require('cookie-parser');
 var flash = require('connect-flash');
 
@@ -81,7 +82,8 @@ app.use(session({
   saveUninitialized: true,
   cookie: {
     secure: true,
-    maxAge: 3600000
+    maxAge: 3600000,
+    store: new MongoStore({ url: config.DB_URL })
     //maxAge: new Date(Date.now() + 3600000)
   }
 }));

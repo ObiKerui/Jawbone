@@ -1,0 +1,20 @@
+<div class="user-list-element" ng-class="{'active' : ctrl.obj.api.getAPI().selected, 'deleteMode' : ctrl.obj.api.getAPI().deleteMode }"
+	ng-click="ctrl.obj.api.getAPI().onClick()">
+	<img ng-src='assets/group.png' height='100px' width='100px'></img>
+	<div class="user-details">
+		<div class="name">
+			{{ctrl.obj.api.getData().name}}
+		</div>
+		<div class="features">
+			<p>{{ctrl.obj.api.getData().description}}</p>
+			<p>{{ctrl.obj.api.getData().size}} members</p>
+		</div> 
+	</div>
+	<div ng-show='ctrl.obj.api.getAPI().deleteMode' class="delete-widget pulser-anim">
+		<p><span class="glyphicon glyphicon-remove faded-glyph"></span></p>
+	</div> 
+	<div ng-show='ctrl.obj.api.getAPI().confirmDeleteMode' class="delete-confirm-widget slider-anim" visible-click-elsewhere='ctrl.obj.element.api.cancel($event)'>
+		<span class="btn btn-default" ng-click='ctrl.obj.api.getAPI().delete($event)'>confirm</span>
+		<span class="btn btn-default" ng-click='ctrl.obj.api.getAPI().cancel($event)'>cancel</span>
+	</div>
+</div>

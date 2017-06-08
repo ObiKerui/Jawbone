@@ -1,0 +1,22 @@
+<div class="user-list-element" ng-class="{'active' : ctrl.obj.api.getAPI().selected, 'deleteMode' : ctrl.obj.api.getAPI().deleteMode }" 
+	ng-click="ctrl.obj.api.getAPI().onClick()">
+	<img ng-src='assets/users.png' height='100px' width='100px'></img>
+	<div class="user-details">
+		<div class="name">
+			{{ctrl.obj.api.getData().first}} {{ctrl.obj.api.getData().last}}
+		</div>
+		<div class="features">
+			<p>Weight: {{ctrl.obj.api.getData().weight | number: 2}}</p>
+			<p>Gender: {{ctrl.obj.api.getData().gender}}</p>
+			<p>Height: {{ctrl.obj.api.getData().height}}</p>
+			<p>Join date: {{ctrl.obj.api.getData().joinDate | date}}</p>
+		</div> 
+	</div>
+	<div ng-show='ctrl.obj.api.getAPI().deleteMode' class="delete-widget pulser-anim">
+		<p><span class="glyphicon glyphicon-remove faded-glyph"></span></p>
+	</div> 
+	<div ng-show='ctrl.obj.api.getAPI().confirmDeleteMode' class="delete-confirm-widget slider-anim" visible-click-elsewhere='ctrl.obj.api.getAPI().cancel($event)'>
+		<span class="btn btn-default" ng-click='ctrl.obj.api.getAPI().delete($event)'>confirm</span>
+		<span class="btn btn-default" ng-click='ctrl.obj.api.getAPI().cancel($event)'>cancel</span>
+	</div>	
+</div>

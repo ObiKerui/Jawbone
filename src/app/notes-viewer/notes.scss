@@ -38,6 +38,22 @@
 	background-color: white;
 }
 
+.notes-delete-widget {
+	//border: 1px solid black;
+	//display: inline-block;
+	position: absolute;
+	right: 3px;
+	top: 3px;
+	color: rgba(255, 0, 0, 0.8);
+	width: 30px;
+
+	p {
+		//font-size: 130%;
+		margin: 0px;
+		padding: 8px;
+	}
+}
+
 .notes-delete-confirm-widget {
 	position: absolute;
 	left: 0px;

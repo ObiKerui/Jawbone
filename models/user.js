@@ -187,7 +187,7 @@ var getByEmail = function(email, cb) {
 */
 var all = function(params, cb) {
 
-  var q = User.find({}).select('-jbdata').sort(params.sortBy).skip(parseInt(params.offset)).limit(parseInt(params.max)).lean();
+  var q = User.find({}).select('-jawboneData').sort(params.sortBy).skip(parseInt(params.offset)).limit(parseInt(params.max)).lean();
   var tq = User.count();
 
   q.exec(function(err, users) {

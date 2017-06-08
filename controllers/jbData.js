@@ -36,6 +36,32 @@ var JBData = {
 	    // });
 	},
 
+	getSleepTicks: function(req, res) {
+		var sleepId = req.params.id;
+
+		Jawbone.sleepTicks(req.user, sleepId, function(err, sleep) {
+			if(err) {
+				return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});	
+			}
+			console.log('got sleep: ' + JSON.stringify(sleep));
+
+			res.json(sleep);
+		})
+	},
+
+	getSleepDetails: function(req, res) {
+		var sleepId = req.params.id;
+
+		Jawbone.sleepDetails(req.user, sleepId, function(err, sleep) {
+			if(err) {
+				return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});	
+			}
+			console.log('got sleep: ' + JSON.stringify(sleep));
+
+			res.json(sleep);
+		})
+	},
+
 	getTrends: function(req, res) {
 
 	    var params = {
@@ -53,6 +79,22 @@ var JBData = {
 	      }
 	      res.json(trends);
 	    });
+	},
+
+	getCardiac : function(req, res) {
+	    var params = {
+	    	user : req.query.user,
+	      	max : req.query.max,
+	      	offset : req.query.offset,
+	      	sortBy : req.query.sortBy
+	    };
+
+	    Jawbone.cardiac(req.user, params, function(err, cardiac) {
+	      if(err) {
+	        return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});
+	      }
+	      res.json(cardiac);
+	    });		
 	},
 
 	getPatients : function(req, res) {

@@ -1,0 +1,58 @@
+<div class="patient-area" ng-if='ctrl.obj.api.getMode() === "view"'>
+
+	<list-viewer-v3
+		iface='ctrl.obj.groupList'>
+	</list-viewer-v3>
+
+</div>
+
+<div class="patient-area" ng-if='ctrl.obj.api.getMode() === "create"'>
+
+	<div class="btn btn-default" ng-click='ctrl.obj.mode = "view"'>back</div>
+
+	<group-creator
+		iface='ctrl.obj.groupCreatorInterface'>
+	</group-creator>
+
+</div>
+
+<div class="patient-area" ng-if='ctrl.obj.api.getMode() === "edit"'>
+	
+	<div class="patient-header">
+		<div class="patient-info">
+			<img ng-src="{{ctrl.obj.selectedGroup.image | defaultGroup }}" height='100px' width='100px'></img>
+			<div class="user-details">
+				<div class="name">
+					{{ctrl.obj.selectedGroup.name}}
+				</div>
+				<div class="features">
+					<p>{{ctrl.obj.selectedGroup.description}}</p>
+					<p>{{ctrl.obj.selectedGroup.members.length}} members</p>
+				</div> 
+			</div>
+		</div>
+	</div>
+
+ 	<div class="patient-header">
+ 		<ul>
+		 	<li ng-click='ctrl.obj.api.setViewMode()'>back</li>
+		 	<li ng-click='ctrl.obj.api.setViewMode()'>something</li>
+	 	</ul>
+ 	</div>
+
+	<div>
+		<ul class="header-titles">
+			<li ng-class="{'selected' : ctrl.obj.api.isPatientView()}"><a ng-click='ctrl.obj.api.setPatientView()'>Patients</a></li>
+			<li ng-class="{'selected' : ctrl.obj.api.isAdminView()}"><a ng-click='ctrl.obj.api.setAdminView()'>Admins</a></li>
+		</ul>
+	</div>
+
+	<patient-mgr-v3 ng-show='ctrl.obj.api.isPatientView()'
+		iface='ctrl.obj.patientMgrInterface'>
+	</patient-mgr-v3>
+
+	<admin-mgr-v3 ng-show='ctrl.obj.api.isAdminView()'
+		iface='ctrl.obj.adminMgrInterface'>
+	</admin-mgr-v3>
+
+</div>

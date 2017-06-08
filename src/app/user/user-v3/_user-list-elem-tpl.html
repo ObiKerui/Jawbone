@@ -1,0 +1,13 @@
+<div class="user-list-element" ng-class="{'active' : ctrl.obj.api.getAPI().selected }" ng-click="ctrl.obj.api.getAPI().onClick()">
+	<img ng-src={{ctrl.obj.api.getData().profile.image}} height='100px' width='100px'></img>
+	<div class="user-details">
+		<div class="name">
+			{{ctrl.obj.api.getData().first}} {{ctrl.obj.api.getData().last}}
+		</div>
+		<div class="features">
+			<p>Weight: {{ctrl.obj.api.getData().weight | number: 2}}</p>
+			<p>Gender: {{ctrl.obj.api.getData().gender}}</p>
+			<p>Height: {{ctrl.obj.api.getData().height}}</p>
+		</div> 
+	</div>
+</div>

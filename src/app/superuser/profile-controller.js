@@ -6,7 +6,7 @@
     .controller('ProfileCtrl', ProfileCtrl);
   
   /** @ngInject */
-  function ProfileCtrl($log, $scope, JawboneService, ProfileComponentBuilder) {
+  function ProfileCtrl($log, $scope, JawboneService, ProfileComponentBuilder, GroupManagerV3Interface) {
     var vm = this;
 
     init();
@@ -19,6 +19,11 @@
         return JawboneService.getUser(mainUserSumm._id);
       })
       .then(function(mainUserFull) {
+
+        vm.groupMgrIface = new GroupManagerV3Interface({
+          
+        });
+
         return ProfileComponentBuilder.build(mainUserFull, JawboneService.getUsers);
       })
       .then(function(profile) {

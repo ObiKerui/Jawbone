@@ -23,7 +23,10 @@
         onElementClicked : config.onElementClicked || function(action, element, index) {
           $log.info('passed to iface: element of index clicked ' + index);
         },
-        onDeselect : config.onDeselect || function(element) {
+        onSelect : config.onSelect || function(element, index) {
+          $log.info('supply an onSelect function');
+        },
+        onDeselect : config.onDeselect || function(element, index) {
           $log.info('supply on onDeselect function');
         },
         onDelete : config.onDelete || function(elem, index, cb) {
@@ -49,7 +52,7 @@
     	var objInst = new BaseComp();
     	objInst.elements = [];
       objInst.deleteMode = false;
-      // set breakpoint here
+      objInst.selected = parseInt(-1);
 
     	// private functions
     	var populate = populateFtn;
@@ -98,7 +101,7 @@
         // PROPAGATE EVENT TO EVERY LIST ELEMENT
         propagateEvent: function(event, data) {
           angular.forEach(objInst.elements, function(element) {
-            //set breakpoint
+
             element.notify(event, data);
           });
         },
@@ -197,7 +200,7 @@
           }, list);
 
           $log.info('size of list: ' + JSON.stringify(list.length));
-          $log.info('elements : ' + JSON.stringify(list));
+          //$log.info('elements : ' + JSON.stringify(list));
 
           if(onDone) {
             onDone({
@@ -221,9 +224,8 @@
 
         // tell an element and the interface if it was deselected
         if(obj.selected !== -1 && obj.selected < obj.elements.length) {
-          obj.elements[obj.selected].notify('deselected');  
-          //iface.notify('deselected', obj.elements[obj.selected], index);
-          iface.config.onElementClicked('deselected', obj.elements[obj.selected], index);
+          obj.elements[obj.selected].notify('deselect');  
+          iface.config.onDeselect(obj.elements[obj.selected], index);          
         }
 
         // tell the interface of click event
@@ -233,7 +235,7 @@
         if(obj.selected !== index) {
           obj.selected = index;          
           //iface.notify('selected', obj.elements[index], index);
-          iface.config.onElementClicked('selected', obj.elements[index], index);
+          iface.config.onSelect(obj.elements[index], index);
         } else {
           obj.selected = -1;
         }
@@ -278,7 +280,7 @@
 
     // CALCULATE THE NBR FORWARDS
     var calculateNoForwards = function(listdata, chunksize) {
-      // set breakpoint here
+
       var total = listdata.totalElems;
       var totalPages = Math.ceil(total / chunksize);
       var nbrOnLastPage = parseInt(total % chunksize);

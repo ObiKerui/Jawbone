@@ -118,6 +118,16 @@ var get = function(id, cb) {
     });
 };
 
+var getDefault = function(cb) {
+  var q = Group.findOne({name : 'default'}).lean();
+  q.exec(function(err, result) {
+    if(err) {
+      return cb(err);
+    }
+    cb(null, result);
+  })
+};
+
 /**
 * get a list of event objects
 */
@@ -202,8 +212,13 @@ var members = function(groupId, params, cb) {
 
   getGroup.exec(function(err, group) {
     q.exec(function(err, result) {
+      console.log('was an err when getting group members: ' + JSON.stringify(err));
+      console.log('result of group find in members req: ' + JSON.stringify(result, true, 3));
 
-      // console.log('result of group find in members req: ' + JSON.stringify(result, true, 3));
+      if(err) {
+        return cb(err);
+      }
+
       cb(null, {
         total: group.members.length,
         max: params.max,
@@ -247,6 +262,7 @@ var admins = function(groupId, params, cb) {
 module.exports.Group = Group;
 module.exports.create = create;
 module.exports.get = get;
+module.exports.getDefault = getDefault;
 module.exports.all = all;
 module.exports.allByUser = allByUser;
 module.exports.remove = remove;

@@ -6,6 +6,7 @@
     .factory('JawboneDataObj', JawboneDataObjFtn)
     .factory('BatchObj', BatchObjFtn)
     .factory('GroupService', GroupServiceFtn)
+    .factory('SleepService', SleepServiceFtn)
     .factory('JawboneService', JawboneService);
 
 	//------------------------------------------------------
@@ -77,10 +78,11 @@
 	//------------------------------------------------------
 	//  JAWBONE DATA SERVICE 
 	//------------------------------------------------------  
-	function JawboneService($log, $q, $http, JawboneDataObj, BatchObj, GroupService) {
+	function JawboneService($log, $q, $http, JawboneDataObj, BatchObj, GroupService, SleepService) {
 		var jboneData = null;
 		var setUserCB = [];
 		var groupService = new GroupService();
+		var sleepService = new SleepService();
 	    var service = {
 	  		init : init,
 	  		getMainUser : getMainUser,
@@ -95,12 +97,17 @@
 	  		createNote : createNote,
 	  		updateNote : updateNote,
 	  		deleteNote : deleteNote,
-	  		groupService : getGroupService
+	  		groupService : getGroupService,
+	  		sleepService : getSleepService
 	  	};
 	  	return service;    
 
 	  	function getGroupService() {
 	  		return groupService;
+	  	}
+
+	  	function getSleepService() {
+	  		return sleepService;
 	  	}
 
 	  	/*
@@ -145,6 +152,7 @@
 	  	}
 
 	  	function makeFieldGetter(root, id, field) {
+	  		var id = id || 'default';
 	  		return ('/' + root + '/' + id + '/' + field);
 	  	}
 
@@ -320,6 +328,43 @@
 				return false;
 			});
 		}
+	} 
+
+	//-----------------------------------------
+	//	SLEEP SERVICE
+	//-----------------------------------------	
+	function SleepServiceFtn($log, $q, $http) {
+		var SleepService = function() {
+			var obj = this;
+			obj.getSleepTicks = getSleepTicks;
+			obj.getSleepDetails = getSleepDetails;
+		};
+		return SleepService;
+
+		function getSleepTicks(sleepId) {
+			return $http.get('/sleeps/ticks/' + sleepId)
+			.then(function(response) {
+				//$log.info('response to get sleep: ' + JSON.stringify(response));
+				return response.data;
+			})
+			.catch(function(errResponse) {
+				$log.info('err response to get sleep ticks: ' + JSON.stringify(errResponse));
+				return errResponse;
+			});
+		}
+
+		function getSleepDetails(sleepId) {
+			return $http.get('/sleeps/details/' + sleepId)
+			.then(function(response) {
+				//$log.info('response to get sleep: ' + JSON.stringify(response));
+				return response.data;
+			})
+			.catch(function(errResponse) {
+				$log.info('err response to get sleep details: ' + JSON.stringify(errResponse));
+				return errResponse;
+			});
+		}
+
 	} 
 
 })();
