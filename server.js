@@ -76,10 +76,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // remove this
 //app.use(cookieParser('secret'));
 app.use(cookieParser());
+app.enable('trust proxy'); // optional, not needed for secure cookies
 app.use(session({
   secret: 'anappsessionsecretkeepssecretyes',
   resave: true,
   saveUninitialized: true,
+  proxy: true,
   cookie: {
     secure: true,
     maxAge: 3600000,
