@@ -9,7 +9,8 @@
 	<span>{{ctrl.obj.api.getData().duration}}</span>
 </div>
  -->
-<div class="trends-element-style" ng-class="{'active' : ctrl.obj.api.getAPI().selected }"
+
+<!-- <div class="trends-element-style" ng-class="{'active' : ctrl.obj.api.getAPI().selected }"
 	ng-click="ctrl.obj.api.getAPI().onClick()">
 	<span>{{ctrl.obj.api.getData().date | jbDate}}</span>	
 	<span>{{ctrl.obj.api.getData().rem | number:2}}</span>
@@ -18,4 +19,17 @@
 	<span>{{ctrl.obj.api.getData().timeToSleep}}</span>	
 	<span>{{ctrl.obj.api.getData().title | minutesConverter:'hrs-mins'}}</span>
 	<span>{{ctrl.obj.api.getData().awake | number:2}}</span>
+</div>
+ -->
+
+<div class="trends-element-style" ng-class="{'active' : ctrl.obj.api.getAPI().selected }"
+	ng-click="ctrl.obj.api.getAPI().onClick()">
+	<span>{{ctrl.obj.api.getData().date | jbDate}}</span>	
+	<span>{{ctrl.obj.api.getData().timeToSleep | secondsToHrsMins}}</span>
+	<span>{{ctrl.obj.api.getData().totalSleepTime | secondsToHrsMins}}</span>
+	<span>{{ctrl.obj.api.getData().wakeAfterSleep | secondsToHrsMins}}</span>
+	<span>{{ctrl.obj.api.getData().sleepEfficiency | number:1}}</span>	
+	<span>{{ctrl.obj.api.getData().remSleep | secondsToHrsMins}}</span>
+	<span>{{ctrl.obj.api.getData().lightSleep | secondsToHrsMins}}</span>
+	<span>{{ctrl.obj.api.getData().deepSleep | secondsToHrsMins}}</span>
 </div>

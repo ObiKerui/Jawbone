@@ -69,8 +69,8 @@ adminsArr = [];
 membersArr = [];
 
 groupData = [
-	{ name : 'defaultGroup', 'description' : 'joined by default', 'creationDate' : Date.now(), 'admins' : [], 'members' : [], 'photo' : null },
-	{ name : 'Therapists', 'description' : 'therapy group', 'creationDate' : Date.now(), 'admins' : [], 'members' : [], 'photo' : null }
+	{ name : 'defaultGroup', 'description' : 'joined by default', 'creationDate' : Date.now(), 'admins' : [], 'members' : [], 'photo' : null }
+//	{ name : 'Therapists', 'description' : 'therapy group', 'creationDate' : Date.now(), 'admins' : [], 'members' : [], 'photo' : null }
 ]
 
 addGroupMembers = function(newGroups, users, cb) {

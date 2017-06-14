@@ -32,16 +32,20 @@
     var iface = function(config) {
 
       var makePlotParams = makePlotParamsFtn;
+      var extractFieldValue = extractFieldValueFtn;
 
       var ifaceInst = new ChartV3Interface();
       var config = config || {};
 
       ifaceInst.config = {      
         patient : config.patient || null,
-        plots: [ 'title', 'sounds', 'awakenings', 'light', 'duration' ],
+        plots: [ 'time to sleep', 'total sleep', 'awake time', 'efficiency', 'rem', 'light', 'deep' ],
+        extractFieldValue : function(obj, index) {
+          return extractFieldValue(obj, index);
+        },
+        yAxisLabels: [ 'minutes', 'minutes', 'minutes', '%', 'minutes', 'minutes', 'minutes' ],
         plotParams: makePlotParams(config.patient),
         getElementsObj: JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps')),
-        //getElementsObj: JawboneService.makeBatch(JawboneService.makeEndpoint('cardiac')),
         makeElement : function(element) {
           return new SleepsV3Obj(element);
         },
@@ -71,11 +75,23 @@
       //------------------------------------
       function makePlotParamsFtn(patient) {
         //$log.info('make plot params: ' + JSON.stringify(patient));
+        //var profile = patient.profile || {};
         return {
-          range : [new Date(2016, 11, 1), new Date(2017, 4, 30)],
-          //plotName : patient.profile.first          
-          plotName : patient.first          
+          range : [new Date(2016, 11, 1), new Date(2017, 6, 30)],        
+          plotName : patient.first || null
         }       
+      }
+
+      //------------------------------------
+      // extract field value function
+      //------------------------------------
+      function extractFieldValueFtn(obj, field) {
+        $log.info('from object : ' + JSON.stringify(obj));
+        if(typeof obj.getField === "function") {
+          return obj.getField(field);          
+        } else {
+          return 0;
+        }
       }
 
       return ifaceInst;

@@ -4,6 +4,7 @@
   angular
     .module('jawboneApp')
     .filter('minutesConverter', minutesConverterFtn)
+    .filter('secondsToHrsMins', secondsToHrsMinsFtn)
     .filter('jbDate', jbDateFtn);
 
   function minutesConverterFtn($log) {
@@ -13,6 +14,19 @@
         return parseInt(minutes / 60.0) + 'h ' + parseInt(minutes % 60) + 'm';
       }
       return minutes;
+    }
+  }
+
+  function secondsToHrsMinsFtn($log) {
+    return function(seconds, arg) {
+      var hours = Math.floor(parseInt(seconds) / 3600);
+      var totalSeconds = parseInt(seconds) % 3600;
+      var minutes = Math.floor(totalSeconds / 60);
+      var seconds = totalSeconds % 60;      
+
+      var hrs = (hours > 0 ? hours + 'h ' : '');
+      var hrsMins = (hrs + minutes + 'm');
+      return hrsMins;
     }
   }
 

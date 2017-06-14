@@ -24,12 +24,23 @@
 		</div>
 	</div>
 
- 	<div class="patient-header">
- 		<ul>
-		 	<li ng-click='ctrl.obj.api.setViewMode()'>back</li>
-		 	<li ng-click='ctrl.obj.api.setViewMode()'>something</li>
-	 	</ul>
- 	</div>
+ 	<div class="panel-header">
+ 		<ul target="panel-buttons">
+ 			<li>
+				<div class="btn btn-default" ng-click='ctrl.obj.api.setViewMode()' style="float : left;">
+					<span class="glyphicon glyphicon-th-list faded-glyph"></span> back to patients view
+				</div>
+			</li>
+			<li>			
+				<div class="btn-group" style="float: right;">
+					<div class="btn btn-default" ng-click='ctrl.obj.api.setViewMode()'>
+						<span class="glyphicon glyphicon-pencil faded-glyph"></span> edit group
+					</div>
+				</div>
+				<div style="clear: both;"></div> 	
+			</li>
+		</ul>
+	</div>
 
 	<chart-v3 
 		iface='ctrl.obj.sleepsChartInterface'>

@@ -135,7 +135,7 @@
                 if(idx === -1) {
                     break;
                 } else {
-                    //$log.info('value to add is : ' + JSON.stringify(value));
+                    //$log.info('value to add is : ' + JSON.stringify(data[i]));
                     PlotGenerator.addToArray(arr, idx, 0, data[i]);
                 }
             }

@@ -17,7 +17,7 @@
     "http-proxy": "^1.15.2",
     "http-proxy-middleware": "~0.9.0",
     "https": "^1.0.0",
-    "jawbone-up": "^0.1.2",
+    "jawbone-up": "https://github.com/ObiKerui/node-jawbone-up/tarball/ddb36dfcd298ceca416259a0abf06d6b773f5e83",
     "moment": "^2.17.1",
     "mongoose": "^4.6.4",
     "morgan": "^1.7.0",

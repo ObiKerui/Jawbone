@@ -52,7 +52,7 @@
       objInst.patientMgrInterface = null;
       objInst.adminMgrInterface = null;
       objInst.mode = 'view';
-      objInst.patientAdminView = 'admin';
+      objInst.patientAdminView = 'patient';
       objInst.selectedGroup = null;
 
       objInst.api = {
@@ -69,7 +69,7 @@
 		        onSelect : function(element, index) {
 		          activateEditMode(element);
 		        },
-          		headerTpl : 'app/groups/group-manager-v3/_group-list-action-bar-tpl.html'		        
+          		headerTpl : 'app/groups/group-manager-v3/_group-list-action-bar-tpl.html'	        
       		});
       	},
 

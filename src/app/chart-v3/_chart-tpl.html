@@ -1,19 +1,26 @@
-<!-- <loader obj="ctrl.co.loaderMessage" ng-show="ctrl.state !== 'ready'"></loader> -->
-<!-- <div class="chart-area animated" ng-show="ctrl.state === 'ready'"> -->
-<div class="chart-area animated">
+<loader obj="ctrl.co.loaderMessage" ng-show="ctrl.obj.api.getState() === 'loading'"></loader>
+<div class="chart-area animated" ng-show="ctrl.obj.api.getState() === 'complete'">
 	<div class="chart-header">
 		<span uib-dropdown>
 		    <a class="btn btn-default" uib-dropdown-toggle>{{ctrl.obj.selected || 'select a plot...'}} <span class="caret"></span> </a>
 		    <ul uib-dropdown-menu>
+<!-- 		        <li ng-repeat="item in ctrl.obj.plots track by $index"><span ng-click='ctrl.obj.api.switchToPlot($index)'>{{item}}</span></li> -->
 		        <li ng-repeat="item in ctrl.obj.plots track by $index"><span ng-click='ctrl.obj.api.switchToPlot($index)'>{{item}}</span></li>
 		    </ul>
 		</span>
-		<span class="btn btn-default" ng-click='ctrl.obj.api.appendPlot()' ng-show='ctrl.obj.api.canAddPlots()'>compare with</span>
+<!-- 		<span class="btn btn-default" ng-click='ctrl.obj.api.appendPlot()' ng-show='ctrl.obj.api.canAddPlots()'>compare with</span>
+ -->		
+		<div class="btn-group" ng-show='ctrl.obj.api.canAddPlots()'>
+			<div class="btn btn-default" ng-click="ctrl.obj.api.appendPlot()">compare with</div>
+			<div class="btn btn-default" ng-disabled="true">&nbsp;</div>
+			<div class="btn btn-default" ng-click="ctrl.obj.api.resetPlots()">reset</div>
+		</div>
+
 	</div>
 
 	<div class="chart-body">
 		<div class="chart-element">
-			<div google-chart chart="ctrl.obj.chart" style="height:300px; width:570px; border: 1px solid #fff;"></div>
+			<div google-chart chart="ctrl.obj.chart" style="height:300px; width:745px; border: 1px solid #fff;"></div>
 		</div>
 	</div>
 

@@ -35,6 +35,11 @@
 
   		ifaceInst.config = {  
         plots : config.plots || [],
+        extractFieldValue : config.extractFieldValue || function(obj, field) {
+          $log.info('supply an extract field value function');
+          return 0;
+        },
+        yAxisLabels : config.yAxisLabels || [],
   			loaderMessage: config.loaderMessage || null,          
   			getElementsObj : config.getElementsObj || null,
   			makeElement : config.makeElement || null,
@@ -70,22 +75,30 @@
     	var removeNullPoints = removeNullPointsFtn;
     	var convertToArr = convertToArrFtn;
     	var extract = extractFtn;
+      var setYAxisTitle = setYAxisTitleFtn;
     	var obj = new BaseComp();
       obj.graphData = [];
       obj.plots = iface.config.plots || [];
       obj.selected = 0;
+      obj.state = 'loading';
 
       obj.api = {
         render: function(cb) {
-          $log.info('called render function of chartv3obj');
+          $log.info('called render function of chartv3obj with supplied iface: ' + JSON.stringify(iface));
           obj.chart = cutils.createJawboneChartLayout();
           iface.config.getElementsObj.get()
           .then(function(result) {
             processElements(iface, result.data, iface.config.plotParams);
+            setYAxisTitleFtn(obj.chart, 0, iface.config.yAxisLabels);
             cb('done');
+            obj.state = 'complete';
           });
         },
+        getState: function() {
+          return obj.state;
+        },
         switchToPlot: function(index) {
+          $log.info('selected: ' + index);
           selectPlot(iface, index, obj.graphData);
         },
         getGraphData: function() {
@@ -103,6 +116,12 @@
             .then(function(result) {
               appendElements(iface, result.data, iface.config.plotParams);
             });
+          });
+        },
+        resetPlots: function() {
+          obj.state = 'loading';
+          this.render(function(arg) {
+
           });
         }
       };
@@ -181,6 +200,7 @@
   			  elem.push(val.x); // push the date 
   			  
   			  angular.forEach(val.y, function(yplot) {
+            $log.info('y value to push : ' + JSON.stringify(yplot));
   			    elem.push(extract(iface, yplot, yValueField));
   			  },val.y);
 
@@ -194,14 +214,24 @@
     	// extract function 
     	//----------------------------------------------      	
   		function extractFtn(iface, yplot, fieldIdx) {
-        var pnames = iface.config.plots;
-        var fieldToGet = pnames[fieldIdx];
+        $log.info('call to extract the field value with obj: ' + JSON.stringify(yplot));
+        var fieldValue = iface.config.extractFieldValue(yplot, fieldIdx);
+        return fieldValue;
+        //var pnames = iface.config.plots;
+        //var fieldToGet = pnames[fieldIdx];
         // $log.info('field idx: ' + fieldIdx);
         // $log.info('pnames: ' + JSON.stringify(pnames));
         // $log.info('obj is : ' + JSON.stringify(yplot));
         // $log.info('get the field: ' + fieldToGet + ' result: ' + JSON.stringify(yplot[pnames[fieldIdx]]));  
-        return yplot[pnames[fieldIdx]];
+        //return yplot[pnames[fieldIdx]];
       }
+
+      //----------------------------------------------
+      // set the y axis title of the chart 
+      //----------------------------------------------        
+      function setYAxisTitleFtn(chart, index, labels) {
+        chart.options.vAxis.title = labels[index];
+      }      
 
       return obj;
     };
@@ -211,38 +241,38 @@
   //----------------------------------------------------
   //  CTRL FUNCTION
   //----------------------------------------------------  
-  function CtrlFtn($scope, $log, ChartV3Obj, googleChartApiPromise, BaseCtrl) {
-    var vm = this;  
-    vm.obj = null;
-
-    googleChartApiPromise.then(function() {
-      new BaseCtrl(vm.iface, function(createdIface) {
-        return new ChartV3Obj(createdIface);
-      }, function(obj) {
-        vm.obj = obj;
-      });
-    });
-  }
-
-  // function CtrlFtn($scope, $log, ChartV3Obj, googleChartApiPromise) {
+  // function CtrlFtn($scope, $log, ChartV3Obj, googleChartApiPromise, BaseCtrl) {
   //   var vm = this;  
   //   vm.obj = null;
 
-  //   $scope.$watch(function(scope) {
-  //     return (vm.iface);
-  //   }, function(iface, oldval) {
-  //     if(iface) {
-  //       googleChartApiPromise.then(function() {
-  //       	$log.info(id + ' loaded google chart api');
-  //     		vm.obj = new ChartV3Obj(iface);
-  //         iface.setAPI(vm.obj.getAPI);
-  //         vm.obj.api.render(function() {
-  //           $log.info('render the chart obj');
-  //         });
-  //       });
-  //     }
-  //   }); 
+  //   googleChartApiPromise.then(function() {
+  //     new BaseCtrl(vm.iface, function(createdIface) {
+  //       return new ChartV3Obj(createdIface);
+  //     }, function(obj) {
+  //       vm.obj = obj;
+  //     });
+  //   });
   // }
+
+  function CtrlFtn($scope, $log, ChartV3Obj, googleChartApiPromise) {
+    var vm = this;  
+    vm.obj = null;
+
+    $scope.$watch(function(scope) {
+      return (vm.iface);
+    }, function(iface, oldval) {
+      if(iface) {
+        googleChartApiPromise.then(function() {
+        	$log.info(id + ' loaded google chart api');
+      		vm.obj = new ChartV3Obj(iface);
+          iface.setAPI(vm.obj.getAPI);
+          vm.obj.api.render(function() {
+            $log.info('render the chart obj');
+          });
+        });
+      }
+    }); 
+  }
 
   //----------------------------------------------------
   //  DIRECTIVE

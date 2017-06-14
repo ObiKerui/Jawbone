@@ -31,11 +31,22 @@
         return JawboneService.getUser(mainUserSumm._id);
       })
       .then(function(mainUserFull) {
+
+        var profile = mainUserFull.profile || {};
+        var patient = {          
+          _id: null,
+          email: mainUserFull.email || null,
+          first: profile.first || null,
+          gender: profile.gender || null,
+          height: profile.height || null,
+          last: profile.last || null,
+          weight: profile.weight || null
+        };
+
         vm.sleepsListIface = new SleepsListInterface(mainUserFull);
         vm.notesViewerIface = new NotesViewerV3Interface(mainUserFull);
-
         vm.sleepsChartIface = new SleepsChartInterface({
-          patient:  mainUserFull,
+          patient:  patient,
           canAddPlots: false
         });
 

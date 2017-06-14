@@ -3,7 +3,7 @@
 	<img ng-src='assets/group.png' height='100px' width='100px'></img>
 	<div class="user-details">
 		<div class="name">
-			{{ctrl.obj.api.getData().name}}
+			{{ctrl.obj.api.getData().name}} <span class="glyphicon glyphicon-lock faded-glyph" ng-show='ctrl.obj.api.getData().permissions.canEdit === false'></span>
 		</div>
 		<div class="features">
 			<p>{{ctrl.obj.api.getData().description}}</p>
@@ -11,10 +11,13 @@
 		</div> 
 	</div>
 	<div ng-show='ctrl.obj.api.getAPI().deleteMode' class="delete-widget pulser-anim">
-		<p><span class="glyphicon glyphicon-remove faded-glyph"></span></p>
+		<p><span class="glyphicon glyphicon-remove faded-glyph" ng-show='ctrl.obj.api.getData().permissions.canDelete'></span></p>
+		<p><span class="glyphicon glyphicon-lock faded-glyph" ng-show='ctrl.obj.api.getData().permissions.canDelete === false'></span></p>
 	</div> 
-	<div ng-show='ctrl.obj.api.getAPI().confirmDeleteMode' class="delete-confirm-widget slider-anim" visible-click-elsewhere='ctrl.obj.element.api.cancel($event)'>
-		<span class="btn btn-default" ng-click='ctrl.obj.api.getAPI().delete($event)'>confirm</span>
-		<span class="btn btn-default" ng-click='ctrl.obj.api.getAPI().cancel($event)'>cancel</span>
+	<div ng-show='ctrl.obj.api.getData().permissions.canDelete'>
+		<div ng-show='ctrl.obj.api.getAPI().confirmDeleteMode' class="delete-confirm-widget slider-anim" visible-click-elsewhere='ctrl.obj.element.api.cancel($event)'>
+			<span class="btn btn-default" ng-click='ctrl.obj.api.getAPI().delete($event)'>confirm</span>
+			<span class="btn btn-default" ng-click='ctrl.obj.api.getAPI().cancel($event)'>cancel</span>		
+		</div>
 	</div>
 </div>

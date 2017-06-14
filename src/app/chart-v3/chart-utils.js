@@ -15,7 +15,7 @@ var jbChartUtils = (function(angular) {
       	chart.options = {
 	        // 'title': 'blank',
 	        //'chartArea': { 'left':'40','top':'40','width':'60%','height':'75%'},
-	        'chartArea': { 'left':'80','top':'40','width':'60%','height':'75%'},
+	        'chartArea': { 'left':'80','top':'40','width':'70%','height':'75%'},
 	        'backgroundColor.fill': '#00ffff',
 	        'explorer': { 
 	          'actions': ['dragToZoom', 'rightClickToReset'],

@@ -33,7 +33,8 @@
           $log.info('supply on Delete function..');
           cb();
         },
-        headerTpl : config.headerTpl || null
+        headerTpl : config.headerTpl || null,
+        canEdit : config.canEdit || false
       };
 
       return ifaceInst;
@@ -53,6 +54,7 @@
     	objInst.elements = [];
       objInst.deleteMode = false;
       objInst.selected = parseInt(-1);
+      objInst.state = 'loading';
 
     	// private functions
     	var populate = populateFtn;
@@ -70,7 +72,16 @@
           });
 
           populate(objInst.elements, iface.config.getElementsObj, cb);
+          objInst.state = 'done';
         },
+
+        getState: function() {
+          return objInst.state;
+        },
+
+        canEdit: function() {
+          return iface.config.canEdit;
+        }, 
 
         // HANDLE ELEMENT CLICKED EVENT
         elementClicked: function(index) {
@@ -101,7 +112,6 @@
         // PROPAGATE EVENT TO EVERY LIST ELEMENT
         propagateEvent: function(event, data) {
           angular.forEach(objInst.elements, function(element) {
-
             element.notify(event, data);
           });
         },

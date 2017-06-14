@@ -101,9 +101,21 @@ var groups = {
     var usr = res.locals.user;
     var id = req.params.id; 
 
-    Groups.update(req.body, id, usr, function(err, updated) {
+    Groups.update(req.body, id, function(err, updated) {
       if(err) {
         return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});
+      }
+      res.status(200).json(updated);
+    });
+  },
+
+  updatePermissions: function(req, res) {
+    var usr = res.locals.user;
+    var groupId = res.params.id;
+
+    Groups.updatePermissions(req.body, id, function(err, updated) {
+      if(err) {
+        return res.status(400).send({ message: ErrorHandler.getErrorMessage(err)});
       }
       res.status(200).json(updated);
     });

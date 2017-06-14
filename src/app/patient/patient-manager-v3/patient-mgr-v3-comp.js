@@ -61,9 +61,14 @@
       		onRender();
       		cb();
       	},
+        
       	getMode : function() {
       		return objInst.mode;
       	},
+
+        setViewMode: function() {
+          objInst.mode = 'view';
+        },
 
         refresh : function() {
           objInst.patientsListInterface.getAPI().refresh();
@@ -81,23 +86,27 @@
     				});
     			},
     			onSelect : function(element, index) {
-    				activateEditMode(element);
+            var config = element.config || {};
+            var patient = config.data || {};
+    				activateEditMode(patient);
     			},
-    			headerTpl : 'app/groups/group-manager-v3/_group-list-action-bar-tpl.html'		        
+    			headerTpl : 'app/patient/patient-manager-v3/_patient-list-action-bar-tpl.html',
+          canEdit : false		        
     		});
       }
 
       function activateEditModeFtn(selectedPatient) {
         objInst.mode = 'edit';
-        objInst.selectedPatient = selectedPatient.config.data;
-        var patientId = selectedPatient.config.data;
+        // objInst.selectedPatient = selectedPatient.config.data;
+        // var patientId = selectedPatient.config.data;
 
         objInst.sleepsChartInterface = new SleepsChartInterface({
-          patient : patientId
+          patient : selectedPatient,
+          canAddPlots : true
         });
 
         objInst.sleepsListInterface = new SleepsListInterface({
-          patient : patientId
+          patient : selectedPatient
         });
       }
 

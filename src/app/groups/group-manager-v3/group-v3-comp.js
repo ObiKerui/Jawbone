@@ -20,6 +20,7 @@
    		objInst.description = data.description || null;
    		objInst.size = data.members.length || 0;
    		objInst.template = 'app/groups/group-manager-v3/_group-element-tpl.html';
+      objInst.permissions = data.permissions || {};
 
 		return objInst;
     };

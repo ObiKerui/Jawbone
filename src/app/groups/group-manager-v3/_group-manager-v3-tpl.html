@@ -1,4 +1,4 @@
-<div class="patient-area" ng-if='ctrl.obj.api.getMode() === "view"'>
+<div class="panel-area" ng-if='ctrl.obj.api.getMode() === "view"'>
 
 	<list-viewer-v3
 		iface='ctrl.obj.groupList'>
@@ -6,7 +6,7 @@
 
 </div>
 
-<div class="patient-area" ng-if='ctrl.obj.api.getMode() === "create"'>
+<div class="panel-area" ng-if='ctrl.obj.api.getMode() === "create"'>
 
 	<div class="btn btn-default" ng-click='ctrl.obj.mode = "view"'>back</div>
 
@@ -16,14 +16,14 @@
 
 </div>
 
-<div class="patient-area" ng-if='ctrl.obj.api.getMode() === "edit"'>
+<div class="panel-area" ng-if='ctrl.obj.api.getMode() === "edit"'>
 	
-	<div class="patient-header">
+	<div class="panel-header">
 		<div class="patient-info">
 			<img ng-src="{{ctrl.obj.selectedGroup.image | defaultGroup }}" height='100px' width='100px'></img>
 			<div class="user-details">
 				<div class="name">
-					{{ctrl.obj.selectedGroup.name}}
+					{{ctrl.obj.selectedGroup.name}} <span class="glyphicon glyphicon-lock faded-glyph" ng-show='ctrl.obj.selectedGroup.permissions.canEdit === false'></span>
 				</div>
 				<div class="features">
 					<p>{{ctrl.obj.selectedGroup.description}}</p>
@@ -33,12 +33,23 @@
 		</div>
 	</div>
 
- 	<div class="patient-header">
- 		<ul>
-		 	<li ng-click='ctrl.obj.api.setViewMode()'>back</li>
-		 	<li ng-click='ctrl.obj.api.setViewMode()'>something</li>
-	 	</ul>
- 	</div>
+ 	<div class="panel-header">
+ 		<ul target="panel-buttons">
+ 			<li>
+				<div class="btn btn-default" ng-click='ctrl.obj.api.setViewMode()' style="float : left;">
+					<span class="glyphicon glyphicon-th-list faded-glyph"></span> back to groups view
+				</div>
+			</li>
+			<li>			
+				<div class="btn-group" style="float: right;">
+					<div class="btn btn-default" ng-click='ctrl.obj.api.setViewMode()' ng-disabled='ctrl.obj.selectedGroup.permissions.canEdit === false'>
+						<span class="glyphicon glyphicon-pencil faded-glyph"></span> edit group
+					</div>
+				</div>
+				<div style="clear: both;"></div> 	
+			</li>
+		</ul>
+	</div>
 
 	<div>
 		<ul class="header-titles">

@@ -17,7 +17,11 @@ var jbGroupSchema = new Schema({
   creationDate: { type: Date, required: true, default: moment().format() },
   admins: [ jbGroupMemberSchema ],
   members: [ jbGroupMemberSchema ],
-  photo: { data: Buffer, contentType: String, required: false }
+  photo: { data: Buffer, contentType: String, required: false },
+  permissions: {
+    canDelete : { type: Boolean, default: false },
+    canEdit : { type: Boolean, default: false }
+  }
 }, {
   timestamps: true
 });
@@ -101,6 +105,18 @@ var update = function(UpdateObj, id, cb) {
 		}
 		return cb(null, result);		
 	});
+};
+
+var updatePermissions = function(UpdateObj, id, permissions, cb) {
+  // find the group > is this user an admin in the group > if not can't update permissions
+  var upQuery = {_id : id };  
+  var updated = { permissions : UpdateObj };
+  Group.findOneAndUpdate(upQuery, updated, {new: true, upsert: true, setDefaultsOnInsert: true}, function(err, result) {
+    if(err) {
+      return cb(err);
+    }
+    return cb(null, result);    
+  });
 };
 
 /**
@@ -272,3 +288,4 @@ module.exports.removeMember = removeMember;
 module.exports.allByUser = allByUser;
 module.exports.members = members;
 module.exports.admins = admins;
+module.exports.updatePermissions = updatePermissions;
