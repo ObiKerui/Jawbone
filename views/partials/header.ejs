@@ -10,7 +10,7 @@
 
         <ul class="nav navbar-nav">
             <% if (locals.user) { %>
-                <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span> Logout (<%= user.email %>)</a></li>
+                <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span> Logout (<%= user.profile.first %> <%=  user.profile.last %>)</a></li>
             <% } %>
 
         </ul>

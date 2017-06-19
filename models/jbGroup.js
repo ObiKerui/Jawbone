@@ -15,6 +15,7 @@ var jbGroupSchema = new Schema({
   name: { type: String, required: true, minlength: 0, maxlength: 40 },
   description: { type: String, required: false, minlength: 0, maxlength: 200 },
   creationDate: { type: Date, required: true, default: moment().format() },
+  type: { type: String, default: 'regular' },
   admins: [ jbGroupMemberSchema ],
   members: [ jbGroupMemberSchema ],
   photo: { data: Buffer, contentType: String, required: false },
@@ -35,9 +36,70 @@ var jbGroupSchema = new Schema({
 
 var Group = db.model('jbGroup', jbGroupSchema);
 
-//
-// Create new comment in your database and return its id
-//
+//------------------------------------------------------
+//  GET THE DEFAULT GROUP IF IT EXISTS
+//------------------------------------------------------
+var getDefaultGroup = function(cb) {
+  Group.findOne({ type: 'default'}, function(err, defGroup) {
+    if(err) {
+      return cb(err);
+    } else {
+      console.log('The default group: ' + JSON.stringify(defGroup));
+      return cb(null, defGroup);
+    }
+  });
+};
+
+//------------------------------------------------------
+//  CREATE THE DEFAULT GROUP FOR ALL MEMBERS
+//------------------------------------------------------
+var createDefaultGroup = function(cb) {
+  var defaultGroup = new Group({
+    name: 'Default Group',
+    description: 'Created by default',
+    type: 'default'
+  });
+
+  defaultGroup.save(function(err, createdDefaultGroup) {
+    if(err) {
+      cb(err);
+    } else {
+      cb(null, createdDefaultGroup);
+    }
+  });
+};
+
+//------------------------------------------------------
+//  ADD MEMBER TO DEFAULT GROUP
+//------------------------------------------------------
+var addMemberToDefault = function(member, cb) {
+  getDefaultGroup(function(getDefGroupErr, defGroup) {
+    if(getDefGroupErr) {
+      console.log('error getting default group: ' + getDefGroupErr);
+    } else {
+      console.log('got the default group: ' + JSON.stringify(defGroup));
+      var groupMember = {
+        user : member,
+        joinDate : Date.now()
+      };
+
+      defGroup.members.push(groupMember);
+      defGroup.save(function(saveErr, result) {
+        if(saveErr) {
+          console.log('error saving default group: ' + saveErr);
+          return cb(saveErr);
+        } else {
+          console.log('saved member to default group: ' + JSON.stringify(result));
+          return cb(null, result);
+        }
+      })
+    }
+  });
+}
+
+//------------------------------------------------------
+//  CREATE A NEW GROUP 
+//------------------------------------------------------
 var create = function(newObj, userCreatedBy, cb) {
   var neObj = new Group(newObj);
   var groupMember = {
@@ -219,63 +281,80 @@ var members = function(groupId, params, cb) {
 
   var offset = parseInt(params.offset);
   var max = parseInt(parseInt(params.offset) + parseInt(params.max));
+
   var getGroup = Group.findOne({_id : groupId });
-
-  // console.log('offset: ' + params.offset);
-  // console.log('max: ' + max);
+  var getMembers = Group.findOne({_id : groupId}, { members: { $slice:[offset, max]}}).populate('members.user', '-jawboneData').lean();
   
-  var q = Group.findOne({_id : groupId}, { members: { $slice:[offset, max]}}).populate('members.user', '-jawboneData').lean();
-
-  getGroup.exec(function(err, group) {
-    q.exec(function(err, result) {
-      console.log('was an err when getting group members: ' + JSON.stringify(err));
-      console.log('result of group find in members req: ' + JSON.stringify(result, true, 3));
-
-      if(err) {
-        return cb(err);
-      }
-
-      cb(null, {
-        total: group.members.length,
+  getGroup.exec(function(getGroupErr, group) { // to discover the size of members
+    if(getGroupErr) {
+      return cb(getGroupErr);
+    } else if(group.members.length === 0) {
+      return cb(null, {
+        total: 0,
         max: params.max,
         offset: params.offset,
         sortBy: params.sortBy,
-        data: result.members
-      });    
-    });    
+        data: []
+      });
+    } else {
+      getMembers.exec(function(getMembersErr, result) {
+        if(getMembersErr) {
+          return cb(getMembersErr);
+        } else {
+          return cb(null, {
+            total: group.members.length,
+            max: params.max,
+            offset: params.offset,
+            sortBy: params.sortBy,
+            data: result.members
+          });
+        }
+      });
+    }
   });
 };
 
 var admins = function(groupId, params, cb) {
+
   var offset = parseInt(params.offset);
   var max = parseInt(parseInt(params.offset) + parseInt(params.max));
+
   var getGroup = Group.findOne({_id : groupId });
-
-  // console.log('offset: ' + params.offset);
-  // console.log('max: ' + max);
+  var getMembers = Group.findOne({_id : groupId}, { admins: { $slice:[offset, max]}}).populate('admins.user', '-jawboneData').lean();
   
-  var q = Group.findOne({_id : groupId}, { admins: { $slice:[offset, max]}}).populate('admins.user', '-jawboneData').lean();
-
-  getGroup.exec(function(err, group) {
-    q.exec(function(err, result) {
-
-      if(err) {
-        return cb(err);
-      }
-
-      // console.log('result of group find in members req: ' + JSON.stringify(result, true, 3));
-      cb(null, {
-        total: group.admins.length,
+  getGroup.exec(function(getGroupErr, group) { // to discover the size of members
+    if(getGroupErr) {
+      return cb(getGroupErr);
+    } else if(group.admins.length === 0) {
+      return cb(null, {
+        total: 0,
         max: params.max,
         offset: params.offset,
         sortBy: params.sortBy,
-        data: result.admins
-      });    
-    });    
+        data: []
+      });
+    } else {
+      getMembers.exec(function(getMembersErr, result) {
+        if(getMembersErr) {
+          return cb(getMembersErr);
+        } else {
+          return cb(null, {
+            total: group.admins.length,
+            max: params.max,
+            offset: params.offset,
+            sortBy: params.sortBy,
+            data: result.admins
+          });
+        }
+      });
+    }
   });
 };
 
 module.exports.Group = Group;
+module.exports.getDefaultGroup = getDefaultGroup;
+module.exports.createDefaultGroup = createDefaultGroup;
+module.exports.addMemberToDefault = addMemberToDefault;
 module.exports.create = create;
 module.exports.get = get;
 module.exports.getDefault = getDefault;

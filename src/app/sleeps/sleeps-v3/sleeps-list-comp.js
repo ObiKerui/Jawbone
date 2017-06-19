@@ -90,25 +90,25 @@
 
       // retrieve specific sleep details
       var sleepService = JawboneService.sleepService();
-      sleepService.getSleepTicks(data.xid)
-      .then(function(ticksResponse) {
-        sleepService.getSleepDetails(data.xid)
-        .then(function(detailsResponse) {
-          // $log.info('sleep ticks: ' + JSON.stringify(ticksResponse));
-          // $log.info('sleep details: ' + JSON.stringify(detailsResponse));
-        });
+      // sleepService.getSleepTicks(data.xid)
+      // .then(function(ticksResponse) {
+      //   sleepService.getSleepDetails(data.xid)
+      //   .then(function(detailsResponse) {
+      //     // $log.info('sleep ticks: ' + JSON.stringify(ticksResponse));
+      //     // $log.info('sleep details: ' + JSON.stringify(detailsResponse));
+      //   });
 
-        // var size = response.data.data.size;
-        // var timeToSleepOnset = (size > 0 ? response.data.data.items[0].time : 0);
-        // var timeCreated = (size > 0 ? objInst.timeCreated : 0);
-        // objInst.timeToSleep = (timeToSleepOnset - objInst.timeCreated);
+      //   // var size = response.data.data.size;
+      //   // var timeToSleepOnset = (size > 0 ? response.data.data.items[0].time : 0);
+      //   // var timeCreated = (size > 0 ? objInst.timeCreated : 0);
+      //   // objInst.timeToSleep = (timeToSleepOnset - objInst.timeCreated);
 
-        // $log.info('time of first tick: ' + JSON.stringify(timeToSleepOnset));
-        // $log.info('time created: ' + JSON.stringify(timeCreated));
-        // $log.info('time asleep : ' + JSON.stringify(objInst.asleepTime));
-        // $log.info('time to sleep: ' + (objInst.asleepTime - timeCreated));
-        // $log.info('time to sleep: ' + (objInst.timeToSleep));
-      });
+      //   // $log.info('time of first tick: ' + JSON.stringify(timeToSleepOnset));
+      //   // $log.info('time created: ' + JSON.stringify(timeCreated));
+      //   // $log.info('time asleep : ' + JSON.stringify(objInst.asleepTime));
+      //   // $log.info('time to sleep: ' + (objInst.asleepTime - timeCreated));
+      //   // $log.info('time to sleep: ' + (objInst.timeToSleep));
+      // });
 
       // sleeps breakpoint
       var details = data.details || {};

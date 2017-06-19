@@ -200,7 +200,7 @@
   			  elem.push(val.x); // push the date 
   			  
   			  angular.forEach(val.y, function(yplot) {
-            $log.info('y value to push : ' + JSON.stringify(yplot));
+            //$log.info('y value to push : ' + JSON.stringify(yplot));
   			    elem.push(extract(iface, yplot, yValueField));
   			  },val.y);
 
@@ -214,7 +214,7 @@
     	// extract function 
     	//----------------------------------------------      	
   		function extractFtn(iface, yplot, fieldIdx) {
-        $log.info('call to extract the field value with obj: ' + JSON.stringify(yplot));
+        //$log.info('call to extract the field value with obj: ' + JSON.stringify(yplot));
         var fieldValue = iface.config.extractFieldValue(yplot, fieldIdx);
         return fieldValue;
         //var pnames = iface.config.plots;

@@ -127,7 +127,8 @@
   			appendElements: function(cb) {        
 
   				iface.config.getElementsObj = iface.config.getElementsObj.next();
-  				$log.info('next batch..params: ' + JSON.stringify(iface.config.getElementsObj.params));
+  				$log.info('next batch..params: ' + JSON.stringify(iface.config.getElementsObj.params, true, 1));
+          $log.info('elements size: ' + JSON.stringify(objInst.elements.length, true, 1));          
 
   				if(!iface.config.getElementsObj.more()) {
   				  $log.info('no more to get w/ params: ' + JSON.stringify(iface.config.getElementsObj.params));
@@ -199,6 +200,7 @@
           $log.info('batch in populate: ' + JSON.stringify(getElementsObj.params));
           $log.info('batch total: ' + batch.total);
           $log.info('total no. of objects: ' + getElementsObj.params.total);
+          $log.info('size of batch: ' + batch.data.length);
           var i = list.length;
           angular.forEach(batch.data, function(value) { 
             this.push(iface.config.makeListElementFtn({
@@ -261,11 +263,12 @@
   //-------------------------------------------
   function ListScroller(initCB, refreshCB) {
     var scroller = this;
+    scroller.nbrForwards = 0;
+
     var initCB = initCB;
     var refreshCB = refreshCB;
     var chunksize = 4;
     var index = 0;
-    var nbrForwards = 0;
     var moveDistance = 0;
     var scrollforward = null;
     var scrollback = null;
@@ -273,7 +276,7 @@
     var onScrollForwardFtn = null;
 
     function atEnd() {
-      return (index === nbrForwards);
+      return (index === scroller.nbrForwards);
     };
 
     function atStart() {
@@ -307,7 +310,7 @@
       initCB(function(scrollInfo, cb) {
         //log.info('the height of list element is: ' + height);
         setHeight(scrollInfo.height, cb);
-        nbrForwards = calculateNoForwards(data.listdata, chunksize);
+        scroller.nbrForwards = calculateNoForwards(data.listdata, chunksize);
         scrollforward = scrollInfo.forward;
         scrollback = scrollInfo.back;
         //log.info('nbr forwards: ' + nbrForwards);
@@ -324,7 +327,7 @@
       // set height
       if(atEnd() || (animating == true)) return;
       animating = true;
-      index = (index === nbrForwards ? nbrForwards : index + 1);
+      index = (index === scroller.nbrForwards ? scroller.nbrForwards : index + 1);
       scrollforward(moveDistance, function() {
         animating = false;
         if(onScrollForwardFtn) {
@@ -364,8 +367,8 @@
     log = $log;
 
     vm.registerLink = function(initCB, refreshCB) {
-      $log.info('called register link');
       vm.scroller = new ListScroller(initCB, refreshCB);
+      $log.info('scroller init: ' + JSON.stringify(vm.scroller, true, 1));      
     };
 
     $scope.$watch(function(scope) {

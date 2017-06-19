@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="jawboneSUApp">
+<head>
+    <% include ../partials/head %>
+</head>
+<body class="container" ng-style="{ 'background-image': 'url(assets/oobe_background_tile.png)' }">
+
+  <header>
+    <% include ../partials/header %>
+  </header>
+
+  <main>
+
+    <div class="jumbotron">
+      
+      <h1>Hello such n such</h1>
+      <p>Login to see your sleep data or login to manage your patients...</p>
+
+      <h3>continue as user</h3>
+      <a href='/userdata'><div class="btn btn-default">user</div></a>
+      <h3>continue as therapist</h3>
+      <a href='/superuser'><div class="btn btn-default">therapist</div></a>
+    </div>
+
+  </main>
+
+  <script type="text/javascript" src="scripts/vendor.js"></script>
+  <script>
+     angular.module('PreloadedData', [])
+       .constant('JawboneData', <%- JSON.stringify(user) %>);
+  </script>
+  <script type="text/javascript" src="scripts/jawbone-app.js"></script>
+
+  <footer>
+    <% include ../partials/footer %>
+  </footer>
+    
+</body>
+</html>

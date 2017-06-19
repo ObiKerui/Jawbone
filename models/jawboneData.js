@@ -1,8 +1,52 @@
 var ids = require('../config').ids;
+var db = require('../db');
+var Schema = db.Schema;
 
-//
+//------------------------------------------------------
+//	KEEP A RECORD OF ALLOWED USERS OF THE SYSTEM FOR NOW
+//------------------------------------------------------
+var jbUserIdsSchema = new Schema({
+  admins: [ { type: String } ],
+  patients: [ { type: String } ],
+}, {
+  timestamps: true
+});
+
+//------------------------------------------------------
+//	JAWBONE USER ID MODEL OBJECT
+//------------------------------------------------------
+var UserIds = db.model('jbUserIds', jbUserIdsSchema);
+
+//------------------------------------------------------
+//	REMOVE JAWBONE IDS
+//------------------------------------------------------
+var removeIds = function(cb) {
+	UserIds.remove(function(err, result) {
+	    if(err) {
+	      cb(err);
+	    } else {
+	      cb(null, result);
+	    }
+	});
+};
+
+//------------------------------------------------------
+//	CREATE JAWBONE IDS
+//------------------------------------------------------
+var createIds = function(admins, patients, cb) {
+  	var newJbUserIds = new UserIds({ admins : admins, patients: patients });
+	newJbUserIds.save(function(err, newSavedUser) {
+	    if(err) {
+	      cb(err);
+	    } else {
+	      cb(null, newSavedUser);
+	    }
+	});
+};
+
+//------------------------------------------------------
 // initialise JAWBONE UP
-//
+//------------------------------------------------------
 var init = function(user) {
 
 	var options = {	
@@ -22,13 +66,40 @@ var validUser = function(user) {
 	return true;
 };
 
-var profile = function(user, cb) {
-	var up = init(user);
+// var profile = function(user, cb) {
+// 	var up = init(user);
+// 	up.me.get({}, function(err, profile) {
+// 		if(err) {
+// 			console.log('err retrieving profile: ' + err);
+// 		} else {
+// 			console.log('raw profile: ' + (profile));
+// 			try {
+//    				var jsonProfile = JSON.parse(profile);
+//    				cb(null, jsonProfile);
+//   			} catch (e) {
+//     			cb('error parsing jawbone data');
+//   			}			
+// 		}
+// 	});
+// };
+
+var profile = function(options, cb) {
+
+	//console.log('>>>options getting raw profile: ' + options.access_token);
+	var up = require('jawbone-up')(options);
+
+	// up.sleeps.get({ limit : 1000 }, function(err, sleeps) {
+	// 	var jsonSleeps = JSON.parse(sleeps);
+
+	// 	console.log('result of sleeps request (jsonSleeps): ' + JSON.stringify(jsonSleeps));				
+	// 	//console.log('result of sleeps request (jsonSleeps): ' + JSON.stringify(jsonSleeps, true, 3));				
+	// });
+
 	up.me.get({}, function(err, profile) {
 		if(err) {
 			console.log('err retrieving profile: ' + err);
 		} else {
-			console.log('raw profile: ' + (profile));
+			//console.log('raw profile retrieved: ' + (profile));
 			try {
    				var jsonProfile = JSON.parse(profile);
    				cb(null, jsonProfile);
@@ -38,6 +109,18 @@ var profile = function(user, cb) {
 		}
 	});
 };
+
+function paginate(array, page_size, offset, total) {
+	console.log('page size: %d offset: %d total: %d', page_size, offset, total);
+	offset = (offset < 0 ? 0 : offset);
+	page_size = (page_size < 0 ? 0 : page_size);
+	page_size = (page_size > total ? total : page_size);
+  	var end = (parseInt(offset) + parseInt(page_size));
+
+  console.log('start: %d end: %d', offset, end);
+
+  return array.slice(offset, end);
+}
 
 // 
 // get sleeps
@@ -49,7 +132,10 @@ var sleeps = function(user, params, cb) {
 		return cb('invalid user');
 	} 
 
+	//console.log('init user: ' + JSON.stringify(user));
+
 	var up = init(user);
+
 	up.sleeps.get({ limit : 1000 }, function(err, sleeps) {
 		if(err) {
 			console.log('err retrieving sleeps: ' + err);
@@ -57,15 +143,24 @@ var sleeps = function(user, params, cb) {
 		} else {
 			try {
 				var jsonSleeps = JSON.parse(sleeps);
-				console.log('result of sleeps request: ' + JSON.stringify(jsonSleeps, true, 3));
 
+				//console.log('result of sleeps request (jsonSleeps): ' + JSON.stringify(jsonSleeps, true, 3));
+				//console.log('>>>> sleeps access token : ' + JSON.stringify(user.jawboneData.access_token));
+
+				console.log('params: ' + JSON.stringify(params));
+				var total = jsonSleeps.data.items.length;
+				console.log('call paginate with total: ' + JSON.stringify(total));
+				var paginatedData = paginate(jsonSleeps.data.items, params.max, params.offset, total);
+				
 	  			result = {
 			      total: jsonSleeps.data.items.length,
 			      max: params.max,
 			      offset: params.offset,
 			      sortBy: params.sortBy,
-			      data: jsonSleeps.data.items
+			      data: paginatedData
 			    };
+
+				//console.log('result of sleeps request (result): ' + JSON.stringify(result, true, 3));
 
 			    cb(null, result);		
 			} catch(e) {
@@ -87,18 +182,18 @@ var sleepTicks = function(user, sleepId, cb) {
 
 	var up = init(user);
 
-	console.log('getting the sleep ticks: ' + sleepId);
+	//console.log('getting the sleep ticks: ' + sleepId);
 
 	up.sleeps.ticks({ xid : sleepId }, function(err, sleep) {
-		console.log('do we get here even?');
+		//console.log('do we get here even?');
 		if(err) {
 			console.log('err retrieving sleeps: ' + err);
 			cb(err);
 		} else {
-			console.log('the retrieved sleep: ' + sleep)
+			//console.log('the retrieved sleep: ' + sleep)
 			try {
 				var jsonSleep = JSON.parse(sleep);
-				console.log('result of sleep tick request: ' + JSON.stringify(jsonSleep, true, 3));
+				//console.log('result of sleep tick request: ' + JSON.stringify(jsonSleep, true, 3));
 
 	  			result = {
 			      data: jsonSleep
@@ -123,18 +218,18 @@ var sleepDetails = function(user, sleepId, cb) {
 
 	var up = init(user);
 
-	console.log('getting the sleep ticks: ' + sleepId);
+	//console.log('getting the sleep ticks: ' + sleepId);
 
 	up.sleeps.get({ xid : sleepId }, function(err, sleep) {
-		console.log('do we get here even?');
+		//console.log('do we get here even?');
 		if(err) {
 			console.log('err retrieving sleeps: ' + err);
 			cb(err);
 		} else {
-			console.log('the retrieved sleep: ' + sleep)
+			//console.log('the retrieved sleep: ' + sleep)
 			try {
 				var jsonSleep = JSON.parse(sleep);
-				console.log('result of sleep tick request: ' + JSON.stringify(jsonSleep, true, 3));
+				//console.log('result of sleep tick request: ' + JSON.stringify(jsonSleep, true, 3));
 
 	  			result = {
 			      data: jsonSleep
@@ -209,8 +304,11 @@ var cardiac = function(user, params, cb) {
 			cb(null, result);
 		}
 	})
-}
+};
 
+module.exports.UserIds = UserIds;
+module.exports.removeIds = removeIds;
+module.exports.createIds = createIds;
 module.exports.init = init;
 module.exports.profile = profile;
 module.exports.sleeps = sleeps;

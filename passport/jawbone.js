@@ -1,6 +1,7 @@
 var JawboneStrategy = require('passport-oauth').OAuth2Strategy;
 var jbbuilder = require('./jawboneProfile');
 var user = require('../models/user');
+var groups = require('../models/jbGroup');
 var jawboneMgr = require('../models/jawboneData');
 
 /*
@@ -63,10 +64,144 @@ var storeUpData = function(data, callback) {
   });
 }
 
+function isSuperUserID(jawboneId) {
+  console.log('the users jawbone id: ' + JSON.stringify(jawboneId));
+
+  var allowedIds = [
+    '-9VI7q6PJcoicKgQZ-kCGA',
+    '-9VI7q6PJcrBConjPPsftA'
+  ];
+
+  for(var i = 0; i < allowedIds.length; i++) {
+    if(allowedIds[i] === jawboneId) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function createRoles(profileData) {
+  var roles = ['ROLE_USER'];
+  if(isSuperUserID(profileData.data.xid)) {
+    roles.push('ROLE_ADMIN');
+  }
+  return roles;
+}
+
 /*
 *   PASSPORT JAWBONE STRATEGY
 */
 module.exports = function(passport, configIds) {
+
+  passport.use('jawbone', new JawboneStrategy({
+    clientID: configIds.jawboneAuth.clientID,
+    clientSecret: configIds.jawboneAuth.clientSecret,
+    authorizationURL: configIds.jawboneAuth.authorizationURL,
+    tokenURL: configIds.jawboneAuth.tokenURL,
+    callbackURL: configIds.jawboneAuth.callbackURL,
+    passReqToCallback: true
+  }, function(req, token, refreshToken, profile, done) {
+
+    var options = {
+      access_token: token,
+      client_id: configIds.jawboneAuth.clientID,
+      client_secret: configIds.jawboneAuth.clientSecret
+    };
+
+    //up = require('jawbone-up')(options);
+    // req.user.jawboneData = req.user.jawboneData || {};
+    // req.user.jawboneData.access_token = token;
+    // req.user.jawboneData.refresh_token = refreshToken;
+
+    //console.log('Here or what? AUTHENTICATE WITH JAWBONE');
+
+    // get the user's jawbone profile - pain in the ass this was't returned in their profile above!
+    jawboneMgr.profile(options, function(profileErr, profileResult) {
+      if(profileErr) {
+        console.log('error getting the user profile: ' + profileErr);
+        return done(profileErr);
+      }
+
+      // create new jawbone credentials
+      var jawboneData = {
+        jawboneId : profileResult.data.xid,
+        access_token : token,
+        refresh_token : refreshToken
+      };
+
+      console.log('got the profile: ' + JSON.stringify(jawboneData.jawboneId));
+
+      // get user by jawbone-id
+      user.getByJawboneId(jawboneData.jawboneId, function(err, userResult) {
+        if(err) {
+          console.log('error retrieving user by jawbone id: ' + err);
+          return done(err);          
+        } else if(!userResult) {
+
+          console.log('the user is null - create one');
+          var roles = createRoles(profileResult);
+
+          user.create(profileResult.data, jawboneData, roles, function(createErr, createdUser) {
+            if(createErr) {
+              console.log('error creating user : ' + createErr);
+              return done(createErr);
+            } else {
+              req.user = createdUser;
+
+              // add the user to the default group
+              groups.addMemberToDefault(createdUser, function(err, result) {
+                if(err) {
+                  console.log('error adding created user to default group: ' + err);
+                } else {
+                  console.log('added created user to default group');
+                }
+                return done(null, createdUser);
+              });
+            }
+          });
+        } else {
+          // found user in db
+          console.log('found this user: ' + JSON.stringify(userResult));
+          userResult.jawboneData = jawboneData;
+
+          user.update(jawboneData.jawboneId, userResult, function(updatedErr, updatedUser) {
+            if(updatedErr) {
+              return done(updatedErr);
+            } else {
+              console.log('updated user to: ' + JSON.stringify(updatedUser));
+              req.user = updatedUser;
+              return done(null, updatedUser);              
+            }
+          });
+        }
+      });
+
+      //console.log('got the user profile: ' + JSON.stringify(profileResult));
+  
+      // fill in the profile fields
+      //req.user.jawboneData.jawboneId = profileResult.data.xid;
+  
+      // we may not want to store these for privacy reasons
+      // req.user.profile = req.user.profile || {};
+      // req.user.profile.weight = profileResult.data.weight;
+      // req.user.profile.img = profileResult.data.image;
+      // req.user.profile.first = profileResult.data.first;
+      // req.user.profile.last = profileResult.data.last;
+      // req.user.profile.height = profileResult.data.height;
+      // req.user.profile.gender = profileResult.data.gender;
+
+      // update the user
+      // user.update(req.user.email, req.user, function(updateErr, result) {
+      //   if(updateErr) {
+      //     console.log('error updating user: ' + updateErr);
+      //     return done(updateErr);
+      //   } else {
+      //     console.log('updated user: ' + JSON.stringify(result));
+      //     return done(null, result);
+      //   }
+      // });
+    });
+  }));
 
   // console.log('client id: ' + configIds.jawboneAuth.clientID);
   // console.log('client secret: ' + configIds.jawboneAuth.clientSecret);
@@ -74,59 +209,59 @@ module.exports = function(passport, configIds) {
   // console.log('token url: ' + configIds.jawboneAuth.tokenURL);
   // console.log('cb url: ' + configIds.jawboneAuth.callbackURL);
 
-	passport.use('jawbone', new JawboneStrategy({
-	  clientID: configIds.jawboneAuth.clientID,
-	  clientSecret: configIds.jawboneAuth.clientSecret,
-	  authorizationURL: configIds.jawboneAuth.authorizationURL,
-	  tokenURL: configIds.jawboneAuth.tokenURL,
-	  callbackURL: configIds.jawboneAuth.callbackURL,
-    passReqToCallback: true
-	}, function(req, token, refreshToken, profile, done) {
+	// passport.use('jawbone', new JawboneStrategy({
+	//   clientID: configIds.jawboneAuth.clientID,
+	//   clientSecret: configIds.jawboneAuth.clientSecret,
+	//   authorizationURL: configIds.jawboneAuth.authorizationURL,
+	//   tokenURL: configIds.jawboneAuth.tokenURL,
+	//   callbackURL: configIds.jawboneAuth.callbackURL,
+ //    passReqToCallback: true
+	// }, function(req, token, refreshToken, profile, done) {
 
-	  var options = {
-	    access_token: token,
-	    client_id: configIds.jawboneAuth.clientID,
-	    client_secret: configIds.jawboneAuth.clientSecret
-	  };
+	//   var options = {
+	//     access_token: token,
+	//     client_id: configIds.jawboneAuth.clientID,
+	//     client_secret: configIds.jawboneAuth.clientSecret
+	//   };
 
-	  //up = require('jawbone-up')(options);
-    req.user.jawboneData = req.user.jawboneData || {};
-    req.user.jawboneData.access_token = token;
-    req.user.jawboneData.refresh_token = refreshToken;
+	//   //up = require('jawbone-up')(options);
+ //    req.user.jawboneData = req.user.jawboneData || {};
+ //    req.user.jawboneData.access_token = token;
+ //    req.user.jawboneData.refresh_token = refreshToken;
 
-    console.log('Here or what? AUTHENTICATE WITH JAWBONE');
+ //    console.log('Here or what? AUTHENTICATE WITH JAWBONE');
 
-    // get the user's jawbone profile - pain in the ass this was't returned in their profile above!
-    jawboneMgr.profile(req.user, function(profileErr, profileResult) {
-      if(profileErr) {
-        console.log('error getting the user profile: ' + profileErr);
-        return done(profileErr);
-      }
+ //    // get the user's jawbone profile - pain in the ass this was't returned in their profile above!
+ //    jawboneMgr.profile(req.user, function(profileErr, profileResult) {
+ //      if(profileErr) {
+ //        console.log('error getting the user profile: ' + profileErr);
+ //        return done(profileErr);
+ //      }
 
-      //console.log('got the user profile: ' + JSON.stringify(profileResult));
+ //      //console.log('got the user profile: ' + JSON.stringify(profileResult));
   
-      // fill in the profile fields
-      req.user.jawboneData.jawboneId = profileResult.data.xid;
+ //      // fill in the profile fields
+ //      req.user.jawboneData.jawboneId = profileResult.data.xid;
   
-      // we may not want to store these for privacy reasons
-      req.user.profile = req.user.profile || {};
-      req.user.profile.weight = profileResult.data.weight;
-      req.user.profile.img = profileResult.data.image;
-      req.user.profile.first = profileResult.data.first;
-      req.user.profile.last = profileResult.data.last;
-      req.user.profile.height = profileResult.data.height;
-      req.user.profile.gender = profileResult.data.gender;
+ //      // we may not want to store these for privacy reasons
+ //      req.user.profile = req.user.profile || {};
+ //      req.user.profile.weight = profileResult.data.weight;
+ //      req.user.profile.img = profileResult.data.image;
+ //      req.user.profile.first = profileResult.data.first;
+ //      req.user.profile.last = profileResult.data.last;
+ //      req.user.profile.height = profileResult.data.height;
+ //      req.user.profile.gender = profileResult.data.gender;
 
-      // update the user
-      user.update(req.user.email, req.user, function(updateErr, result) {
-        if(updateErr) {
-          console.log('error updating user: ' + updateErr);
-          return done(updateErr);
-        } else {
-          console.log('updated user: ' + JSON.stringify(result));
-          return done(null, result);
-        }
-      });
-    });
-	}));
+ //      // update the user
+ //      user.update(req.user.email, req.user, function(updateErr, result) {
+ //        if(updateErr) {
+ //          console.log('error updating user: ' + updateErr);
+ //          return done(updateErr);
+ //        } else {
+ //          console.log('updated user: ' + JSON.stringify(result));
+ //          return done(null, result);
+ //        }
+ //      });
+ //    });
+	// }));
 }

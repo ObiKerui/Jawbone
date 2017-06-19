@@ -23,7 +23,7 @@ var JBData = {
 	    	if(err) {				
 				return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});
 	    	} 
-	    	console.log('got sleeps: ' + JSON.stringify(sleeps));
+	    	//console.log('got sleeps: ' + JSON.stringify(sleeps));
 
 	    	res.json(sleeps);
 	    })
@@ -43,7 +43,7 @@ var JBData = {
 			if(err) {
 				return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});	
 			}
-			console.log('got sleep: ' + JSON.stringify(sleep));
+			//console.log('got sleep: ' + JSON.stringify(sleep));
 
 			res.json(sleep);
 		})
@@ -56,7 +56,7 @@ var JBData = {
 			if(err) {
 				return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});	
 			}
-			console.log('got sleep: ' + JSON.stringify(sleep));
+			//console.log('got sleep: ' + JSON.stringify(sleep));
 
 			res.json(sleep);
 		})

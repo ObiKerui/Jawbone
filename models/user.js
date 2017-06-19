@@ -4,42 +4,85 @@ var Schema = db.Schema;
 
 var util = require('util');
 
+var jawboneDataSchema = new Schema({
+  jawboneId : { type: String, required: false, unique: false },
+  access_token : { type: String, required: false },
+  refresh_token : { type: String, required: false }
+});
+
+var statsSchema = new Schema({
+  nbrGroups: { type: Number, required: false },
+  nbrPatients: { type: Number, required: false }  
+});
+
+var profileSchema = new Schema({
+  img: { data: Buffer, contentType: String, required: false },
+  first: { type: String, required: false },
+  last: { type: String, required: false },
+  weight: { type: String, required: false },
+  height: { type: String, required: false },   
+  gender: { type: String, required: false }, 
+  phone: { type: String, required: false }, 
+  dateOfBirth: { type: Date, required: false },
+  bio: { type: String, required: false },
+  homepage: { type: String, required: false },
+  timezone: { type: String, required: false },
+  country: { type: String, required: false }    
+});
+
 /*
 * User Schema
 */
 var user = new Schema({
   email: { type: String, required: false, unique: false },
-	password: { type: String, required: false, select: false },
+  password: { type: String, required: false, select: false },
   socialMediaUser : { type: String, required: false },  
-	roles: [{ type: String, required: true }],
+  roles: [{ type: String, required: true }],
   groups: [{ type: Schema.Types.ObjectId, ref: 'JbGroup' }],
   notes: [{ type: Schema.Types.ObjectId, ref: 'JbNote' }], 
-  jawboneData : {
-    jawboneId : { type: String, required: false, unique: false },
-    access_token : { type: String, required: false },
-    refresh_token : { type: String, required: false }
-  },
-  stats : {
-    nbrGroups: { type: Number, required: false },
-    nbrPatients: { type: Number, required: false }
-  },
-	profile: {
-		img: { data: Buffer, contentType: String, required: false },
-		first: { type: String, required: false },
-    last: { type: String, required: false },
-    weight: { type: String, required: false },
-    height: { type: String, required: false },   
-    gender: { type: String, required: false }, 
-		phone: { type: String, required: false },	
-		dateOfBirth: { type: Date, required: false },
-		bio: { type: String, required: false },
-		homepage: { type: String, required: false },
-		timezone: { type: String, required: false },
-		country: { type: String, required: false }		
-	}
+  jawboneData : jawboneDataSchema,
+  stats : statsSchema,
+  profile: profileSchema
 }, {
   timestamps: true
 });
+
+/*
+* User Schema
+*/
+// var user = new Schema({
+//   email: { type: String, required: false, unique: false },
+// 	password: { type: String, required: false, select: false },
+//   socialMediaUser : { type: String, required: false },  
+// 	roles: [{ type: String, required: true }],
+//   groups: [{ type: Schema.Types.ObjectId, ref: 'JbGroup' }],
+//   notes: [{ type: Schema.Types.ObjectId, ref: 'JbNote' }], 
+//   jawboneData : {
+//     jawboneId : { type: String, required: false, unique: false },
+//     access_token : { type: String, required: false },
+//     refresh_token : { type: String, required: false }
+//   },
+//   stats : {
+//     nbrGroups: { type: Number, required: false },
+//     nbrPatients: { type: Number, required: false }
+//   },
+// 	profile: {
+// 		img: { data: Buffer, contentType: String, required: false },
+// 		first: { type: String, required: false },
+//     last: { type: String, required: false },
+//     weight: { type: String, required: false },
+//     height: { type: String, required: false },   
+//     gender: { type: String, required: false }, 
+// 		phone: { type: String, required: false },	
+// 		dateOfBirth: { type: Date, required: false },
+// 		bio: { type: String, required: false },
+// 		homepage: { type: String, required: false },
+// 		timezone: { type: String, required: false },
+// 		country: { type: String, required: false }		
+// 	}
+// }, {
+//   timestamps: true
+// });
 
 user.pre('remove', function(next) {
   // 'this' is the client being removed. Provide callbacks here if you want
@@ -109,22 +152,60 @@ var User = db.model('User', user);
 /*
 * Create new user in the database and return its id
 */
-var create = function(prof, data, cb) {
+// var create = function(prof, data, cb) {
+
+//   var newProf = { img: prof.img, first: prof.first, last: prof.last, weight: prof.weight, height: prof.height, gender: prof.gender };
+//   var neObj = new User({jawboneId : prof.xid, email: prof.email, password: prof.password, profile : newProf, jbdata : data});
+
+//   bcrypt.hash(neObj.password, 10, function(err, hash) {
+//     neObj.password = hash;
+//     neObj.save(function (err, result) {
+//       if (err) {
+//         cb(err);
+//       } else {
+//           cb(null, result);
+//       }
+//     });
+//   });
+//   //console.log('create a new user: ' + JSON.stringify(neObj));
+// };
+
+var create = function(prof, jawboneData, roles, cb) {
 
   var newProf = { img: prof.img, first: prof.first, last: prof.last, weight: prof.weight, height: prof.height, gender: prof.gender };
-  var neObj = new User({jawboneId : prof.xid, email: prof.email, password: prof.password, profile : newProf, jbdata : data});
+  var newUser = new User({ profile : newProf, roles: roles, jawboneData : jawboneData });
 
-  bcrypt.hash(neObj.password, 10, function(err, hash) {
-    neObj.password = hash;
-    neObj.save(function (err, result) {
-      if (err) {
-        cb(err);
-      } else {
-          cb(null, result);
-      }
-    });
+  newUser.save(function(err, newSavedUser) {
+    if(err) {
+      cb(err);
+    } else {
+      cb(null, newSavedUser);
+    }
   });
+
+  // bcrypt.hash(neObj.password, 10, function(err, hash) {
+  //   neObj.password = hash;
+  //   neObj.save(function (err, result) {
+  //     if (err) {
+  //       cb(err);
+  //     } else {
+  //         cb(null, result);
+  //     }
+  //   });
+  // });
   //console.log('create a new user: ' + JSON.stringify(neObj));
+};
+
+var update = function(id, updatedUser, cb) {
+  var upQuery = { 'jawboneData.jawboneId' : id }; 
+  User.findOneAndUpdate(upQuery, updatedUser, {new: true, upsert: true, setDefaultsOnInsert: true}, function(err, result) {
+    if(err) {
+      console.log('error updating user: ' + err);
+      return cb(err);
+    }
+    console.log('udpated user: ' + result);
+    return cb(null, result);    
+  });  
 };
 
 var createRaw = function(email, pwd, cb) {
@@ -159,7 +240,7 @@ var get = function(id, cb) {
 };
 
 var getByJawboneId = function(jbId, cb) {
-  var q = User.findOne({jawboneId : jbId}).lean();
+  var q = User.findOne({ 'jawboneData.jawboneId' : jbId }).lean();
   q.exec(function(err, result) {
     if(err) {
       return cb(err);
@@ -209,19 +290,19 @@ var all = function(params, cb) {
   });
 };
 
-var update = function(email, newData, cb) {
-  // todo must belong to me - event should have owner field 
-  var upQuery = { email : email }; 
-  var update = newData;
-  User.findOneAndUpdate(upQuery, update, {new: true, upsert: true, setDefaultsOnInsert: true}, function(err, result) {
-    if(err) {
-      console.log('error updating user: ' + err);
-      return cb(err);
-    }
-    console.log('udpated user: ' + result);
-    return cb(null, result);    
-  });
-};
+// var update = function(email, newData, cb) {
+//   // todo must belong to me - event should have owner field 
+//   var upQuery = { email : email }; 
+//   var update = newData;
+//   User.findOneAndUpdate(upQuery, update, {new: true, upsert: true, setDefaultsOnInsert: true}, function(err, result) {
+//     if(err) {
+//       console.log('error updating user: ' + err);
+//       return cb(err);
+//     }
+//     console.log('udpated user: ' + result);
+//     return cb(null, result);    
+//   });
+// };
 
 /*
 * Remove user from database

@@ -83,7 +83,7 @@
           onSelect : function(element, index) {
             activateEditMode(element);
           },
-          headerTpl : 'app/groups/group-manager-v3/_group-list-action-bar-tpl.html'           
+          headerTpl : 'app/admins/admin-manager-v3/_admin-list-action-bar-tpl.html'           
         });
       }
 

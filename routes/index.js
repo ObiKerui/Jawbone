@@ -88,12 +88,10 @@ module.exports = function(app, passport) {
 	// callback for jawbone to complete the 3 way authentication
 	//------------------------------------------------------------------------
 	app.get('/sleepdata', [
-			isLoggedIn, 
 			passport.authenticate('jawbone', { scope: jbbuilder.scopes, failureRedirect: '/'})
 		], 
 		function(req, res) {
-			console.log('go to the sleepdata page...');
-	    	res.redirect('/userdata');
+			res.redirect('/superuser-gateway');
 	  	}
 	);
 
@@ -101,8 +99,13 @@ module.exports = function(app, passport) {
 	// render the user data page - must be logged in and a valid jawbone user
 	// create fake data to be removed eventually
 	//------------------------------------------------------------------------	
-	app.get('/userdata', [ isLoggedIn, isJBUser, createFakeData ], function(req, res) {
-			console.log('render the userdata...');
+	// app.get('/userdata', [ isLoggedIn, isJBUser, createFakeData ], function(req, res) {
+	// 		console.log('render the userdata...');
+	// 		res.render('pages/userdata', { user: req.user});
+	// 	}
+	// );
+	app.get('/userdata', [ isLoggedIn ], function(req, res) {
+			//console.log('render the userdata...');
 			res.render('pages/userdata', { user: req.user});
 		}
 	);
@@ -110,8 +113,18 @@ module.exports = function(app, passport) {
 	//------------------------------------------------------------------------
 	// render the super user data page - must be logged in and authorized
 	//------------------------------------------------------------------------	
+	app.get('/superuser-gateway', [isLoggedIn, isAuthorized], function(req, res) {
+		//console.log('render the superuser...');
+		//res.render('pages/superuser', { user: req.user });
+		res.render('pages/superuser-gateway', { user: req.user });
+	});
+
+	//------------------------------------------------------------------------
+	// render the super user data page - must be logged in and authorized
+	//------------------------------------------------------------------------	
 	app.get('/superuser', [isLoggedIn, isAuthorized], function(req, res) {
-		console.log('render the superuser...');
+		//console.log('render the superuser...');
+		//res.render('pages/superuser', { user: req.user });
 		res.render('pages/superuser', { user: req.user });
 	});
 
@@ -129,6 +142,20 @@ module.exports = function(app, passport) {
 	  err.status = 404;
 	  next(err);
 	});
+
+	function assignRole(user, role) {
+		var roles = user.roles || [];
+		var roles = Array.isArray(roles) ? roles : [roles];
+
+		for(var i = 0; i < roles.length; i++) {
+			// role already exists
+			if(roles[i] === role) {
+				return;
+			}
+		};
+		// add the role
+		user.roles.push(role);
+	}
 
 	// route middleware to make sure a user is logged in
 	function isLoggedIn(req, res, next) {
@@ -154,9 +181,9 @@ module.exports = function(app, passport) {
 		};
 
 		// user is not authorized to login as superuser
-		console.log('User not authorized. Redirect to home');
+		console.log('User not authorized. Redirect to home : ' + JSON.stringify(roles));
 
-		res.redirect('/');
+		res.redirect('/userdata');
 	}
 
 	function isJBUser(req, res, next) {
