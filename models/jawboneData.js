@@ -35,11 +35,12 @@ var removeIds = function(cb) {
 //------------------------------------------------------
 var createIds = function(admins, patients, cb) {
   	var newJbUserIds = new UserIds({ admins : admins, patients: patients });
-	newJbUserIds.save(function(err, newSavedUser) {
+	newJbUserIds.save(function(err, newSavedIds) {
 	    if(err) {
-	      cb(err);
+	    	cb(err);
 	    } else {
-	      cb(null, newSavedUser);
+	    	console.log('new saved ids : ' + JSON.stringify(newSavedIds))
+	      	cb(null, newSavedIds.patients, newSavedIds.admins);
 	    }
 	});
 };
@@ -51,9 +52,12 @@ var getIds = function(cb) {
 	UserIds.find({}, function(err, ids) {
 	    if(err) {
 	      	return cb(err);
-	    } else {	    	
+	    } else if(ids.length === 0) {	    	
+	    	console.log('ids undefined');
+	    	return cb(null, null);
+	    } else {
 	    	console.log('ids returned: ' + JSON.stringify(ids[0]));
-	      	return cb(null, ids[0].patients, ids[0].admins);
+	      	return cb(null, ids[0].patients, ids[0].admins);	    	
 	    }
 	});
 };

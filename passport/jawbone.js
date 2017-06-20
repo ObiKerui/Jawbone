@@ -171,6 +171,8 @@ module.exports = function(passport, configIds) {
 
             console.log('found this user: ' + JSON.stringify(userResult));
             userResult.jawboneData = jawboneData;
+            userResult.roles = roles;
+            console.log('found this user: ' + JSON.stringify(userResult));
 
             user.update(jawboneData.jawboneId, userResult, function(updatedErr, updatedUser) {
               if(updatedErr) {

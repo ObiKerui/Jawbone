@@ -31,5 +31,18 @@ module.exports = {
 	        'clientSecret'  : process.env.GO_CLIENT_SECRET,
 	        'callbackURL'   : process.env.GO_CB_URL
 	    }
-	}
+	},
+
+	//--------------------------------------------------------------
+	// JAWBONE IDS OF ADMINISTRATORS
+	//--------------------------------------------------------------
+	jboneAdminIds : [
+		'-9VI7q6PJcrBConjPPsftA'
+	],
+
+	//--------------------------------------------------------------
+	// JAWBONE IDS OF PATIENTS
+	//--------------------------------------------------------------
+	jbonePatientIds : [
+	]	
 };

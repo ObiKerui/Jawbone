@@ -5,6 +5,7 @@ var Users = require('./models/user').User;
 var Groups = require('./models/jbGroup');
 var JBCtrl = require('./models/jawboneData');
 var fs = require('fs');
+var config = require('./config');
 
 populateDB = function(dataFile, modelName, num, cb) {
 
@@ -72,10 +73,10 @@ membersArr = [];
 //--------------------------------------------------------------
 // JAWBONE IDS OF ADMINISTRATORS
 //--------------------------------------------------------------
-jboneAdminIds = [
-	'-9VI7q6PJcoicKgQZ-kCGA',
-	'-9VI7q6PJcrBConjPPsftA'
-];
+// jboneAdminIds = [
+// 	'-9VI7q6PJcoicKgQZ-kCGA',
+// 	'-9VI7q6PJcrBConjPPsftA'
+// ];
 
 //--------------------------------------------------------------
 // JAWBONE IDS OF PATIENTS
@@ -189,20 +190,21 @@ setUpJawboneIds = function(cb) {
 	JBCtrl.getIds(function(err, authUsers, authAdmins) {
 		if(err) {
 			console.log('error getting jawboneIds: ' + err);
+			return cb(err);
 		} else if(authUsers === null) {
-			JBCtrl.createIds(jboneAdminIds, jbonePatientIds, function(createErr, createdIds) {
+			JBCtrl.createIds(config.jboneAdminIds, config.jbonePatientIds, function(createErr, createdUsers, createdAdmins) {
 				if(createErr) {
 					console.log('error creating jawbone ids: ' + err);
-					cb(err);
+					return cb(err);
 				} else {
-					console.log('created jawbone ids: ' + JSON.stringify(createdIds));
-					cb(null, createdIds);
+					console.log('created jawbone ids: %s %s', JSON.stringify(createdUsers), JSON.stringify(createdAdmins));
+					return cb(null, createdUsers, createdAdmins);
 				}
 			});
 
 		} else {
 			console.log('ids exist : patients: %s admins: %s', JSON.stringify(authUsers), JSON.stringify(authAdmins));
-			cb(null, authUsers, authAdmins);
+			return cb(null, authUsers, authAdmins);
 		}
 	});
 };
