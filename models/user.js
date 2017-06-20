@@ -228,13 +228,13 @@ var createRaw = function(email, pwd, cb) {
 */
 var get = function(id, cb) {
 
-    var q = User.findOne({_id : id}).lean();
+    var q = User.findOne({ _id : id}).lean();
     q.exec(function(err, result) {
       if(err) {
         console.log('err is  : ' + err);
         return cb(err);
       }
-      //console.log('send result from get function: ' + result);
+      console.log('found user: ' + result);
       return cb(null, result);
     });
 };

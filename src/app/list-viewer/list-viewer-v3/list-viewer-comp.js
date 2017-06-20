@@ -34,6 +34,7 @@
           cb();
         },
         headerTpl : config.headerTpl || null,
+        heading : config.heading || null,
         canEdit : config.canEdit || false
       };
 
@@ -73,6 +74,10 @@
 
           populate(objInst.elements, iface.config.getElementsObj, cb);
           objInst.state = 'done';
+        },
+
+        getHeading: function() {
+          return iface.config.heading;
         },
 
         getState: function() {

@@ -1,7 +1,7 @@
 <loader obj="ctrl.obj.loaderMessage" ng-show="ctrl.obj.api.getState() === 'loading'"></loader>
 <div class="list-view-box animated" ng-show="ctrl.obj.api.getState() === 'done'">
 	<div class="heading">
-		{{ctrl.obj.header.heading}}
+		{{ctrl.obj.api.getHeading()}}
 	</div>
 	<div class="filter-container" ng-show='ctrl.hasFilter'>
 		<input type="text" class="form-control" placeholder="search for..." ng-model='searchtext'></input>
@@ -29,8 +29,9 @@
 		</span>
 	</div>
 </div>
-<div>
+<!-- <div>
 	<h3>debugging</h3>
 	<p>nbr: {{ctrl.obj.elements.length}}</p>
 	<p>scroller: {{ctrl.scroller | json}}</p>
 </div>
+ -->

@@ -1,9 +1,24 @@
+var User = require('../models/user');
 var JBDataModel = require('../models/user').JBData;
 var Groups = require('../models/jbGroup');
 var Jawbone = require('../models/jawboneData');
 var ErrorHandler = require('./error-handler');
 
 // var ErrorHandler = require('./error-handler');
+
+function getUser(req, cb) {
+	if(req.params.id) {
+		User.getByJawboneId(req.params.id, function(err, user) {
+			if(err) {
+				return cb(null);
+			} else {
+				return cb(null, user);
+			}
+		});
+	} else {
+		cb(null, req.user);
+	}
+}
 
 var JBData = {
  
@@ -16,17 +31,31 @@ var JBData = {
 	      	sortBy : req.query.sortBy
 	    };
 
-	    //console.log('request for sleeps id : ' + req.params.id);
+	    console.log('request for sleeps id : ' + req.params.id);
+	    getUser(req, function(err, user) {
+	    	if(err) {
+	    		return res.status(400).send({  message: ErrorHandler.getErrorMessage(err) });
+	    	} else {
+			    Jawbone.sleeps(user, params, function(err, sleeps) {
+			    	if(err) {				
+						return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});
+			    	} 
+			    	//console.log('got sleeps: ' + JSON.stringify(sleeps));
+
+			    	res.json(sleeps);
+			    })
+	    	}
+	    });
 	    // console.log('sleeps max : ' + params.max + ' offset: ' + params.offset + ' sortBy: ' + params.sortBy);
 
-	    Jawbone.sleeps(req.user, params, function(err, sleeps) {
-	    	if(err) {				
-				return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});
-	    	} 
-	    	//console.log('got sleeps: ' + JSON.stringify(sleeps));
+	   //  Jawbone.sleeps(req.user, params, function(err, sleeps) {
+	   //  	if(err) {				
+				// return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});
+	   //  	} 
+	   //  	//console.log('got sleeps: ' + JSON.stringify(sleeps));
 
-	    	res.json(sleeps);
-	    })
+	   //  	res.json(sleeps);
+	   //  })
 
 	    // JBDataModel.sleeps(req.user, params, function(err, sleeps) {
 	    //   if(err) {

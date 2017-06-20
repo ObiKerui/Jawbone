@@ -97,8 +97,8 @@
 
       function activateEditModeFtn(selectedPatient) {
         objInst.mode = 'edit';
-        // objInst.selectedPatient = selectedPatient.config.data;
-        // var patientId = selectedPatient.config.data;
+        console.log('selected patient: ' + JSON.stringify(selectedPatient));
+        objInst.selectedPatient = selectedPatient;
 
         objInst.sleepsChartInterface = new SleepsChartInterface({
           patient : selectedPatient,

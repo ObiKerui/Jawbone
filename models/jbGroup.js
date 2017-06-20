@@ -283,7 +283,8 @@ var members = function(groupId, params, cb) {
   var max = parseInt(parseInt(params.offset) + parseInt(params.max));
 
   var getGroup = Group.findOne({_id : groupId });
-  var getMembers = Group.findOne({_id : groupId}, { members: { $slice:[offset, max]}}).populate('members.user', '-jawboneData').lean();
+  //var getMembers = Group.findOne({_id : groupId}, { members: { $slice:[offset, max]}}).populate('members.user', '-jawboneData').lean();
+  var getMembers = Group.findOne({_id : groupId}, { members: { $slice:[offset, max]}}).populate('members.user').lean();
   
   getGroup.exec(function(getGroupErr, group) { // to discover the size of members
     if(getGroupErr) {
@@ -320,7 +321,8 @@ var admins = function(groupId, params, cb) {
   var max = parseInt(parseInt(params.offset) + parseInt(params.max));
 
   var getGroup = Group.findOne({_id : groupId });
-  var getMembers = Group.findOne({_id : groupId}, { admins: { $slice:[offset, max]}}).populate('admins.user', '-jawboneData').lean();
+  //var getMembers = Group.findOne({_id : groupId}, { admins: { $slice:[offset, max]}}).populate('admins.user', '-jawboneData').lean();
+  var getMembers = Group.findOne({_id : groupId}, { admins: { $slice:[offset, max]}}).populate('admins.user').lean();
   
   getGroup.exec(function(getGroupErr, group) { // to discover the size of members
     if(getGroupErr) {

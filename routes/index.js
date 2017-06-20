@@ -28,7 +28,7 @@ module.exports = function(app, passport) {
 	app.get('/groups/:id/admins', isLoggedIn, groupCtrl.getAdmins);
 
 	app.get('/sleeps/me', isLoggedIn, JBDataCtrl.getSleeps);
-	app.get('/sleeps/:id', isLoggedIn, JBDataCtrl.getSleeps);
+	app.get('/sleeps/:id', isLoggedIn, isAuthorized, JBDataCtrl.getSleeps);
 	app.get('/sleeps/ticks/:id', isLoggedIn, JBDataCtrl.getSleepTicks);
 	app.get('/sleeps/details/:id', isLoggedIn, JBDataCtrl.getSleepDetails);
 
@@ -176,6 +176,7 @@ module.exports = function(app, passport) {
 
 		for(var i = 0; i < roles.length; i++) {
 			if(roles[i] === 'ROLE_ADMIN') {
+				console.log('user is authorized');
 				return next();
 			}
 		};

@@ -1,4 +1,4 @@
-<div class="patient-area" ng-if='ctrl.obj.api.getMode() === "view"'>
+<div class="panel-area" ng-if='ctrl.obj.api.getMode() === "view"'>
 
 	<list-viewer-v3
 		iface='ctrl.obj.patientsListInterface'>
@@ -6,9 +6,9 @@
 
 </div>
 
-<div class="patient-area" ng-if='ctrl.obj.api.getMode() === "edit"'>
+<div class="panel-area" ng-if='ctrl.obj.api.getMode() === "edit"'>
 
-	<div class="patient-header">
+	<div class="panel-header">
 		<div class="patient-info">
 			<img ng-src="{{ctrl.obj.selectedPatient.image | defaultPatient }}" height='100px' width='100px'></img>
 			<div class="user-details">
@@ -33,11 +33,18 @@
 			</li>
 			<li>			
 				<div class="btn-group" style="float: right;">
-					<div class="btn btn-default" ng-click='ctrl.obj.api.setViewMode()'>
-						<span class="glyphicon glyphicon-pencil faded-glyph"></span> edit group
+					<div class="btn btn-default" ng-click='ctrl.obj.api.setViewMode()' ng-disabled='true'>
+						<span class="glyphicon glyphicon-pencil faded-glyph"></span> edit patient
+					</div>
+					<div class="btn btn-default" ng-disabled="true">&nbsp;</div>					
+					<div class="btn btn-default" ng-click='ctrl.obj.api.setViewMode()' ng-disabled='true'>
+						<span class="glyphicon glyphicon-pencil faded-glyph"></span> show notes
+					</div>
+					<div class="btn btn-default" ng-disabled="true">&nbsp;</div>					
+					<div class="btn btn-default" ng-click='ctrl.obj.api.setViewMode()' ng-disabled='true'>
+						<span class="glyphicon glyphicon-pencil faded-glyph"></span> download data
 					</div>
 				</div>
-				<div style="clear: both;"></div> 	
 			</li>
 		</ul>
 	</div>

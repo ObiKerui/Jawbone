@@ -20,6 +20,7 @@
       var profile = user.profile || {};
 
       objInst._id = data._id || null;
+      objInst.jawboneId = user.jawboneData.jawboneId || null;
       objInst.email = data.user.email || null;
       objInst.first = profile.first || null;
       objInst.last = profile.last || null;    

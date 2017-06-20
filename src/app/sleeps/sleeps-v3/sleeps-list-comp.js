@@ -31,7 +31,11 @@
       var config = config || {};
 
       var userId = config.userId || null;
-      ifaceInst.config.getElementsObj = JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps', userId));
+      var patient = config.patient || {};
+      var jawboneId = patient.jawboneId || null;
+      $log.info('the patient passed to sleep list is : ' + JSON.stringify(patient));
+      $log.info('while the user id is: ' + userId);
+      ifaceInst.config.getElementsObj = JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps', jawboneId));
       ifaceInst.config.makeListElementFtn = function(listData) {
         return new ListViewerElemInterface({
           api : new ListElemAPI(listData),

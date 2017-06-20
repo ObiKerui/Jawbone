@@ -69,7 +69,8 @@
 		        onSelect : function(element, index) {
 		          activateEditMode(element);
 		        },
-          		headerTpl : 'app/groups/group-manager-v3/_group-list-action-bar-tpl.html'	        
+          	headerTpl : 'app/groups/group-manager-v3/_group-list-action-bar-tpl.html',
+            heading: 'Groups'   
       		});
       	},
 
