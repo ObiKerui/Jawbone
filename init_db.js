@@ -186,10 +186,10 @@ removeJawboneIds = function(cb) {
 // SET UP JAWBONE IDS
 //--------------------------------------------------------------
 setUpJawboneIds = function(cb) {
-	JBCtrl.getIds(function(err, ids) {
+	JBCtrl.getIds(function(err, authUsers, authAdmins) {
 		if(err) {
 			console.log('error getting jawboneIds: ' + err);
-		} else if(ids === null) {
+		} else if(authUsers === null) {
 			JBCtrl.createIds(jboneAdminIds, jbonePatientIds, function(createErr, createdIds) {
 				if(createErr) {
 					console.log('error creating jawbone ids: ' + err);
@@ -201,8 +201,8 @@ setUpJawboneIds = function(cb) {
 			});
 
 		} else {
-			console.log('ids exist : ' + JSON.stringify(ids));
-			cb(null, ids);
+			console.log('ids exist : patients: %s admins: %s', JSON.stringify(authUsers), JSON.stringify(authAdmins));
+			cb(null, authUsers, authAdmins);
 		}
 	});
 };
@@ -236,12 +236,12 @@ createGroups = function(cb) {
 					console.log('error creating the default group: ' + createDefErr);
 					return cb(createDefErr);
 				} else {
-					console.log('created the default group: ' + JSON.stringify(newDefaultGroup));
+					//console.log('created the default group: ' + JSON.stringify(newDefaultGroup));
 					return cb(null, newDefaultGroup);
 				}
 			})
 		} else {
-			console.log('default group: ' + JSON.stringify(defaultGroup));
+			//console.log('default group: ' + JSON.stringify(defaultGroup));
 			return cb(null, defaultGroup);
 		}
 	});
@@ -262,7 +262,7 @@ newInitialiseDatabase = function() {
 		function(callback) {
 			setUpJawboneIds(callback);
 		},
-		function(createdIds, callback) {
+		function(users, admins, callback) {
 			createGroups(callback);
 		},
 		function(createdGroups, callback) {

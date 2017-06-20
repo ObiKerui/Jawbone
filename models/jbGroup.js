@@ -77,7 +77,7 @@ var addMemberToDefault = function(member, cb) {
     if(getDefGroupErr) {
       console.log('error getting default group: ' + getDefGroupErr);
     } else {
-      console.log('got the default group: ' + JSON.stringify(defGroup));
+      //console.log('got the default group: ' + JSON.stringify(defGroup));
       var groupMember = {
         user : member,
         joinDate : Date.now()
@@ -89,7 +89,7 @@ var addMemberToDefault = function(member, cb) {
           console.log('error saving default group: ' + saveErr);
           return cb(saveErr);
         } else {
-          console.log('saved member to default group: ' + JSON.stringify(result));
+          //console.log('saved member to default group: ' + JSON.stringify(result));
           return cb(null, result);
         }
       })

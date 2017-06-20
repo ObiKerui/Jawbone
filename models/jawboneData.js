@@ -53,7 +53,7 @@ var getIds = function(cb) {
 	      	return cb(err);
 	    } else {	    	
 	    	console.log('ids returned: ' + JSON.stringify(ids[0]));
-	      	return cb(null, ids[0]);
+	      	return cb(null, ids[0].patients, ids[0].admins);
 	    }
 	});
 };

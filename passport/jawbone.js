@@ -64,42 +64,35 @@ var storeUpData = function(data, callback) {
   });
 }
 
-function getSuperUserIDs(cb) {
-
-  jawboneMgr.getIds(function(err, ids) {
-    if(err) {
-      return cb(err);
-    } else {
-      return cb(null, ids);
-    }
-  });
-
-  // var allowedIds = [
-  //   '-9VI7q6PJcoicKgQZ-kCGA',
-  //   '-9VI7q6PJcrBConjPPsftA'
-  // ];
-
-  // cb(null, allowedIds);
-}
-
+//---------------------------------------------
+//
+//---------------------------------------------
 function createRoles(profileData, cb) {
 
   var xid = profileData.data.xid;
-  var roles = ['ROLE_USER'];
+  var roles = ['ROLE_GUEST'];
 
   //console.log('xid to create roles: ' + JSON.stringify(xid));
 
-  getSuperUserIDs(function(err, ids) {
+  jawboneMgr.getIds(function(err, authUsers, authAdmins) {
     if(err) {
       console.log('error getting those xid to create roles: ' + JSON.stringify(err));
       return cb(roles);
     } else {
-      console.log('got those xid to create roles: ' + JSON.stringify(ids));
-      for(var i = 0; i < ids.length; i++) {
-        if(ids.admins[i] === profileData.data.xid) {
+      console.log('got those xid to create roles: %s %s', JSON.stringify(authUsers), JSON.stringify(authAdmins));
+
+      for(var i = 0; i < authUsers.length; i++) {
+        if(authUsers[i] === profileData.data.xid) {
+          roles.push('ROLE_USER');        
+        }
+      } 
+
+      for(var i = 0; i < authAdmins.length; i++) {
+        if(authAdmins[i] === profileData.data.xid) {
           roles.push('ROLE_ADMIN');        
         }
       } 
+
       return cb(roles);     
     }
   });
@@ -148,15 +141,13 @@ module.exports = function(passport, configIds) {
 
       console.log('got the profile: ' + JSON.stringify(jawboneData.jawboneId));
 
-      // get user by jawbone-id
-      user.getByJawboneId(jawboneData.jawboneId, function(err, userResult) {
-        if(err) {
-          console.log('error retrieving user by jawbone id: ' + err);
-          return done(err);          
-        } else if(!userResult) {
+      createRoles(profileResult, function(roles) {
+        user.getByJawboneId(jawboneData.jawboneId, function(err, userResult) {
+          if(err) {
+            console.log('error retrieving user by jawbone id: ' + err);
+            return done(err);                      
+          } else if(!userResult) {  // create a new user
 
-          console.log('the user is null - create one');
-          createRoles(profileResult, function(roles) {
             user.create(profileResult.data, jawboneData, roles, function(createErr, createdUser) {
               if(createErr) {
                 console.log('error creating user : ' + createErr);
@@ -174,25 +165,72 @@ module.exports = function(passport, configIds) {
                   return done(null, createdUser);
                 });
               }
+            });            
+
+          } else { // user already existed
+
+            console.log('found this user: ' + JSON.stringify(userResult));
+            userResult.jawboneData = jawboneData;
+
+            user.update(jawboneData.jawboneId, userResult, function(updatedErr, updatedUser) {
+              if(updatedErr) {
+                return done(updatedErr);
+              } else {
+                console.log('updated user to: ' + JSON.stringify(updatedUser));
+                req.user = updatedUser;
+                return done(null, updatedUser);              
+              }
             });
-          });
 
-        } else {
-          // found user in db
-          console.log('found this user: ' + JSON.stringify(userResult));
-          userResult.jawboneData = jawboneData;
+          }
+        }); // end get user
+      }); // end create roles
 
-          user.update(jawboneData.jawboneId, userResult, function(updatedErr, updatedUser) {
-            if(updatedErr) {
-              return done(updatedErr);
-            } else {
-              console.log('updated user to: ' + JSON.stringify(updatedUser));
-              req.user = updatedUser;
-              return done(null, updatedUser);              
-            }
-          });
-        }
-      });
+      // get user by jawbone-id
+      // user.getByJawboneId(jawboneData.jawboneId, function(err, userResult) {
+      //   if(err) {
+      //     console.log('error retrieving user by jawbone id: ' + err);
+      //     return done(err);          
+      //   } else if(!userResult) {
+
+      //     console.log('the user is null - create one');
+      //     createRoles(profileResult, function(roles) {
+      //       user.create(profileResult.data, jawboneData, roles, function(createErr, createdUser) {
+      //         if(createErr) {
+      //           console.log('error creating user : ' + createErr);
+      //           return done(createErr);
+      //         } else {
+      //           req.user = createdUser;
+
+      //           // add the user to the default group
+      //           groups.addMemberToDefault(createdUser, function(err, result) {
+      //             if(err) {
+      //               console.log('error adding created user to default group: ' + err);
+      //             } else {
+      //               console.log('added created user to default group');
+      //             }
+      //             return done(null, createdUser);
+      //           });
+      //         }
+      //       });
+      //     });
+
+      //   } else {
+      //     // found user in db
+      //     console.log('found this user: ' + JSON.stringify(userResult));
+      //     userResult.jawboneData = jawboneData;
+
+      //     user.update(jawboneData.jawboneId, userResult, function(updatedErr, updatedUser) {
+      //       if(updatedErr) {
+      //         return done(updatedErr);
+      //       } else {
+      //         console.log('updated user to: ' + JSON.stringify(updatedUser));
+      //         req.user = updatedUser;
+      //         return done(null, updatedUser);              
+      //       }
+      //     });
+      //   }
+      // });
 
       //console.log('got the user profile: ' + JSON.stringify(profileResult));
   
