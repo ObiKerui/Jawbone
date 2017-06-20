@@ -64,28 +64,45 @@ var storeUpData = function(data, callback) {
   });
 }
 
-function isSuperUserID(jawboneId) {
-  console.log('the users jawbone id: ' + JSON.stringify(jawboneId));
+function getSuperUserIDs(cb) {
 
-  var allowedIds = [
-    '-9VI7q6PJcoicKgQZ-kCGA',
-    '-9VI7q6PJcrBConjPPsftA'
-  ];
-
-  for(var i = 0; i < allowedIds.length; i++) {
-    if(allowedIds[i] === jawboneId) {
-      return true;
+  jawboneMgr.getIds(function(err, ids) {
+    if(err) {
+      return cb(err);
+    } else {
+      return cb(null, ids);
     }
-  }
-  return false;
+  });
+
+  // var allowedIds = [
+  //   '-9VI7q6PJcoicKgQZ-kCGA',
+  //   '-9VI7q6PJcrBConjPPsftA'
+  // ];
+
+  // cb(null, allowedIds);
 }
 
-function createRoles(profileData) {
+function createRoles(profileData, cb) {
+
+  var xid = profileData.data.xid;
   var roles = ['ROLE_USER'];
-  if(isSuperUserID(profileData.data.xid)) {
-    roles.push('ROLE_ADMIN');
-  }
-  return roles;
+
+  //console.log('xid to create roles: ' + JSON.stringify(xid));
+
+  getSuperUserIDs(function(err, ids) {
+    if(err) {
+      console.log('error getting those xid to create roles: ' + JSON.stringify(err));
+      return cb(roles);
+    } else {
+      console.log('got those xid to create roles: ' + JSON.stringify(ids));
+      for(var i = 0; i < ids.length; i++) {
+        if(ids.admins[i] === profileData.data.xid) {
+          roles.push('ROLE_ADMIN');        
+        }
+      } 
+      return cb(roles);     
+    }
+  });
 }
 
 /*
@@ -139,26 +156,27 @@ module.exports = function(passport, configIds) {
         } else if(!userResult) {
 
           console.log('the user is null - create one');
-          var roles = createRoles(profileResult);
+          createRoles(profileResult, function(roles) {
+            user.create(profileResult.data, jawboneData, roles, function(createErr, createdUser) {
+              if(createErr) {
+                console.log('error creating user : ' + createErr);
+                return done(createErr);
+              } else {
+                req.user = createdUser;
 
-          user.create(profileResult.data, jawboneData, roles, function(createErr, createdUser) {
-            if(createErr) {
-              console.log('error creating user : ' + createErr);
-              return done(createErr);
-            } else {
-              req.user = createdUser;
-
-              // add the user to the default group
-              groups.addMemberToDefault(createdUser, function(err, result) {
-                if(err) {
-                  console.log('error adding created user to default group: ' + err);
-                } else {
-                  console.log('added created user to default group');
-                }
-                return done(null, createdUser);
-              });
-            }
+                // add the user to the default group
+                groups.addMemberToDefault(createdUser, function(err, result) {
+                  if(err) {
+                    console.log('error adding created user to default group: ' + err);
+                  } else {
+                    console.log('added created user to default group');
+                  }
+                  return done(null, createdUser);
+                });
+              }
+            });
           });
+
         } else {
           // found user in db
           console.log('found this user: ' + JSON.stringify(userResult));

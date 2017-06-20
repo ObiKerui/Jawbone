@@ -186,13 +186,23 @@ removeJawboneIds = function(cb) {
 // SET UP JAWBONE IDS
 //--------------------------------------------------------------
 setUpJawboneIds = function(cb) {
-	JBCtrl.createIds(jboneAdminIds, jbonePatientIds, function(err, result) {
+	JBCtrl.getIds(function(err, ids) {
 		if(err) {
-			console.log('error creating jawbone ids: ' + err);
-			cb(err);
+			console.log('error getting jawboneIds: ' + err);
+		} else if(ids === null) {
+			JBCtrl.createIds(jboneAdminIds, jbonePatientIds, function(createErr, createdIds) {
+				if(createErr) {
+					console.log('error creating jawbone ids: ' + err);
+					cb(err);
+				} else {
+					console.log('created jawbone ids: ' + JSON.stringify(createdIds));
+					cb(null, createdIds);
+				}
+			});
+
 		} else {
-			console.log('created jawbone ids: ' + JSON.stringify(result));
-			cb(null, result);
+			console.log('ids exist : ' + JSON.stringify(ids));
+			cb(null, ids);
 		}
 	});
 };
@@ -250,9 +260,6 @@ getUsers = function(cb) {
 newInitialiseDatabase = function() {
 	async.waterfall([		
 		function(callback) {
-			removeJawboneIds(callback);
-		},
-		function(nbrJBIdsRem, callback) {
 			setUpJawboneIds(callback);
 		},
 		function(createdIds, callback) {

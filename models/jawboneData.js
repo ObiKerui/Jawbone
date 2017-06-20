@@ -45,6 +45,20 @@ var createIds = function(admins, patients, cb) {
 };
 
 //------------------------------------------------------
+//	CREATE JAWBONE IDS
+//------------------------------------------------------
+var getIds = function(cb) {
+	UserIds.find({}, function(err, ids) {
+	    if(err) {
+	      	return cb(err);
+	    } else {	    	
+	    	console.log('ids returned: ' + JSON.stringify(ids[0]));
+	      	return cb(null, ids[0]);
+	    }
+	});
+};
+
+//------------------------------------------------------
 // initialise JAWBONE UP
 //------------------------------------------------------
 var init = function(user) {
@@ -309,6 +323,7 @@ var cardiac = function(user, params, cb) {
 module.exports.UserIds = UserIds;
 module.exports.removeIds = removeIds;
 module.exports.createIds = createIds;
+module.exports.getIds = getIds;
 module.exports.init = init;
 module.exports.profile = profile;
 module.exports.sleeps = sleeps;
