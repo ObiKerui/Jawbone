@@ -37,7 +37,7 @@ module.exports = {
 	// JAWBONE IDS OF ADMINISTRATORS
 	//--------------------------------------------------------------
 	jboneAdminIds : [
-		'-9VI7q6PJcrBConjPPsftA'
+		process.env.JBADMIN_USER_ID
 	],
 
 	//--------------------------------------------------------------
