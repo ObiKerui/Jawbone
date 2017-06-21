@@ -54,9 +54,11 @@
     var object = function(data) {
     	var objInst = this;
 
-    	$log.info('data to user v3 object: ' + JSON.stringify(data));
+    	$log.info('>>>>>> want jawbone id >>>>> data to user v3 object: ' + JSON.stringify(data));
     	var profile = data.profile || {};
+      var jbdata = data.jawboneData || {};
     	objInst._id = data._id || null;
+      objInst.jawboneId = jbdata.jawboneId || null;
     	objInst.memberSince = data.createdAt || null;
     	objInst.email = data.email || null;
     	objInst.first = profile.first || null;

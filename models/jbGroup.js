@@ -83,6 +83,8 @@ var addMemberToDefault = function(member, cb) {
         joinDate : Date.now()
       };
 
+      // see if member is already in group
+
       defGroup.members.push(groupMember);
       defGroup.save(function(saveErr, result) {
         if(saveErr) {
@@ -197,7 +199,7 @@ var get = function(id, cb) {
 };
 
 var getDefault = function(cb) {
-  var q = Group.findOne({name : 'default'}).lean();
+  var q = Group.findOne({ type : 'default'}).lean();
   q.exec(function(err, result) {
     if(err) {
       return cb(err);

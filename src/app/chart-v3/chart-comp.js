@@ -99,6 +99,7 @@
         },
         switchToPlot: function(index) {
           $log.info('selected: ' + index);
+          setYAxisTitleFtn(obj.chart, index, iface.config.yAxisLabels);
           selectPlot(iface, index, obj.graphData);
         },
         getGraphData: function() {
@@ -110,11 +111,12 @@
         },
         appendPlot: function() {
           $log.info('request to append plot');
-          iface.config.getAdditionalPlotData(function(getAdditionalPlotsObj) {
+          iface.config.getAdditionalPlotData(function(getAdditionalPlotsObj, plotParams) {
             $log.info('got the additional plot data...' + JSON.stringify(getAdditionalPlotsObj));
             getAdditionalPlotsObj.get()
             .then(function(result) {
-              appendElements(iface, result.data, iface.config.plotParams);
+              //appendElements(iface, result.data, iface.config.plotParams);
+              appendElements(iface, result.data, plotParams);
             });
           });
         },
@@ -230,6 +232,7 @@
       // set the y axis title of the chart 
       //----------------------------------------------        
       function setYAxisTitleFtn(chart, index, labels) {
+        $log.info('setting the Y Axis title: ' + labels[index]);
         chart.options.vAxis.title = labels[index];
       }      
 

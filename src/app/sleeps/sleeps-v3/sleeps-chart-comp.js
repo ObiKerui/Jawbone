@@ -59,10 +59,14 @@
             tpl : 'app/profile/_user-modal-tpl.html',
             iface : new UserViewerV3Adaptor({
               onConfirm : function(patient) {
-                //$log.info('patient confirmed: ' + JSON.stringify(patient.config.selected));
-                var patientId = patient.config.selected._id;
-                var getElements = JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps', patientId));
-                cb(getElements);
+                //$log.info('patient confirmed: ' + JSON.stringify(patient));
+                //$log.info('jbid patient confirmed: ' + JSON.stringify(patient.config.selected.jawboneId)); 
+                $log.info('>>> >>> first name: ' + JSON.stringify(patient.config.selected));       
+                var id = patient.config.selected.jawboneId;
+
+                //var patientId = patient.config.selected._id;
+                var getElements = JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps', id), { max: 1000 });
+                cb(getElements, makePlotParamsFtn(patient.config.selected));
               }
             })
           }));

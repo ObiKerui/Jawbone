@@ -374,9 +374,11 @@ var utils = (function(angular) {
     var object = function(data) {
     	var objInst = this;
 
-    	$log.info('data to user v3 object: ' + JSON.stringify(data));
+    	$log.info('>>>>>> want jawbone id >>>>> data to user v3 object: ' + JSON.stringify(data));
     	var profile = data.profile || {};
+      var jbdata = data.jawboneData || {};
     	objInst._id = data._id || null;
+      objInst.jawboneId = jbdata.jawboneId || null;
     	objInst.memberSince = data.createdAt || null;
     	objInst.email = data.email || null;
     	objInst.first = profile.first || null;
@@ -1125,10 +1127,14 @@ var utils = (function(angular) {
             tpl : 'app/profile/_user-modal-tpl.html',
             iface : new UserViewerV3Adaptor({
               onConfirm : function(patient) {
-                //$log.info('patient confirmed: ' + JSON.stringify(patient.config.selected));
-                var patientId = patient.config.selected._id;
-                var getElements = JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps', patientId));
-                cb(getElements);
+                //$log.info('patient confirmed: ' + JSON.stringify(patient));
+                //$log.info('jbid patient confirmed: ' + JSON.stringify(patient.config.selected.jawboneId)); 
+                $log.info('>>> >>> first name: ' + JSON.stringify(patient.config.selected));       
+                var id = patient.config.selected.jawboneId;
+
+                //var patientId = patient.config.selected._id;
+                var getElements = JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps', id), { max: 1000 });
+                cb(getElements, makePlotParamsFtn(patient.config.selected));
               }
             })
           }));
@@ -7815,7 +7821,15 @@ var jbChartUtils = (function(angular) {
         	}
       	};
       	return chart;
-	}	
+	}
+
+	function setChartYAxisTitle(chart, title) {
+		var options = chart.options || {};
+		var vAxis = options.vAxis || {};
+		vAxis.title = title;
+		console.log('did set the v axis title to : ' + title); 
+	}
+
 })(angular);
 
 (function(cutils) {
@@ -7918,6 +7932,7 @@ var jbChartUtils = (function(angular) {
         },
         switchToPlot: function(index) {
           $log.info('selected: ' + index);
+          setYAxisTitleFtn(obj.chart, index, iface.config.yAxisLabels);
           selectPlot(iface, index, obj.graphData);
         },
         getGraphData: function() {
@@ -7929,11 +7944,12 @@ var jbChartUtils = (function(angular) {
         },
         appendPlot: function() {
           $log.info('request to append plot');
-          iface.config.getAdditionalPlotData(function(getAdditionalPlotsObj) {
+          iface.config.getAdditionalPlotData(function(getAdditionalPlotsObj, plotParams) {
             $log.info('got the additional plot data...' + JSON.stringify(getAdditionalPlotsObj));
             getAdditionalPlotsObj.get()
             .then(function(result) {
-              appendElements(iface, result.data, iface.config.plotParams);
+              //appendElements(iface, result.data, iface.config.plotParams);
+              appendElements(iface, result.data, plotParams);
             });
           });
         },
@@ -8049,6 +8065,7 @@ var jbChartUtils = (function(angular) {
       // set the y axis title of the chart 
       //----------------------------------------------        
       function setYAxisTitleFtn(chart, index, labels) {
+        $log.info('setting the Y Axis title: ' + labels[index]);
         chart.options.vAxis.title = labels[index];
       }      
 
@@ -8887,8 +8904,8 @@ $templateCache.put("app/_default-modal-tpl.html","default modal template");
 $templateCache.put("app/_modal-frame-tpl.html","<div class=\"modal-body\" id=\"modal-body\" style=\"padding: 4px;\"><div ng-include=\"ctrl.template\"></div></div><div class=\"modal-footer\" style=\"padding: 4px; background: rgba(221, 221, 221, 0.3);\"><div class=\"btn-group\"><div class=\"btn btn-default\" ng-click=\"ctrl.cancel()\">Cancel</div><div class=\"btn btn-default\" ng-disabled=\"true\">&nbsp;</div><div class=\"btn btn-default\" ng-click=\"ctrl.ok()\">OK</div></div></div>");
 $templateCache.put("app/main.html","<div class=\"container\"><div ui-view=\"\"></div></div>");
 $templateCache.put("app/user.html","<div class=\"container\"><a href=\"/login/jawbone\">login jawbone</a><div ui-view=\"\"></div></div>");
-$templateCache.put("app/chart/_chart-tpl.html","<loader obj=\"ctrl.co.loaderMessage\" ng-show=\"ctrl.state !== \'ready\'\"></loader><div class=\"chart-area animated\" ng-show=\"ctrl.state === \'ready\'\"><div class=\"chart-header\"><span uib-dropdown=\"\"><a class=\"btn btn-default\" uib-dropdown-toggle=\"\">{{ctrl.co.chart.selected || \'select a plot...\'}} <span class=\"caret\"></span></a><ul uib-dropdown-menu=\"\"><li ng-repeat=\"item in ctrl.co.chart.plots track by $index\"><span ng-click=\"ctrl.co.chart.selectPlot($index)\">{{item}}</span></li></ul></span> <span class=\"btn btn-default\" ng-click=\"ctrl.co.onClick()\">compare with</span></div><div class=\"chart-body\"><div class=\"chart-element\"><div google-chart=\"\" chart=\"ctrl.co.chart.chart\" style=\"height:300px; width:570px; border: 1px solid #fff;\"></div></div></div></div>");
 $templateCache.put("app/chart-v2/_chart-tpl.html","<loader obj=\"ctrl.co.loaderMessage\" ng-show=\"ctrl.state !== \'ready\'\"></loader><div class=\"chart-area animated\" ng-show=\"ctrl.state === \'ready\'\"><div class=\"chart-header\"><span uib-dropdown=\"\"><a class=\"btn btn-default\" uib-dropdown-toggle=\"\">{{ctrl.obj.selected || \'select a plot...\'}} <span class=\"caret\"></span></a><ul uib-dropdown-menu=\"\"><li ng-repeat=\"item in ctrl.obj.plots track by $index\"><span ng-click=\"ctrl.obj.api.switchToPlot($index)\">{{item}}</span></li></ul></span> <span class=\"btn btn-default\" ng-click=\"ctrl.obj.api.appendPlot()\">compare with</span></div><div class=\"chart-body\"><div class=\"chart-element\"><div google-chart=\"\" chart=\"ctrl.obj.chart\" style=\"height:300px; width:570px; border: 1px solid #fff;\"></div></div></div></div>");
+$templateCache.put("app/chart/_chart-tpl.html","<loader obj=\"ctrl.co.loaderMessage\" ng-show=\"ctrl.state !== \'ready\'\"></loader><div class=\"chart-area animated\" ng-show=\"ctrl.state === \'ready\'\"><div class=\"chart-header\"><span uib-dropdown=\"\"><a class=\"btn btn-default\" uib-dropdown-toggle=\"\">{{ctrl.co.chart.selected || \'select a plot...\'}} <span class=\"caret\"></span></a><ul uib-dropdown-menu=\"\"><li ng-repeat=\"item in ctrl.co.chart.plots track by $index\"><span ng-click=\"ctrl.co.chart.selectPlot($index)\">{{item}}</span></li></ul></span> <span class=\"btn btn-default\" ng-click=\"ctrl.co.onClick()\">compare with</span></div><div class=\"chart-body\"><div class=\"chart-element\"><div google-chart=\"\" chart=\"ctrl.co.chart.chart\" style=\"height:300px; width:570px; border: 1px solid #fff;\"></div></div></div></div>");
 $templateCache.put("app/chart-v3/_chart-tpl.html","<loader obj=\"ctrl.co.loaderMessage\" ng-show=\"ctrl.obj.api.getState() === \'loading\'\"></loader><div class=\"chart-area animated\" ng-show=\"ctrl.obj.api.getState() === \'complete\'\"><div class=\"chart-header\"><span uib-dropdown=\"\"><a class=\"btn btn-default\" uib-dropdown-toggle=\"\">{{ctrl.obj.selected || \'select a plot...\'}} <span class=\"caret\"></span></a><ul uib-dropdown-menu=\"\"><li ng-repeat=\"item in ctrl.obj.plots track by $index\"><span ng-click=\"ctrl.obj.api.switchToPlot($index)\">{{item}}</span></li></ul></span><div class=\"btn-group\" ng-show=\"ctrl.obj.api.canAddPlots()\"><div class=\"btn btn-default\" ng-click=\"ctrl.obj.api.appendPlot()\">compare with</div><div class=\"btn btn-default\" ng-disabled=\"true\">&nbsp;</div><div class=\"btn btn-default\" ng-click=\"ctrl.obj.api.resetPlots()\">reset</div></div></div><div class=\"chart-body\"><div class=\"chart-element\"><div google-chart=\"\" chart=\"ctrl.obj.chart\" style=\"height:300px; width:745px; border: 1px solid #fff;\"></div></div></div></div>");
 $templateCache.put("app/dropdown/_default-dropdown-tpl.html","<span class=\"glyphicon glyphicon-menu-hamburger obi-default-dropdown-box\"></span>");
 $templateCache.put("app/dropdown/_dropdown-tpl.html","<div class=\"obi-dropdown-container\" ng-class=\"{ \'obi-show\': ctrl.visible }\" obi-click-elsewhere=\"ctrl.onDeselect()\"><div class=\"obi-dropdown-display\" ng-click=\"ctrl.show();\" ng-class=\"{ \'clicked\': ctrl.visible }\"><span ng-include=\"ctrl.ddobj.templateUrl\"></span></div><div class=\"obi-dropdown-list\"><ul><li ng-repeat=\"$item in ctrl.ddobj.filters track by $index\" ng-click=\"ctrl.setSelected($index)\"><h5 ng-if=\"ctrl.ddobj.selectedFilterIdx === $index\">{{$item}} <small><span class=\"glyphicon glyphicon-ok\"></span></small></h5><h5 ng-if=\"ctrl.ddobj.selectedFilterIdx !== $index\">{{$item}} &nbsp;</h5></li></ul></div></div>");
@@ -8977,6 +8994,6 @@ $templateCache.put("app/patient/patient-manager-v3/_patient-tpl.html","<div clas
 $templateCache.put("app/sleeps/sleeps-v3/_sleeps-header-tpl.html","<div class=\"trends-header-bar\"><span>date</span> <span>time to sleep</span> <span>total sleep</span> <span>awake time</span> <span>efficiency</span> <span>rem</span> <span>light</span> <span>deep</span></div>");
 $templateCache.put("app/sleeps/sleeps-v3/_sleeps-list-elem-tpl.html","<div class=\"trends-element-style\" ng-class=\"{\'active\' : ctrl.obj.api.getAPI().selected }\" ng-click=\"ctrl.obj.api.getAPI().onClick()\"><span>{{ctrl.obj.api.getData().date | jbDate}}</span> <span>{{ctrl.obj.api.getData().timeToSleep | secondsToHrsMins}}</span> <span>{{ctrl.obj.api.getData().totalSleepTime | secondsToHrsMins}}</span> <span>{{ctrl.obj.api.getData().wakeAfterSleep | secondsToHrsMins}}</span> <span>{{ctrl.obj.api.getData().sleepEfficiency | number:1}}</span> <span>{{ctrl.obj.api.getData().remSleep | secondsToHrsMins}}</span> <span>{{ctrl.obj.api.getData().lightSleep | secondsToHrsMins}}</span> <span>{{ctrl.obj.api.getData().deepSleep | secondsToHrsMins}}</span></div>");
 $templateCache.put("app/user/user-v3/_user-list-elem-tpl.html","<div class=\"user-list-element\" ng-class=\"{\'active\' : ctrl.obj.api.getAPI().selected }\" ng-click=\"ctrl.obj.api.getAPI().onClick()\"><img ng-src=\"{{ctrl.obj.api.getData().profile.image}}\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.api.getData().first}} {{ctrl.obj.api.getData().last}}</div><div class=\"features\"><p>Weight: {{ctrl.obj.api.getData().weight | number: 2}}</p><p>Gender: {{ctrl.obj.api.getData().gender}}</p><p>Height: {{ctrl.obj.api.getData().height}}</p></div></div></div>");
-$templateCache.put("app/user/user-viewer/_user-viewer-tpl.html","<list-viewer-v3 iface=\"ctrl.obj.listIface\"></list-viewer-v3>user viewer: {{ctrl.obj | json}}");
+$templateCache.put("app/user/user-viewer/_user-viewer-tpl.html","<list-viewer-v3 iface=\"ctrl.obj.listIface\"></list-viewer-v3>");
 $templateCache.put("app/groups/patients/patient-summary/_patient-summary-action-bar-tpl.html","<div class=\"btn btn-default\" ng-click=\"ctrl.obj.actionBarObj.actions.backToPatients()\" style=\"float : left;\"><span class=\"glyphicon glyphicon-th-list faded-glyph\"></span> back to patients view</div><div class=\"btn-group\" style=\"float: right;\"><div class=\"btn btn-default\" ng-click=\"ctrl.obj.actionBarObj.actions.showPatientNotes()\"><span class=\"glyphicon glyphicon-list-alt faded-glyph\"></span> show patient notes</div><div class=\"btn btn-default\" ng-click=\"ctrl.obj.actionBarObj.actions.downloadToCSV()\"><span class=\"glyphicon glyphicon-stats faded-glyph\"></span> download to csv file</div></div><div style=\"clear: both;\"></div>");
 $templateCache.put("app/groups/patients/patient-summary/_patient-summary-tpl.html","<div class=\"patient-header\"><div class=\"patient-info\"><img ng-src=\"{{ctrl.obj.patient.user.profile.image | defaultPatient }}\" height=\"100px\" width=\"100px\"><div class=\"user-details\"><div class=\"name\">{{ctrl.obj.patient.user.profile.first}} {{ctrl.obj.patient.user.profile.last}}</div><div class=\"features\"><p>Weight: {{ctrl.obj.patient.user.profile.weight | number: 2}}</p><p>Gender: {{ctrl.obj.patient.user.profile.gender}}</p><p>Height: {{ctrl.obj.patient.user.profile.height}}</p></div></div></div><hr><div style=\"clear: both;\"></div><div ng-include=\"ctrl.obj.actionBarObj.template\"></div></div>");}]);

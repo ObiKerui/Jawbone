@@ -30,5 +30,13 @@ var jbChartUtils = (function(angular) {
         	}
       	};
       	return chart;
-	}	
+	}
+
+	function setChartYAxisTitle(chart, title) {
+		var options = chart.options || {};
+		var vAxis = options.vAxis || {};
+		vAxis.title = title;
+		console.log('did set the v axis title to : ' + title); 
+	}
+
 })(angular);
