@@ -18,7 +18,10 @@
       var config = config || {};
 
       ifaceInst.config = {
-      	getElementsObj : config.getElementsObj || null,
+        makeGetElementsObj : config.makeGetElementsObj || function() {
+          $log.info('supply a makeGetElementsObj ftn');
+          return null;
+        },
       	makeListElementFtn : config.makeListElementFtn || null,
         onElementClicked : config.onElementClicked || function(action, element, index) {
           $log.info('passed to iface: element of index clicked ' + index);
@@ -56,6 +59,8 @@
       objInst.deleteMode = false;
       objInst.selected = parseInt(-1);
       objInst.state = 'loading';
+      objInst.renderCB = null;
+      objInst.getElementsObj = null;
 
     	// private functions
     	var populate = populateFtn;
@@ -72,7 +77,10 @@
             getListAPI : objInst.getAPI
           });
 
-          populate(objInst.elements, iface.config.getElementsObj, cb);
+          objInst.getElementsObj = iface.config.makeGetElementsObj();
+
+          populate(objInst.elements, objInst.getElementsObj, cb);
+          objInst.renderCB = cb;
           objInst.state = 'done';
         },
 
@@ -123,7 +131,7 @@
 
         // REFRESH THE LIST
         refresh: function() {
-        	$log.info('refresh list');
+        	//$log.info('refresh list, nbr elems: ' + objInst.elements.length);
           this.deselectAll();
           refreshList();
         },
@@ -131,16 +139,17 @@
         // APPEND ELEMENTS TO THE LIST
   			appendElements: function(cb) {        
 
-  				iface.config.getElementsObj = iface.config.getElementsObj.next();
-  				$log.info('next batch..params: ' + JSON.stringify(iface.config.getElementsObj.params, true, 1));
+  				//iface.config.getElementsObj = iface.config.getElementsObj.next();
+          objInst.getElementsObj = objInst.getElementsObj.next();
+  				$log.info('next batch..params: ' + JSON.stringify(objInst.getElementsObj.params, true, 1));
           $log.info('elements size: ' + JSON.stringify(objInst.elements.length, true, 1));          
 
-  				if(!iface.config.getElementsObj.more()) {
-  				  $log.info('no more to get w/ params: ' + JSON.stringify(iface.config.getElementsObj.params));
+  				if(!objInst.getElementsObj.more()) {
+  				  $log.info('no more to get w/ params: ' + JSON.stringify(objInst.getElementsObj.params));
   				  $log.info('no more to get w/ elems :  ' + objInst.elements.length);
   				  return cb();          
   				}
-  				populate(objInst.elements, iface.config.getElementsObj, cb);
+  				populate(objInst.elements, objInst.getElementsObj, cb);
         },
 
         // HANDLE AN EVENT
@@ -182,10 +191,11 @@
       // REFRESH THE LIST
       //----------------------------------------------
       function refreshListFtn() {
-        objInst.elements = [];
-        populate(objInst.elements, iface.config.getElementsObj, function(listdata) {
-          $log.info('list refreshed: ' + JSON.stringify(listdata));
-        });
+        //objInst.elements = [];
+        // populate(objInst.elements, iface.config.getElementsObj, function(listdata) {
+        //   $log.info('list refreshed: ' + JSON.stringify(listdata));
+        //   //objInst.renderCB(listdata);
+        // });
       }
 
       //----------------------------------------------
@@ -193,6 +203,7 @@
       //----------------------------------------------
     	function populateFtn(list, getElementsObj, onDone) {
         if(!getElementsObj) {
+          $log.info('get elements obj empty: ' + JSON.stringify(getElementsObj));
           onDone({
             nbrElems: 0,
             totalElems: 0
@@ -200,6 +211,7 @@
           return;
         }
 
+        objInst.state = 'pulling';
         getElementsObj.get()
         .then(function(batch) {
           $log.info('batch in populate: ' + JSON.stringify(getElementsObj.params));
@@ -219,6 +231,7 @@
           $log.info('size of list: ' + JSON.stringify(list.length));
           //$log.info('elements : ' + JSON.stringify(list));
 
+          objInst.state = 'done';
           if(onDone) {
             onDone({
               nbrElems: list.length,
@@ -279,6 +292,7 @@
     var scrollback = null;
     var animating = false;
     var onScrollForwardFtn = null;
+    var highestIndexSoFar = 0;
 
     function atEnd() {
       return (index === scroller.nbrForwards);
@@ -292,7 +306,11 @@
     var setHeight = function(height, cb) {
       //$log.info('init height called: ' + height);
       var frameHeight = (chunksize * height);
-      moveDistance = parseInt(frameHeight / 2);
+      //moveDistance = parseInt(frameHeight / 2);
+      moveDistance = parseInt(frameHeight - 3);
+
+      console.log('>>>>>>>>>> element height: ' + height + ', frame height: ' + frameHeight + ' move distance: ' + moveDistance);
+      
       cb(frameHeight);
     };
 
@@ -300,12 +318,18 @@
     var calculateNoForwards = function(listdata, chunksize) {
 
       var total = listdata.totalElems;
-      var totalPages = Math.ceil(total / chunksize);
-      var nbrOnLastPage = parseInt(total % chunksize);
-      var lessThanHalfOnLastPage = (nbrOnLastPage !== 0 && (nbrOnLastPage <= chunksize / 2))
-      var nbrForwards = (lessThanHalfOnLastPage ? totalPages - 1 : totalPages);
-      //log.info('total elements: ' + total);
-      //log.info('number of pages: ' + totalPages + ' number of forwards: ' + nbrForwards);
+      var totalMinusOne = (total === 0 ? 0 : total - 1);
+      var nbrForwards = (Math.floor(totalMinusOne / chunksize));
+      log.info('total : %d minus 1 : %d nbrForwards: %d', total, totalMinusOne, nbrForwards);
+      
+      // var total = listdata.totalElems;
+      // //var totalPages = Math.ceil(total / chunksize);
+      // var totalPages = Math.floor(total / chunksize);
+      // var nbrOnLastPage = parseInt(total % chunksize);
+      // var lessThanHalfOnLastPage = (nbrOnLastPage !== 0 && (nbrOnLastPage <= chunksize / 2));
+      // var nbrForwards = (lessThanHalfOnLastPage ? totalPages - 1 : totalPages);
+      // log.info('number of pages: ' + totalPages + ' number last page: ' + nbrOnLastPage);
+      // log.info('total elements: ' + total);
       return nbrForwards;
     }
 
@@ -326,17 +350,29 @@
       onScrollForwardFtn = onScrollForward;
     };
 
+    scroller.adjustHeight = function() {
+      refreshCB(function(scrollInfo, cb) {
+        setHeight(scrollInfo.height, cb);
+      });
+    };
+
     // PUBLIC FORWARD
     scroller.forward = function() {
-      //log.info('scroll forward...');
-      // set height
+      //log.info('scroll forward...');      
+      // set height      
+
       if(atEnd() || (animating == true)) return;
       animating = true;
+      scroller.adjustHeight();
       index = (index === scroller.nbrForwards ? scroller.nbrForwards : index + 1);
       scrollforward(moveDistance, function() {
         animating = false;
-        if(onScrollForwardFtn) {
-          onScrollForwardFtn();
+
+        if(index > highestIndexSoFar) {
+          highestIndexSoFar = index;
+          if(onScrollForwardFtn) {
+            onScrollForwardFtn();
+          }          
         }
       });
     };
@@ -362,6 +398,7 @@
     var vm = this;  
     vm.obj = null;
     vm.scroller = null;
+
     vm.didMouseWheelUp = function() {
       $log.info('did mouse wheel up..');
     };
@@ -451,7 +488,7 @@
           forward: forward,
           back: back
         }, function(scrollFrameHeight) {
-          //$log.info('new init height of list element : ' + height + ' frame height: ' + scrollFrameHeight);
+          //$log.info('>>>>>>>>> height to set frame : ' + scrollFrameHeight);
           frame.css({
             'height': scrollFrameHeight + 'px'
           });          

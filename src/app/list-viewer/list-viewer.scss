@@ -31,7 +31,7 @@
 	.list-viewer-elements {
 		border-top: 1px solid #ddd;
 		border-bottom: 1px solid #ddd;
-	  	padding: 1px 0px 0px 1px;
+	  	//padding: 1px 0px 0px 1px;
 	  	height: 100%;
 	  	overflow: hidden;
 	  	position: relative;
@@ -44,10 +44,11 @@
 		}
 
 		li {
-			display: block;
-			float: left;
+			//display: block;
+			//float: left;
 			position: relative;
-
+			overflow: auto;
+			
 			:hover {
 				cursor: pointer;
 			}

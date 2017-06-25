@@ -263,6 +263,17 @@ var getByEmail = function(email, cb) {
   });
 };
 
+var getTotalUsers = function(cb) {
+  var total = User.count();
+  total.exec(function(err, nbr) {
+    if(err) {
+      return cb(err);
+    } else {
+      return cb(null, nbr);
+    }
+  });
+};
+
 /**
 * get all users
 */
@@ -460,6 +471,7 @@ module.exports.JBData = JBData;
 module.exports.get = get;
 module.exports.getByJawboneId = getByJawboneId;
 module.exports.getByEmail = getByEmail;
+module.exports.getTotalUsers = getTotalUsers;
 module.exports.all = all;
 module.exports.remove = remove;
 module.exports.update = update;

@@ -2,6 +2,7 @@ var async = require('async');
 var assert = require('assert');
 var bcrypt = require('bcryptjs');
 var Users = require('./models/user').User;
+var UserCtrl = require('./models/user');
 var Groups = require('./models/jbGroup');
 var JBCtrl = require('./models/jawboneData');
 var fs = require('fs');
@@ -223,37 +224,70 @@ removeGroups = function(cb) {
 	});
 };
 
-//--------------------------------------------------------------
-// CREATE GROUPS
-//--------------------------------------------------------------
-createGroups = function(cb) {
-	Groups.getDefaultGroup(function(err, defaultGroup) {
+removeDefaultGroup = function(cb) {
+	Groups.remove({ type: 'default' }, function(err, defaultGroup) {
 		if(err) {
-			console.log('error getting the default group: ' + err);
 			return cb(err);
-		} else if(defaultGroup === null) {
-			console.log('the default group is null');
-			Groups.createDefaultGroup(function(createDefErr, newDefaultGroup) {
-				if(createDefErr) {
-					console.log('error creating the default group: ' + createDefErr);
-					return cb(createDefErr);
-				} else {
-					//console.log('created the default group: ' + JSON.stringify(newDefaultGroup));
-					return cb(null, newDefaultGroup);
-				}
-			})
 		} else {
-			//console.log('default group: ' + JSON.stringify(defaultGroup));
-			return cb(null, defaultGroup);
+			return cb(null);
 		}
 	});
 };
 
 //--------------------------------------------------------------
-// GET THE USERS IN THE SYSTEM
+// CREATE GROUPS
 //--------------------------------------------------------------
-getUsers = function(cb) {
-	cb(null, []);
+createDefaultGroup = function(cb) {
+	Groups.createDefaultGroup(function(err, newDefaultGroup) {
+		if(err) {
+			return cb(err);
+		} else {
+			return cb(null, newDefaultGroup);
+		}
+	});
+};
+
+//--------------------------------------------------------------
+// GET ALL THE USERS IN THE SYSTEM
+//--------------------------------------------------------------
+getAllUsers = function(cb) {
+	UserCtrl.getTotalUsers(function(errNbrUsers, nbr) {
+		if(errNbrUsers) {
+			return cb(errNbrUsers);
+		} else {
+			var params = {
+				sortBy : 'jawboneData.jawboneId',
+				offset : 0,
+				max : nbr
+			};
+
+			UserCtrl.all(params, function(errGetAllUsers, users) {
+				if(errGetAllUsers) {
+					return cb(errGetAllUsers);
+				} else {
+					cb(null, users);
+				}
+			});			
+		}
+	});
+};
+
+//--------------------------------------------------------------
+// ADD ALL USERS TO NEWLY CREATED DEFAULT GROUP
+//--------------------------------------------------------------
+populateDefaultGroup = function(defaultGroup, allUsers, cb) {
+	async.each(allUsers.data, function(user, callback) {
+		Groups.addMemberToDefault(user, function(err, result) {
+			if(err) {
+				return callback(err);
+			} else {
+				return callback(null);
+			}
+		});
+	}, cb);
+	// console.log('default group: ' + JSON.stringify(defaultGroup));
+	// console.log('all users: ' + JSON.stringify(allUsers.data, true, 3));
+	// cb(null);
 };
 
 //--------------------------------------------------------------
@@ -265,14 +299,19 @@ newInitialiseDatabase = function() {
 			setUpJawboneIds(callback);
 		},
 		function(users, admins, callback) {
-			createGroups(callback);
+			removeDefaultGroup(callback);
 		},
-		function(createdGroups, callback) {
-			getUsers(callback);
+		function(callback) {
+			createDefaultGroup(callback);
 		},
-		function(users, callback) {
-			console.log('users available: ' + JSON.stringify(users));
-			callback(null, 'done');
+		function(defaultGroup, callback) {
+			getAllUsers(function(err, users) {
+				if(err) {
+					callback(err);
+				} else {
+					populateDefaultGroup(defaultGroup, users, callback);					
+				}
+			});
 		}
 	], function(err, results) {
 		if(err) {

@@ -41,7 +41,8 @@
         },
         yAxisLabels : config.yAxisLabels || [],
   			loaderMessage: config.loaderMessage || null,          
-  			getElementsObj : config.getElementsObj || null,
+  			//getElementsObj : config.getElementsObj || null,
+        makeGetElementsObj : config.makeGetElementsObj || null,
   			makeElement : config.makeElement || null,
   			preprocessElements : config.preprocessElements || null,
   			plotParams : config.plotParams || null,
@@ -80,13 +81,15 @@
       obj.graphData = [];
       obj.plots = iface.config.plots || [];
       obj.selected = 0;
+      obj.getElementsObj = null;
       obj.state = 'loading';
 
       obj.api = {
         render: function(cb) {
           $log.info('called render function of chartv3obj with supplied iface: ' + JSON.stringify(iface));
           obj.chart = cutils.createJawboneChartLayout();
-          iface.config.getElementsObj.get()
+          obj.getElementsObj = iface.config.makeGetElementsObj();
+          obj.getElementsObj.get()
           .then(function(result) {
             processElements(iface, result.data, iface.config.plotParams);
             setYAxisTitleFtn(obj.chart, 0, iface.config.yAxisLabels);

@@ -78,7 +78,10 @@
       function onRenderFtn() {
 
       	objInst.patientsListInterface = new ListViewerV3Interface({
-    			getElementsObj : JawboneService.makeBatch(JawboneService.makeFieldGetter('groups', iface.config.groupId, 'members')),
+    			//getElementsObj : JawboneService.makeBatch(JawboneService.makeFieldGetter('groups', iface.config.groupId, 'members')),
+          makeGetElementsObj : function() {
+            return JawboneService.makeBatch(JawboneService.makeFieldGetter('groups', iface.config.groupId, 'members'));
+          },
     			makeListElementFtn : function(listData) {
     				return new ListViewerElemInterface({
     				  api : new ListElemAPI(listData),

@@ -1,5 +1,5 @@
 <loader obj="ctrl.obj.loaderMessage" ng-show="ctrl.obj.api.getState() === 'loading'"></loader>
-<div class="list-view-box animated" ng-show="ctrl.obj.api.getState() === 'done'">
+<div class="list-view-box animated" ng-show="ctrl.obj.api.getState() !== 'loading'">
 	<div class="heading">
 		{{ctrl.obj.api.getHeading()}}
 	</div>
@@ -19,6 +19,9 @@
 				</list-viewer-elem>			
  			</li>
 		</ul>	
+		<div style="position: absolute; left: 45%; top: 10%;" ng-show="ctrl.obj.api.getState() === 'pulling'">
+			<div class="loader"></div>
+		</div>		
 	</div>
 	<div class="scroll-control" ng-show='ctrl.hasScrollers'>
 		<span class="btn btn-default scroll-button" ng-click='ctrl.back()' ng-disabled='ctrl.atStart()'>

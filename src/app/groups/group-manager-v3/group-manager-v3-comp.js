@@ -59,7 +59,10 @@
       	render: function(cb) {
       		// create out group list
       		objInst.groupList = new ListViewerV3Interface({
-      			getElementsObj : JawboneService.makeBatch(JawboneService.makeEndpoint('groups')),
+      			//getElementsObj : JawboneService.makeBatch(JawboneService.makeEndpoint('groups')),
+            makeGetElementsObj : function() {
+              return JawboneService.makeBatch(JawboneService.makeEndpoint('groups'));
+            },
       			makeListElementFtn : function(listData) {
 			        return new ListViewerElemInterface({
 			          api : new ListElemAPI(listData),

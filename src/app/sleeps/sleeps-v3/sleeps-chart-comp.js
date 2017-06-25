@@ -45,7 +45,10 @@
         },
         yAxisLabels: [ 'minutes', 'minutes', 'minutes', '%', 'minutes', 'minutes', 'minutes' ],
         plotParams: makePlotParams(config.patient),
-        getElementsObj: JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps', config.patient.jawboneId), { max: 1000 }),
+        //getElementsObj: JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps', config.patient.jawboneId), { max: 1000 }),
+        makeGetElementsObj: function() {
+          return JawboneService.makeBatch(JawboneService.makeEndpoint('sleeps', config.patient.jawboneId), { max: 1000 });
+        },
         makeElement : function(element) {
           return new SleepsV3Obj(element);
         },

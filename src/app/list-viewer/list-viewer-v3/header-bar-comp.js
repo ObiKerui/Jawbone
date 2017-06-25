@@ -32,10 +32,10 @@
 
       objInst.api = {
         render : function(cb) {
-          $log.info('render function of header bar');          
+          //$log.info('render function of header bar');          
         },
         getListAPI: function() {
-          $log.info('called get list api');
+          //$log.info('called get list api');
           return iface.config.getListAPI();
         }
       };     

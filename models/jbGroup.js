@@ -44,7 +44,7 @@ var getDefaultGroup = function(cb) {
     if(err) {
       return cb(err);
     } else {
-      console.log('The default group: ' + JSON.stringify(defGroup));
+      //console.log('The default group: ' + JSON.stringify(defGroup));
       return cb(null, defGroup);
     }
   });
@@ -55,8 +55,8 @@ var getDefaultGroup = function(cb) {
 //------------------------------------------------------
 var createDefaultGroup = function(cb) {
   var defaultGroup = new Group({
-    name: 'Default Group',
-    description: 'Created by default',
+    name: 'All Users',
+    description: 'Created and joined by default',
     type: 'default'
   });
 
@@ -262,21 +262,28 @@ var allByUser = function(params, userId, cb) {
   });
 };
 
-var remove = function(id, user, cb) {
-    var q = Group.findOne({_id : id});
-    q.exec(function(err, result) {
+var remove = function(filter, cb) {
+    Group.remove(filter, function(err, result) {
       if(err) {
-      	return cb(err);
+        return cb(err);
+      } else {
+        return cb(null, result);
       }
-      if(!result) {
-      }
-      result.remove(function(removeErr, removed) {
-      	if(removeErr) {
-      		return cb(removeErr);
-      	}
-      	return cb(null, removed);
-      })
     });
+    // var q = Group.findOne(filter);
+    // q.exec(function(err, result) {
+    //   if(err) {
+    //   	return cb(err);
+    //   }
+    //   if(!result) {
+    //   }
+    //   result.remove(function(removeErr, removed) {
+    //   	if(removeErr) {
+    //   		return cb(removeErr);
+    //   	}
+    //   	return cb(null, removed);
+    //   })
+    // });
 };
 
 var members = function(groupId, params, cb) {

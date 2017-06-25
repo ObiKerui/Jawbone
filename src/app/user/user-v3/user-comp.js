@@ -29,7 +29,10 @@
   		var ifaceInst = new ListViewerV3Interface();
   		var config = config || {};
 
-		  ifaceInst.config.getElementsObj = JawboneService.makeBatch(JawboneService.makeEndpoint('users'));
+		  //ifaceInst.config.getElementsObj = JawboneService.makeBatch(JawboneService.makeEndpoint('users'));
+      ifaceInst.config.makeGetElementsObj = function() {
+        return JawboneService.makeBatch(JawboneService.makeEndpoint('users'));
+      },
       ifaceInst.config.makeListElementFtn = function(listData) {
         return new ListViewerElemInterface({
           api : new ListElemAPI(listData),
