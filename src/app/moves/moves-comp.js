@@ -51,6 +51,7 @@
       this.data = data || {};
       this.date = data.date || new Date();
       this.title = data.title || 'blank';
+      
     };
     return MoveObj;
   }

@@ -41,7 +41,6 @@
         },
         yAxisLabels : config.yAxisLabels || [],
   			loaderMessage: config.loaderMessage || null,          
-  			//getElementsObj : config.getElementsObj || null,
         makeGetElementsObj : config.makeGetElementsObj || null,
   			makeElement : config.makeElement || null,
   			preprocessElements : config.preprocessElements || null,
@@ -66,7 +65,7 @@
   //----------------------------------------------------
   //  OBJECT FUNCTION
   //----------------------------------------------------  
-  function ObjectFtn($log, BaseComp, ChartV3Interface, PlotGenerator) {
+  function ObjectFtn($log, BaseComp, ChartV3Interface, PlotGenerator, ChartDownloaderV3) {
     var object = function(iface) {
 
       //var initialise = initialiseFtn;
@@ -76,7 +75,9 @@
     	var removeNullPoints = removeNullPointsFtn;
     	var convertToArr = convertToArrFtn;
     	var extract = extractFtn;
+      var getGraphTitle = getGraphTitleFtn;
       var setYAxisTitle = setYAxisTitleFtn;
+      var getCSVData = getCSVDataFtn;
     	var obj = new BaseComp();
       obj.graphData = [];
       obj.plots = iface.config.plots || [];
@@ -128,6 +129,10 @@
           this.render(function(arg) {
 
           });
+        },
+        downloadToCSV: function() {
+          $log.info('request to download csv');
+          ChartDownloaderV3.csvDownloader(getCSVData(), getGraphTitle());
         }
       };
 
@@ -180,6 +185,7 @@
         //obj.chart.options.title = obj.selected;
         //$log.info('chart data: ' + JSON.stringify(chartdata, true, 3));
         obj.chart.data = google.visualization.arrayToDataTable(chartdata);
+        $log.info('did it');
         //$log.info('chart data: ' + JSON.stringify(obj.chart.data, true, 3));
         //onStateChange('ready');
     	}
@@ -232,11 +238,25 @@
       }
 
       //----------------------------------------------
+      // get the y axis title of the chart 
+      //----------------------------------------------        
+      function getGraphTitleFtn() {
+        return obj.selected;
+      }
+
+      //----------------------------------------------
       // set the y axis title of the chart 
       //----------------------------------------------        
       function setYAxisTitleFtn(chart, index, labels) {
         $log.info('setting the Y Axis title: ' + labels[index]);
         chart.options.vAxis.title = labels[index];
+      }      
+
+      //----------------------------------------------
+      // set the y axis title of the chart 
+      //----------------------------------------------        
+      function getCSVDataFtn() {
+        return google.visualization.dataTableToCsv(obj.chart.data);
       }      
 
       return obj;

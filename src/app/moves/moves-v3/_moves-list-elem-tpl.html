@@ -1,0 +1,8 @@
+<div class="trends-element-style" ng-class="{'active' : ctrl.obj.api.getAPI().selected }"
+	ng-click="ctrl.obj.api.getAPI().onClick()">
+	<span>{{ctrl.obj.api.getData().date | jbDate}}</span>	
+	<span>{{ctrl.obj.api.getData().calories | number:1}}</span>
+	<span>{{ctrl.obj.api.getData().bmr | number:1}}</span>
+	<span>{{ctrl.obj.api.getData().distance | number:1}}</span>
+	<span>{{ctrl.obj.api.getData().steps}}</span>	
+</div>

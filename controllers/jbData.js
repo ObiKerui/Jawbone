@@ -153,7 +153,34 @@ var JBData = {
 	      		res.status(200).json(patients);
 	        });      
 	    });
-	}
+	},
+
+	getMoves: function(req, res) {
+
+	    var params = {
+	    	user : req.query.user,
+	      	max : req.query.max,
+	      	offset : req.query.offset,
+	      	sortBy : req.query.sortBy
+	    };
+
+	    console.log('request for moves id : ' + req.params.id);
+	    getUser(req, function(err, user) {
+	    	if(err) {
+	    		return res.status(400).send({  message: ErrorHandler.getErrorMessage(err) });
+	    	} else {
+			    Jawbone.moves(user, params, function(err, moves) {
+			    	if(err) {				
+						return res.status(400).send({message: ErrorHandler.getErrorMessage(err)});
+			    	} 
+			    	console.log('got moves: ' + JSON.stringify(moves));
+
+			    	res.json(moves);
+			    })
+	    	}
+	    });
+	},
+
 };
  
 module.exports = JBData;

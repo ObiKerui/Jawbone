@@ -324,6 +324,52 @@ var cardiac = function(user, params, cb) {
 	})
 };
 
+var moves = function(user, params, cb) {
+	if(!validUser(user)) {
+		console.log('invalid user: ' + JSON.stringify(user));
+		return cb('invalid user');
+	} 
+
+	var up = init(user);
+
+	console.log('moves: ' + JSON.stringify(up, true, 1));
+
+	up.moves.get({ limit : 1000 }, function(err, moves) {
+		if(err) {
+			console.log('err retrieving moves: ' + err);
+			cb(err);
+		} else {
+			try {
+				var jsonMoves = JSON.parse(moves);
+
+				//console.log('result of sleeps request (jsonSleeps): ' + JSON.stringify(jsonSleeps, true, 3));
+				//console.log('>>>> sleeps access token : ' + JSON.stringify(user.jawboneData.access_token));
+
+				console.log('params: ' + JSON.stringify(params));
+				var total = jsonMoves.data.items.length;
+				console.log('call paginate with total: ' + JSON.stringify(total));
+				var paginatedData = paginate(jsonMoves.data.items, params.max, params.offset, total);
+				
+	  			result = {
+			      total: jsonMoves.data.items.length,
+			      max: params.max,
+			      offset: params.offset,
+			      sortBy: params.sortBy,
+			      data: paginatedData
+			    };
+
+				//console.log('result of sleeps request (result): ' + JSON.stringify(result, true, 3));
+
+			    cb(null, result);		
+			} catch(e) {
+				cb('error parsing jawbone results');
+			}
+
+		}
+	});
+
+};
+
 module.exports.UserIds = UserIds;
 module.exports.removeIds = removeIds;
 module.exports.createIds = createIds;
@@ -335,3 +381,4 @@ module.exports.sleepTicks = sleepTicks;
 module.exports.sleepDetails = sleepDetails;
 module.exports.trends = trends;
 module.exports.cardiac = cardiac;
+module.exports.moves = moves;

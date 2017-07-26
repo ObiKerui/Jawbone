@@ -40,25 +40,48 @@
 					<div class="btn btn-default" ng-click='ctrl.obj.api.setViewMode()' ng-disabled='true'>
 						<span class="glyphicon glyphicon-pencil faded-glyph"></span> show notes
 					</div>
-					<div class="btn btn-default" ng-disabled="true">&nbsp;</div>					
-					<div class="btn btn-default" ng-click='ctrl.obj.api.setViewMode()' ng-disabled='true'>
+<!-- 					<div class="btn btn-default" ng-disabled="true">&nbsp;</div>					
+					<div class="btn btn-default" ng-click='ctrl.obj.api.downloadData()' ng-disabled='false'>
 						<span class="glyphicon glyphicon-pencil faded-glyph"></span> download data
 					</div>
-				</div>
+ -->				
+ 				</div>
 			</li>
 		</ul>
 	</div>
 
-	<chart-v3 
-		iface='ctrl.obj.sleepsChartInterface'>
-	</chart-v3>
+	<div>
+		<ul class="header-titles">
+			<li ng-class="{'selected' : ctrl.obj.api.isSleepsMode()}"><a ng-click='ctrl.obj.api.setSleepsMode()'>Sleeps</a></li>
+			<li ng-class="{'selected' : ctrl.obj.api.isStepsMode()}"><a ng-click='ctrl.obj.api.setStepsMode()'>Steps</a></li>
+		</ul>
+	</div>
 
-	<list-viewer-v3
-		iface='ctrl.obj.sleepsListInterface'>
-	</list-viewer-v3>
+ 	<div ng-show='ctrl.obj.api.isSleepsMode()'>
+		<chart-v3 
+			iface='ctrl.obj.sleepsChartInterface'>
+		</chart-v3>
+
+		<list-viewer-v3
+			iface='ctrl.obj.sleepsListInterface'>
+		</list-viewer-v3>
+	</div>
+
+	<div ng-show='ctrl.obj.api.isStepsMode()'>
+
+		<chart-v3 
+			iface='ctrl.obj.movesChartInterface'>
+		</chart-v3>
+
+		<list-viewer-v3
+			iface='ctrl.obj.movesListInterface'>
+		</list-viewer-v3>
+
+	</div>
 
 <!--  	<notes-viewer 
 		obj=''
 	</notes-viewer>
  -->
+
 </div>

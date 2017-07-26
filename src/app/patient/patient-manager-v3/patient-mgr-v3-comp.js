@@ -43,7 +43,7 @@
   //----------------------------------------------------
   //  OBJECT FUNCTION
   //----------------------------------------------------  
-  function ObjectFtn($log, PatientMgrV3Interface, BaseComp, ListViewerV3Interface, ListViewerElemInterface, ListElemAPI, SleepsListInterface, SleepsChartInterface, PatientV3Obj, JawboneService) {
+  function ObjectFtn($log, MovesChartV3Interface, MovesListV3Interface, SleepsDownloaderAdaptor, CommonModals, BaseSelector, PatientMgrV3Interface, BaseComp, ListViewerV3Interface, ListViewerElemInterface, ListElemAPI, SleepsListInterface, SleepsChartInterface, SleepsDownloaderInterface, PatientV3Obj, JawboneService) {
     var object = function(iface) {
 
     	var onRender = onRenderFtn;
@@ -51,10 +51,14 @@
 
       var objInst = new BaseComp();
       objInst.mode = 'view';
+      objInst.sleepStepsMode = 'sleeps';
       objInst.patientsListInterface = null;
       objInst.seletedPatient = null;
       objInst.sleepsChartInterface = null;
       objInst.sleepsListInterface = null;
+      objInst.sleepsDownloaderInterface = null;
+      objInst.movesListInterface = null;
+      objInst.movesChartInterface = null;
 
       objInst.api = {
       	render: function(cb) {
@@ -68,6 +72,37 @@
 
         setViewMode: function() {
           objInst.mode = 'view';
+        },
+
+        setSleepsMode: function() {
+          activateSleepsMode(objInst.selectedPatient);
+          objInst.sleepStepsMode = 'sleeps';
+        },
+
+        setStepsMode: function() {
+          activateMovesMode(objInst.selectedPatient);
+          objInst.sleepStepsMode = 'steps';
+        },
+
+        isSleepsMode: function() {
+          return (objInst.sleepStepsMode === 'sleeps');
+        },
+
+        isStepsMode: function() {
+          return (objInst.sleepStepsMode === 'steps');
+        },
+
+        downloadData: function() {
+
+          CommonModals.selector(new BaseSelector({
+            tpl : 'app/sleeps/sleeps-v3/_sleeps-downloader-modal-tpl.html',
+            iface : new SleepsDownloaderAdaptor({
+              getSleepData: objInst.sleepsChartInterface.getAPI().getGraphData,
+              onConfirm : function(arg) {
+                $log.info('sleeps downloader confirm download');
+              }
+            })
+          }));
         },
 
         refresh : function() {
@@ -98,11 +133,7 @@
     		});
       }
 
-      function activateEditModeFtn(selectedPatient) {
-        objInst.mode = 'edit';
-        console.log('selected patient: ' + JSON.stringify(selectedPatient));
-        objInst.selectedPatient = selectedPatient;
-
+      function activateSleepsMode(selectedPatient) {
         objInst.sleepsChartInterface = new SleepsChartInterface({
           patient : selectedPatient,
           canAddPlots : true
@@ -111,6 +142,30 @@
         objInst.sleepsListInterface = new SleepsListInterface({
           patient : selectedPatient
         });
+      }
+
+      function activateMovesMode(selectedPatient) {
+
+        objInst.movesChartInterface = new MovesChartV3Interface({
+          patient : selectedPatient,
+          canAddPlots : true
+        });
+
+        objInst.movesListInterface = new MovesListV3Interface({
+          patient : selectedPatient
+        });        
+      }
+
+      function activateEditModeFtn(selectedPatient) {
+        objInst.mode = 'edit';
+        console.log('selected patient: ' + JSON.stringify(selectedPatient));
+        objInst.selectedPatient = selectedPatient;
+        
+        if(objInst.api.isSleepsMode()) {
+          activateSleepsMode(selectedPatient);
+        } else {
+          activateMovesMode(selectedPatient);
+        }
       }
 
       return objInst;
